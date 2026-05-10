@@ -3,20 +3,26 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Newborn Tracker API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Family PIN authentication
+  - name: events
+    description: Baby event logging
+  - name: summary
+    description: Daily summary and stats
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,218 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/verify:
+    post:
+      operationId: verifyPin
+      tags: [auth]
+      summary: Verify family PIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PinInput"
+      responses:
+        "200":
+          description: PIN verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "401":
+          description: Invalid PIN
+
+  /auth/status:
+    get:
+      operationId: getAuthStatus
+      tags: [auth]
+      summary: Check current auth status
+      responses:
+        "200":
+          description: Auth status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out
+      responses:
+        "200":
+          description: Logged out
+
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List events for a date
+      parameters:
+        - name: date
+          in: query
+          description: ISO date string (YYYY-MM-DD), defaults to today
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+
+  /events/feeding:
+    post:
+      operationId: logFeeding
+      tags: [events]
+      summary: Log a feeding event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedingInput"
+      responses:
+        "201":
+          description: Feeding logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/sleep/start:
+    post:
+      operationId: startSleep
+      tags: [events]
+      summary: Start a sleep session
+      responses:
+        "201":
+          description: Sleep started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/sleep/stop:
+    post:
+      operationId: stopSleep
+      tags: [events]
+      summary: Stop the active sleep session
+      responses:
+        "200":
+          description: Sleep stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/sleep:
+    post:
+      operationId: logSleep
+      tags: [events]
+      summary: Log a sleep event manually
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SleepInput"
+      responses:
+        "201":
+          description: Sleep logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/diaper:
+    post:
+      operationId: logDiaper
+      tags: [events]
+      summary: Log a diaper event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiaperInput"
+      responses:
+        "201":
+          description: Diaper logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/active-sleep:
+    get:
+      operationId: getActiveSleep
+      tags: [events]
+      summary: Get the current active (ongoing) sleep session if any
+      responses:
+        "200":
+          description: Active sleep session or null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveSleepResult"
+
+  /events/{id}:
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /summary:
+    get:
+      operationId: getDailySummary
+      tags: [summary]
+      summary: Get daily summary and stats
+      parameters:
+        - name: date
+          in: query
+          description: ISO date string (YYYY-MM-DD), defaults to today
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Daily summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailySummary"
+
+  /summary/recent:
+    get:
+      operationId: getRecentActivity
+      tags: [summary]
+      summary: Get time since last event of each type
+      responses:
+        "200":
+          description: Recent activity timestamps
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentActivity"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +249,146 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    PinInput:
+      type: object
+      properties:
+        pin:
+          type: string
+      required: [pin]
+
+    AuthResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success, message]
+
+    AuthStatus:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        babyName:
+          type: ["string", "null"]
+        babyBirthDate:
+          type: ["string", "null"]
+      required: [authenticated]
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [feeding, sleep, diaper]
+        startedAt:
+          type: string
+        endedAt:
+          type: ["string", "null"]
+        durationMinutes:
+          type: ["integer", "null"]
+        amountMl:
+          type: ["integer", "null"]
+        diaperType:
+          type: ["string", "null"]
+          enum: [pee, poop, both, null]
+        notes:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+      required: [id, type, startedAt, isActive]
+
+    FeedingInput:
+      type: object
+      properties:
+        amountMl:
+          type: ["integer", "null"]
+        durationMinutes:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+        startedAt:
+          type: ["string", "null"]
+
+    SleepInput:
+      type: object
+      properties:
+        startedAt:
+          type: string
+        endedAt:
+          type: string
+        notes:
+          type: ["string", "null"]
+      required: [startedAt, endedAt]
+
+    DiaperInput:
+      type: object
+      properties:
+        diaperType:
+          type: string
+          enum: [pee, poop, both]
+        notes:
+          type: ["string", "null"]
+        startedAt:
+          type: ["string", "null"]
+      required: [diaperType]
+
+    ActiveSleepResult:
+      type: object
+      properties:
+        event:
+          $ref: "#/components/schemas/Event"
+        elapsedMinutes:
+          type: ["integer", "null"]
+      required: []
+
+    DailySummary:
+      type: object
+      properties:
+        date:
+          type: string
+        feedingCount:
+          type: integer
+        totalFeedingMl:
+          type: integer
+        totalFeedingMinutes:
+          type: integer
+        sleepCount:
+          type: integer
+        totalSleepMinutes:
+          type: integer
+        diaperCount:
+          type: integer
+        peeCount:
+          type: integer
+        poopCount:
+          type: integer
+        feedingGoalMin:
+          type: integer
+        feedingGoalMax:
+          type: integer
+        sleepGoalMinutes:
+          type: integer
+      required: [date, feedingCount, totalFeedingMl, totalFeedingMinutes, sleepCount, totalSleepMinutes, diaperCount, peeCount, poopCount, feedingGoalMin, feedingGoalMax, sleepGoalMinutes]
+
+    RecentActivity:
+      type: object
+      properties:
+        lastFeedingAt:
+          type: ["string", "null"]
+        lastSleepAt:
+          type: ["string", "null"]
+        lastDiaperAt:
+          type: ["string", "null"]
+        lastFeedingMinutesAgo:
+          type: ["integer", "null"]
+        lastSleepMinutesAgo:
+          type: ["integer", "null"]
+        lastDiaperMinutesAgo:
+          type: ["integer", "null"]
+      required: []
