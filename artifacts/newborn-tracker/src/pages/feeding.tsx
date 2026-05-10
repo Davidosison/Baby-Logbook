@@ -40,23 +40,24 @@ export default function FeedingPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32">
-      <PageHeader title="Feeding" hebrewTitle="האכלה" />
+    <div className="min-h-[100dvh] bg-background pb-32" dir="rtl">
+      <PageHeader hebrewTitle="האכלה" />
       
       <div className="p-4 max-w-md mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           
           <div className="space-y-4 bg-blue-500/5 p-6 rounded-3xl border border-blue-500/20">
             <div>
-              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">Amount (ml)</label>
+              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">כמות (מ"ל)</label>
               <Input 
                 type="number" 
                 pattern="[0-9]*" 
                 inputMode="numeric"
                 value={amountMl}
                 onChange={e => setAmountMl(e.target.value)}
-                placeholder="e.g. 120"
+                placeholder='לדוגמה: 120'
                 className="h-14 text-lg bg-card border-blue-500/20"
+                data-testid="input-amount-ml"
               />
             </div>
             
@@ -65,40 +66,43 @@ export default function FeedingPage() {
                 <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground font-medium">OR / AND</span>
+                <span className="bg-background px-2 text-muted-foreground font-medium">או / וגם</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">Duration (minutes)</label>
+              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">משך (דקות)</label>
               <Input 
                 type="number" 
                 pattern="[0-9]*" 
                 inputMode="numeric"
                 value={durationMinutes}
                 onChange={e => setDurationMinutes(e.target.value)}
-                placeholder="e.g. 20"
+                placeholder="לדוגמה: 20"
                 className="h-14 text-lg bg-card border-blue-500/20"
+                data-testid="input-duration-minutes"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Notes (optional)</label>
+            <label className="block text-sm font-medium mb-2">הערות (אופציונלי)</label>
             <Textarea 
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="e.g. Left side first..."
+              placeholder="לדוגמה: צד שמאל קודם..."
               className="resize-none h-24 bg-card"
+              data-testid="input-notes"
             />
           </div>
 
           <Button 
             type="submit" 
             disabled={logFeeding.isPending || (!amountMl && !durationMinutes)}
+            data-testid="button-save-feeding"
             className="w-full h-16 text-lg font-bold rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20 active:scale-95 transition-transform"
           >
-            Save Feeding
+            שמור האכלה
           </Button>
           
         </form>

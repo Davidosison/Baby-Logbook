@@ -18,8 +18,8 @@ export default function PinPage() {
         } else {
           setPin("");
           toast({
-            title: "Incorrect PIN",
-            description: "Please try again.",
+            title: "קוד שגוי",
+            description: "אנא נסו שנית.",
             variant: "destructive"
           });
         }
@@ -27,8 +27,8 @@ export default function PinPage() {
       onError: () => {
         setPin("");
         toast({
-          title: "Error",
-          description: "Could not verify PIN. Please try again.",
+          title: "שגיאה",
+          description: "לא ניתן לאמת את הקוד. אנא נסו שנית.",
           variant: "destructive"
         });
       }
@@ -50,7 +50,7 @@ export default function PinPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-foreground">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-foreground" dir="rtl">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -59,8 +59,8 @@ export default function PinPage() {
         <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mb-6">
           <Moon className="w-10 h-10 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold mb-2">Welcome Family</h1>
-        <p className="text-muted-foreground text-center">Enter your family PIN to access the tracker</p>
+        <h1 className="text-3xl font-bold mb-2">ברוכים הבאים</h1>
+        <p className="text-muted-foreground text-center">הזינו את הקוד המשפחתי</p>
       </motion.div>
 
       <div className="flex gap-4 mb-12" dir="ltr">
@@ -81,6 +81,7 @@ export default function PinPage() {
             key={num}
             onClick={() => handleKeyPress(num)}
             disabled={verifyPin.isPending}
+            data-testid={`pin-button-${num}`}
             className="w-full aspect-square rounded-full bg-card border border-border text-2xl font-medium active:bg-accent transition-colors flex items-center justify-center active:scale-95"
           >
             {num}
@@ -90,6 +91,7 @@ export default function PinPage() {
         <button
           onClick={() => handleKeyPress(0)}
           disabled={verifyPin.isPending}
+          data-testid="pin-button-0"
           className="w-full aspect-square rounded-full bg-card border border-border text-2xl font-medium active:bg-accent transition-colors flex items-center justify-center active:scale-95"
         >
           0
@@ -97,9 +99,10 @@ export default function PinPage() {
         <button
           onClick={handleDelete}
           disabled={verifyPin.isPending}
+          data-testid="pin-button-delete"
           className="w-full aspect-square rounded-full text-lg font-medium active:bg-accent/50 transition-colors flex items-center justify-center text-muted-foreground"
         >
-          Delete
+          מחק
         </button>
       </div>
     </div>

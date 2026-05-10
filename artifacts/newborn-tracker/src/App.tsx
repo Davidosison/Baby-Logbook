@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthWrapper } from "@/components/auth-wrapper";
 import { BottomNav } from "@/components/bottom-nav";
+import { PushPrompt } from "@/components/push-prompt";
 
 import PinPage from "@/pages/pin";
 import DashboardPage from "@/pages/dashboard";
@@ -27,6 +28,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
+      <PushPrompt />
       <BottomNav />
     </>
   );
