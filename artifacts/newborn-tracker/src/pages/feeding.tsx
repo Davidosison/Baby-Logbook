@@ -3,14 +3,17 @@ import { useLocation } from "wouter";
 import { useLogFeeding, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@workspace/api-client-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/contexts/language-context";
+import { tr } from "@/lib/translations";
+import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function FeedingPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { lang, dir } = useLanguage();
   const [amountMl, setAmountMl] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [notes, setNotes] = useState("");
@@ -23,8 +26,8 @@ export default function FeedingPage() {
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey({ date: today }) });
         setLocation("/");
-      }
-    }
+      },
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,51 +37,50 @@ export default function FeedingPage() {
         amountMl: amountMl ? parseInt(amountMl) : undefined,
         durationMinutes: durationMinutes ? parseInt(durationMinutes) : undefined,
         notes: notes || undefined,
-        startedAt: new Date().toISOString()
-      }
+        startedAt: new Date().toISOString(),
+      },
     });
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir="rtl">
-      <PageHeader hebrewTitle="האכלה" />
-      
+    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+      <PageHeader hebrewTitle="האכלה" russianTitle="Кормление" />
+
       <div className="p-4 max-w-md mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
-          
           <div className="space-y-4 bg-blue-500/5 p-6 rounded-3xl border border-blue-500/20">
             <div>
-              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">כמות (מ"ל)</label>
-              <Input 
-                type="number" 
-                pattern="[0-9]*" 
+              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">{tr("amountMl", lang)}</label>
+              <Input
+                type="number"
+                pattern="[0-9]*"
                 inputMode="numeric"
                 value={amountMl}
-                onChange={e => setAmountMl(e.target.value)}
-                placeholder='לדוגמה: 120'
+                onChange={(e) => setAmountMl(e.target.value)}
+                placeholder={tr("exAmount", lang)}
                 className="h-14 text-lg bg-card border-blue-500/20"
                 data-testid="input-amount-ml"
               />
             </div>
-            
+
             <div className="relative py-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground font-medium">או / וגם</span>
+                <span className="bg-background px-2 text-muted-foreground font-medium">{tr("orAnd", lang)}</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">משך (דקות)</label>
-              <Input 
-                type="number" 
-                pattern="[0-9]*" 
+              <label className="block text-sm font-medium mb-2 text-blue-600 dark:text-blue-400">{tr("durationMin", lang)}</label>
+              <Input
+                type="number"
+                pattern="[0-9]*"
                 inputMode="numeric"
                 value={durationMinutes}
-                onChange={e => setDurationMinutes(e.target.value)}
-                placeholder="לדוגמה: 20"
+                onChange={(e) => setDurationMinutes(e.target.value)}
+                placeholder={tr("exDuration", lang)}
                 className="h-14 text-lg bg-card border-blue-500/20"
                 data-testid="input-duration-minutes"
               />
@@ -86,25 +88,24 @@ export default function FeedingPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">הערות (אופציונלי)</label>
-            <Textarea 
+            <label className="block text-sm font-medium mb-2">{tr("notesOptional", lang)}</label>
+            <Textarea
               value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="לדוגמה: צד שמאל קודם..."
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={tr("exNotes", lang)}
               className="resize-none h-24 bg-card"
               data-testid="input-notes"
             />
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={logFeeding.isPending || (!amountMl && !durationMinutes)}
             data-testid="button-save-feeding"
             className="w-full h-16 text-lg font-bold rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20 active:scale-95 transition-transform"
           >
-            שמור האכלה
+            {tr("saveFeeding", lang)}
           </Button>
-          
         </form>
       </div>
     </div>

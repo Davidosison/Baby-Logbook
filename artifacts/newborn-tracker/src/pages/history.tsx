@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useListEvents, getListEventsQueryKey, useDeleteEvent, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@workspace/api-client-react";
 import { PageHeader } from "@/components/page-header";
+import { useLanguage } from "@/contexts/language-context";
+import { tr } from "@/lib/translations";
 import { format } from "date-fns";
-import { he } from "date-fns/locale";
+import { he, ru } from "date-fns/locale";
 import { Droplet, Moon, Utensils, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -17,34 +19,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-function EventIcon({ type, className }: { type: string, className?: string }) {
+function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "feeding") return <Utensils className={cn("w-5 h-5", className)} />;
   if (type === "sleep") return <Moon className={cn("w-5 h-5", className)} />;
   if (type === "diaper") return <Droplet className={cn("w-5 h-5", className)} />;
   return null;
 }
 
-function typeLabel(type: string) {
-  if (type === "feeding") return "האכלה";
-  if (type === "sleep") return "שינה";
-  if (type === "diaper") return "טיטול";
-  return type;
-}
-
-function diaperLabel(diaperType: string | null | undefined) {
-  if (diaperType === "pee") return "פיפי";
-  if (diaperType === "poop") return "קקי";
-  if (diaperType === "both") return "שניהם";
-  return diaperType ?? "";
-}
-
 export default function HistoryPage() {
   const queryClient = useQueryClient();
+  const { lang, dir } = useLanguage();
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const dateLocale = lang === "he" ? he : ru;
 
-  const { data: events, isLoading } = useListEvents({ limit: 100 }, {
-    query: { queryKey: getListEventsQueryKey({ limit: 100 }) }
-  });
+  const { data: events, isLoading } = useListEvents(
+    { limit: 100 },
+    { query: { queryKey: getListEventsQueryKey({ limit: 100 }) } },
+  );
 
   const deleteEvent = useDeleteEvent({
     mutation: {
@@ -53,104 +44,128 @@ export default function HistoryPage() {
         queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey() });
-      }
-    }
+      },
+    },
   });
 
-  const groupedEvents = events?.reduce((acc, event) => {
-    const date = format(new Date(event.startedAt), "yyyy-MM-dd");
-    if (!acc[date]) acc[date] = [];
-    acc[date]!.push(event);
-    return acc;
-  }, {} as Record<string, typeof events>);
+  const typeLabel = (type: string) => {
+    if (type === "feeding") return tr("feeding", lang);
+    if (type === "sleep") return tr("sleep", lang);
+    if (type === "diaper") return tr("diaper", lang);
+    return type;
+  };
+
+  const diaperLabel = (t: string | null | undefined) => {
+    if (t === "pee") return tr("pee", lang);
+    if (t === "poop") return tr("poop", lang);
+    if (t === "both") return tr("both", lang);
+    return t ?? "";
+  };
+
+  const groupedEvents = events?.reduce(
+    (acc, event) => {
+      const date = format(new Date(event.startedAt), "yyyy-MM-dd");
+      if (!acc[date]) acc[date] = [];
+      acc[date]!.push(event);
+      return acc;
+    },
+    {} as Record<string, typeof events>,
+  );
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir="rtl">
-      <PageHeader hebrewTitle="היסטוריה" />
-      
+    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+      <PageHeader hebrewTitle="היסטוריה" russianTitle="История" />
+
       <div className="p-4 space-y-8">
-        {isLoading && <div className="text-center text-muted-foreground py-8 animate-pulse">טוען היסטוריה...</div>}
-        
+        {isLoading && (
+          <div className="text-center text-muted-foreground py-8 animate-pulse">{tr("loadingHistory", lang)}</div>
+        )}
         {!isLoading && events?.length === 0 && (
-          <div className="text-center text-muted-foreground py-12">
-            אין אירועים מתועדים עדיין
-          </div>
+          <div className="text-center text-muted-foreground py-12">{tr("noEvents", lang)}</div>
         )}
 
-        {groupedEvents && Object.entries(groupedEvents).map(([date, dayEvents]) => (
-          <div key={date} className="space-y-4">
-            <h3 className="font-semibold text-lg sticky top-20 bg-background/95 backdrop-blur py-2 z-10">
-              {format(new Date(date + 'T12:00:00'), "EEEE, d בMMMM", { locale: he })}
-            </h3>
-            
-            <div className="space-y-3">
-              {dayEvents!.map(event => (
-                <div key={event.id} data-testid={`history-event-${event.id}`} className="flex gap-3 bg-card border border-border rounded-2xl p-4 shadow-sm items-center">
-                  <button 
-                    onClick={() => setDeleteId(event.id)}
-                    data-testid={`button-delete-${event.id}`}
-                    className="w-10 h-10 shrink-0 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-destructive/10"
+        {groupedEvents &&
+          Object.entries(groupedEvents).map(([date, dayEvents]) => (
+            <div key={date} className="space-y-4">
+              <h3 className="font-semibold text-lg sticky top-20 bg-background/95 backdrop-blur py-2 z-10">
+                {format(new Date(date + "T12:00:00"), lang === "he" ? "EEEE, d בMMMM" : "EEEE, d MMMM", { locale: dateLocale })}
+              </h3>
+
+              <div className="space-y-3">
+                {dayEvents!.map((event) => (
+                  <div
+                    key={event.id}
+                    data-testid={`history-event-${event.id}`}
+                    className="flex gap-3 bg-card border border-border rounded-2xl p-4 shadow-sm items-center"
                   >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                    <button
+                      onClick={() => setDeleteId(event.id)}
+                      data-testid={`button-delete-${event.id}`}
+                      className="w-10 h-10 shrink-0 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                      <span className="text-xs text-muted-foreground font-medium shrink-0 ml-2">{format(new Date(event.startedAt), "HH:mm")}</span>
-                      <span className="font-semibold">{typeLabel(event.type)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-0.5">
+                        <span className="text-xs text-muted-foreground font-medium shrink-0">
+                          {format(new Date(event.startedAt), "HH:mm")}
+                        </span>
+                        <span className="font-semibold">{typeLabel(event.type)}</span>
+                      </div>
+                      <div className={cn("text-sm text-muted-foreground truncate", dir === "rtl" ? "text-right" : "text-left")}>
+                        {event.type === "feeding" && (
+                          <>
+                            {event.amountMl ? tr("feedingAmount", lang, event.amountMl) : ""}
+                            {event.amountMl && event.durationMinutes ? " · " : ""}
+                            {event.durationMinutes ? tr("feedingDuration", lang, event.durationMinutes) : ""}
+                          </>
+                        )}
+                        {event.type === "sleep" && (
+                          <>
+                            {event.isActive
+                              ? tr("sleepingShort", lang)
+                              : event.durationMinutes
+                              ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60)
+                              : ""}
+                          </>
+                        )}
+                        {event.type === "diaper" && <span>{diaperLabel(event.diaperType)}</span>}
+                      </div>
                     </div>
-                    
-                    <div className="text-sm text-muted-foreground truncate text-right">
-                      {event.type === 'feeding' && (
-                        <>
-                          {event.amountMl ? `${event.amountMl} מ"ל` : ''} 
-                          {event.amountMl && event.durationMinutes ? ' · ' : ''}
-                          {event.durationMinutes ? `${event.durationMinutes} דק'` : ''}
-                        </>
+
+                    <div
+                      className={cn(
+                        "w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-background border border-border",
+                        event.type === "feeding" && "text-blue-500",
+                        event.type === "sleep" && "text-purple-500",
+                        event.type === "diaper" && "text-amber-500",
                       )}
-                      
-                      {event.type === 'sleep' && (
-                        <>{event.isActive ? 'ישן...' : event.durationMinutes ? `${Math.floor(event.durationMinutes/60)}ש' ${event.durationMinutes%60}ד'` : ''}</>
-                      )}
-                      
-                      {event.type === 'diaper' && (
-                        <span>{diaperLabel(event.diaperType)}</span>
-                      )}
+                    >
+                      <EventIcon type={event.type} />
                     </div>
                   </div>
-
-                  <div className={cn(
-                    "w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-background border border-border",
-                    event.type === 'feeding' && "text-blue-500",
-                    event.type === 'sleep' && "text-purple-500",
-                    event.type === 'diaper' && "text-amber-500"
-                  )}>
-                    <EventIcon type={event.type} />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="rounded-2xl" dir="rtl">
+        <AlertDialogContent className="rounded-2xl" dir={dir}>
           <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת אירוע</AlertDialogTitle>
-            <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק אירוע זה? פעולה זו אינה הפיכה.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{tr("deleteEvent", lang)}</AlertDialogTitle>
+            <AlertDialogDescription>{tr("deleteConfirm", lang)}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => deleteId && deleteEvent.mutate({ id: deleteId })}
               data-testid="button-confirm-delete"
               className="h-12 rounded-xl bg-destructive hover:bg-destructive text-destructive-foreground"
             >
-              מחק
+              {tr("delete", lang)}
             </AlertDialogAction>
-            <AlertDialogCancel className="mt-0 h-12 rounded-xl">ביטול</AlertDialogCancel>
+            <AlertDialogCancel className="mt-0 h-12 rounded-xl">{tr("cancel", lang)}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

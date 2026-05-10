@@ -1,0 +1,105 @@
+import type { Language } from "@/contexts/language-context";
+
+const t = {
+  // PIN page
+  welcome: { he: "ברוכים הבאים", ru: "Добро пожаловать" },
+  enterPin: { he: "הזינו את הקוד המשפחתי", ru: "Введите семейный PIN-код" },
+  wrongPin: { he: "קוד שגוי", ru: "Неверный PIN" },
+  tryAgain: { he: "אנא נסו שנית.", ru: "Пожалуйста, попробуйте снова." },
+  error: { he: "שגיאה", ru: "Ошибка" },
+  cannotVerifyPin: { he: "לא ניתן לאמת את הקוד. אנא נסו שנית.", ru: "Не удалось проверить PIN. Попробуйте снова." },
+  deleteKey: { he: "מחק", ru: "Удалить" },
+
+  // Navigation
+  home: { he: "בית", ru: "Главная" },
+  history: { he: "היסטוריה", ru: "История" },
+  theme: { he: "ערכת נושא", ru: "Тема" },
+  logEvent: { he: "תיעוד אירוע", ru: "Записать" },
+
+  // Event types
+  feeding: { he: "האכלה", ru: "Кормление" },
+  sleep: { he: "שינה", ru: "Сон" },
+  diaper: { he: "טיטול", ru: "Подгузник" },
+
+  // Dashboard
+  summary: { he: "סיכום", ru: "Сводка" },
+  never: { he: "מעולם", ru: "Никогда" },
+  justNow: { he: "עכשיו", ru: "Сейчас" },
+  dailyGoals: { he: "יעדים יומיים", ru: "Дневные цели" },
+  feedings: { he: "האכלות", ru: "Кормления" },
+  todayTimeline: { he: "ציר הזמן של היום", ru: "График дня" },
+  refresh: { he: "רענן", ru: "Обновить" },
+  loading: { he: "טוען...", ru: "Загрузка..." },
+  noEventsToday: { he: "אין אירועים היום עדיין", ru: "Сегодня событий нет" },
+  sleepingNow: { he: "ישן עכשיו...", ru: "Спит сейчас..." },
+
+  // Diaper types
+  pee: { he: "פיפי", ru: "Пи-пи" },
+  poop: { he: "קקי", ru: "Ка-ка" },
+  both: { he: "שניהם", ru: "Оба" },
+
+  // Feeding page
+  amountMl: { he: 'כמות (מ"ל)', ru: "Количество (мл)" },
+  exAmount: { he: "לדוגמה: 120", ru: "Например: 120" },
+  orAnd: { he: "או / וגם", ru: "ИЛИ / И" },
+  durationMin: { he: "משך (דקות)", ru: "Длительность (мин)" },
+  exDuration: { he: "לדוגמה: 20", ru: "Например: 20" },
+  notesOptional: { he: "הערות (אופציונלי)", ru: "Примечания (необязательно)" },
+  exNotes: { he: "לדוגמה: צד שמאל קודם...", ru: "Например: сначала левая сторона..." },
+  saveFeeding: { he: "שמור האכלה", ru: "Сохранить кормление" },
+
+  // Sleep page
+  asleep: { he: "ישן", ru: "Спит" },
+  babyAwake: { he: "התינוק ער", ru: "Малыш не спит" },
+  wakeUp: { he: "התעורר", ru: "Разбудить" },
+  stopSleep: { he: "להפסיק שינה", ru: "Остановить сон" },
+  startSleepLabel: { he: "שינה", ru: "Сон" },
+  startSleepSub: { he: "להתחיל שינה", ru: "Начать сон" },
+
+  // Diaper page
+  exDiaperNotes: { he: "לדוגמה: הפריחה נראית טוב יותר...", ru: "Например: сыпь выглядит лучше..." },
+  saveDiaper: { he: "שמור טיטול", ru: "Сохранить" },
+
+  // History page
+  loadingHistory: { he: "טוען היסטוריה...", ru: "Загрузка истории..." },
+  noEvents: { he: "אין אירועים מתועדים עדיין", ru: "Событий пока нет" },
+  deleteEvent: { he: "מחיקת אירוע", ru: "Удалить событие" },
+  deleteConfirm: { he: "האם אתה בטוח שברצונך למחוק אירוע זה? פעולה זו אינה הפיכה.", ru: "Вы уверены, что хотите удалить это событие? Это действие нельзя отменить." },
+  cancel: { he: "ביטול", ru: "Отмена" },
+  delete: { he: "מחק", ru: "Удалить" },
+  sleepingShort: { he: "ישן...", ru: "Спит..." },
+
+  // Header
+  babyTracker: { he: "מעקב תינוק", ru: "Трекер малыша" },
+  agePrefix: { he: "בן/בת", ru: "возраст" },
+
+  // Push prompt
+  enablePushTitle: { he: "הפעל התראות האכלה", ru: "Включить напоминания" },
+  enablePushSub: { he: "קבלו תזכורת כל 3 שעות", ru: "Напоминание каждые 3 часа" },
+  pushEnabledTitle: { he: "התראות מופעלות", ru: "Уведомления включены" },
+  pushEnabledSub: { he: "תקבלו התראה כשהתינוק לא הוזן 3 שעות", ru: "Уведомление придёт, если не кормили 3 часа" },
+  enable: { he: "הפעל", ru: "Включить" },
+
+  // Time ago
+  minutesAgo: { he: (m: number) => `לפני ${m}ד'`, ru: (m: number) => `${m} мин. назад` },
+  hoursAgo: { he: (h: number) => `לפני ${h}ש'`, ru: (h: number) => `${h} ч. назад` },
+  hoursMinutesAgo: { he: (h: number, m: number) => `לפני ${h}ש' ${m}ד'`, ru: (h: number, m: number) => `${h} ч. ${m} мин. назад` },
+
+  // Sleep duration
+  sleepDuration: { he: (h: number, m: number) => `${h}ש' ${m}ד'`, ru: (h: number, m: number) => `${h} ч. ${m} мин.` },
+  feedingDuration: { he: (d: number) => `${d} דק'`, ru: (d: number) => `${d} мин.` },
+  feedingAmount: { he: (a: number) => `${a} מ"ל`, ru: (a: number) => `${a} мл` },
+  sleepGoalDuration: { he: (h: number, m: number) => `${h}ש' ${m}ד'`, ru: (h: number, m: number) => `${h} ч. ${m} мин.` },
+};
+
+export function tr<K extends keyof typeof t>(
+  key: K,
+  lang: Language,
+  ...args: (typeof t)[K][Language] extends (...a: any[]) => string ? Parameters<(typeof t)[K][Language]> : []
+): string {
+  const val = (t[key] as any)[lang];
+  if (typeof val === "function") return val(...args);
+  return val as string;
+}
+
+export default t;

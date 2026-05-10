@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useVerifyPin } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
+import { tr } from "@/lib/translations";
 import { motion } from "framer-motion";
 import { Moon } from "lucide-react";
 
@@ -9,7 +11,8 @@ export default function PinPage() {
   const [pin, setPin] = useState("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+  const { lang, dir } = useLanguage();
+
   const verifyPin = useVerifyPin({
     mutation: {
       onSuccess: (data) => {
@@ -17,22 +20,14 @@ export default function PinPage() {
           setLocation("/");
         } else {
           setPin("");
-          toast({
-            title: "קוד שגוי",
-            description: "אנא נסו שנית.",
-            variant: "destructive"
-          });
+          toast({ title: tr("wrongPin", lang), description: tr("tryAgain", lang), variant: "destructive" });
         }
       },
       onError: () => {
         setPin("");
-        toast({
-          title: "שגיאה",
-          description: "לא ניתן לאמת את הקוד. אנא נסו שנית.",
-          variant: "destructive"
-        });
-      }
-    }
+        toast({ title: tr("error", lang), description: tr("cannotVerifyPin", lang), variant: "destructive" });
+      },
+    },
   });
 
   const handleKeyPress = (num: number) => {
@@ -45,13 +40,11 @@ export default function PinPage() {
     }
   };
 
-  const handleDelete = () => {
-    setPin(prev => prev.slice(0, -1));
-  };
+  const handleDelete = () => setPin((prev) => prev.slice(0, -1));
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-foreground" dir="rtl">
-      <motion.div 
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-foreground" dir={dir}>
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center mb-12"
@@ -59,18 +52,16 @@ export default function PinPage() {
         <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mb-6">
           <Moon className="w-10 h-10 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold mb-2">ברוכים הבאים</h1>
-        <p className="text-muted-foreground text-center">הזינו את הקוד המשפחתי</p>
+        <h1 className="text-3xl font-bold mb-2">{tr("welcome", lang)}</h1>
+        <p className="text-muted-foreground text-center">{tr("enterPin", lang)}</p>
       </motion.div>
 
       <div className="flex gap-4 mb-12" dir="ltr">
         {[0, 1, 2, 3].map((i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className="w-4 h-4 rounded-full transition-colors duration-300"
-            style={{ 
-              backgroundColor: i < pin.length ? 'var(--color-primary)' : 'var(--color-input)'
-            }}
+            style={{ backgroundColor: i < pin.length ? "var(--color-primary)" : "var(--color-input)" }}
           />
         ))}
       </div>
@@ -100,9 +91,9 @@ export default function PinPage() {
           onClick={handleDelete}
           disabled={verifyPin.isPending}
           data-testid="pin-button-delete"
-          className="w-full aspect-square rounded-full text-lg font-medium active:bg-accent/50 transition-colors flex items-center justify-center text-muted-foreground"
+          className="w-full aspect-square rounded-full text-base font-medium active:bg-accent/50 transition-colors flex items-center justify-center text-muted-foreground"
         >
-          מחק
+          {tr("deleteKey", lang)}
         </button>
       </div>
     </div>
