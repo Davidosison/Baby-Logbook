@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils } from "lucide-react";
+import { Droplet, Moon, Utensils, Share2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,28 @@ export default function DashboardPage() {
 
   const handleRefresh = () => { refetchEvents(); refetchRecent(); refetchSummary(); };
 
+  const handleShare = () => {
+    if (!summary) return;
+    const dateLabel = format(new Date(), lang === "he" ? "d בMMMM yyyy" : "d MMMM yyyy", { locale: dateLocale });
+    const sleepH = Math.floor(summary.totalSleepMinutes / 60);
+    const sleepM = summary.totalSleepMinutes % 60;
+    const lines = [
+      tr("shareTitle", lang, dateLabel),
+      "",
+      tr("shareFeedings", lang, summary.feedingCount, summary.totalFeedingMl),
+      tr("shareSleep", lang, sleepH, sleepM),
+      tr("shareDiapers", lang, summary.diaperCount),
+      "",
+      tr("shareFooter", lang),
+    ];
+    const text = lines.join("\n");
+    if (navigator.share) {
+      navigator.share({ text });
+    } else {
+      navigator.clipboard.writeText(text);
+    }
+  };
+
   const getRecentText = (mins: number | null | undefined) => {
     if (mins === null || mins === undefined) return tr("never", lang);
     if (mins < 1) return tr("justNow", lang);
@@ -59,7 +81,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
-      <PageHeader hebrewTitle="סיכום" russianTitle="Сводка" />
+      <PageHeader hebrewTitle="יומן אדם" russianTitle="Журнал Адама" />
 
       <div className="p-4 space-y-6">
         {/* Recent Activity Cards */}
@@ -74,7 +96,7 @@ export default function DashboardPage() {
               : type === "sleep" ? <Moon className="w-6 h-6 text-purple-500 mb-2" />
               : <Droplet className="w-6 h-6 text-amber-500 mb-2" />;
             return (
-              <div key={type} className="bg-card border border-card-border rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
+              <div key={type} className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
                 {icon}
                 <div className="text-sm font-medium mb-1">{typeLabel(type)}</div>
                 <div className="text-xs text-muted-foreground font-medium">{getRecentText(minsAgo)}</div>
@@ -85,8 +107,18 @@ export default function DashboardPage() {
 
         {/* Daily Progress */}
         {summary && (
-          <div className="bg-card border border-card-border rounded-2xl p-5 shadow-sm space-y-5">
-            <h3 className="font-semibold text-lg">{tr("dailyGoals", lang)}</h3>
+          <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg">{tr("dailyGoals", lang)}</h3>
+              <button
+                onClick={handleShare}
+                data-testid="button-share"
+                className="flex items-center gap-1.5 text-sm font-medium text-primary px-3 py-1.5 rounded-xl bg-primary/10 active:bg-primary/20 transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+                {tr("share", lang)}
+              </button>
+            </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="font-medium">{tr("feedings", lang)}</span>
@@ -107,8 +139,8 @@ export default function DashboardPage() {
         {/* Timeline */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">{tr("todayTimeline", lang)}</h3>
             <button onClick={handleRefresh} data-testid="button-refresh" className="text-sm text-primary font-medium p-2 active:opacity-50">{tr("refresh", lang)}</button>
+            <h3 className="font-semibold text-lg">{tr("todayTimeline", lang)}</h3>
           </div>
 
           <div className="space-y-4">
@@ -122,14 +154,28 @@ export default function DashboardPage() {
             )}
 
             {events?.map((event, i) => (
-              <div key={event.id} className="flex gap-4 relative" data-testid={`event-item-${event.id}`}>
+              <div key={event.id} className="flex gap-3 relative items-start" data-testid={`event-item-${event.id}`} dir={dir}>
+                {/* Timeline vertical line — anchored to icon column on the inline-start side */}
                 {i !== events.length - 1 && (
-                  <div className={cn("absolute top-10 bottom-[-16px] w-[2px] bg-border z-0", dir === "rtl" ? "right-6" : "left-6")} />
+                  <div className="absolute top-12 bottom-[-16px] w-[2px] bg-border z-0 inline-start-5" style={{ [dir === "rtl" ? "right" : "left"]: "20px" }} />
                 )}
-                <div className="flex-1 bg-card border border-border rounded-2xl p-4 shadow-sm">
-                  <div className="flex justify-between items-start mb-1">
+
+                {/* Icon — inline-start = right in RTL, left in LTR */}
+                <div className={cn(
+                  "w-10 h-10 shrink-0 rounded-full flex items-center justify-center z-10 bg-card border border-border shadow-sm",
+                  event.type === "feeding" && "text-blue-500",
+                  event.type === "sleep" && "text-purple-500",
+                  event.type === "diaper" && "text-amber-500",
+                )}>
+                  <EventIcon type={event.type} />
+                </div>
+
+                {/* Content card */}
+                <div className="flex-1 bg-card border border-border rounded-2xl p-4 shadow-sm min-w-0">
+                  {/* Category name + time — name on inline-start (right in RTL) */}
+                  <div className="flex justify-between items-start mb-1" dir={dir}>
                     <span className="text-xs text-muted-foreground font-medium">{format(new Date(event.startedAt), "HH:mm")}</span>
-                    <span className="font-semibold">{typeLabel(event.type)}</span>
+                    <span className="font-bold text-base">{typeLabel(event.type)}</span>
                   </div>
                   {event.type === "feeding" && (
                     <div className={cn("text-sm text-muted-foreground", dir === "rtl" ? "text-right" : "text-left")}>
@@ -149,16 +195,6 @@ export default function DashboardPage() {
                     </div>
                   )}
                   {event.notes && <div className={cn("text-sm mt-2 italic opacity-80", dir === "rtl" ? "text-right" : "text-left")}>{event.notes}</div>}
-                </div>
-                <div className="w-12 h-12 shrink-0 rounded-full flex items-center justify-center z-10 bg-card border border-border shadow-sm">
-                  <EventIcon
-                    type={event.type}
-                    className={cn(
-                      event.type === "feeding" && "text-blue-500",
-                      event.type === "sleep" && "text-purple-500",
-                      event.type === "diaper" && "text-amber-500",
-                    )}
-                  />
                 </div>
               </div>
             ))}

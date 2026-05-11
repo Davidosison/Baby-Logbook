@@ -1,6 +1,9 @@
 import type { Language } from "@/contexts/language-context";
 
 const t = {
+  // App name
+  appName: { he: "יומן אדם", ru: "Журнал Адама" },
+
   // PIN page
   welcome: { he: "ברוכים הבאים", ru: "Добро пожаловать" },
   enterPin: { he: "הזינו את הקוד המשפחתי", ru: "Введите семейный PIN-код" },
@@ -32,6 +35,7 @@ const t = {
   loading: { he: "טוען...", ru: "Загрузка..." },
   noEventsToday: { he: "אין אירועים היום עדיין", ru: "Сегодня событий нет" },
   sleepingNow: { he: "ישן עכשיו...", ru: "Спит сейчас..." },
+  share: { he: "שתף", ru: "Поделиться" },
 
   // Diaper types
   pee: { he: "פיפי", ru: "Пи-пи" },
@@ -39,6 +43,13 @@ const t = {
   both: { he: "שניהם", ru: "Оба" },
 
   // Feeding page
+  startTime: { he: "שעת התחלה", ru: "Начало" },
+  endTime: { he: "שעת סיום", ru: "Конец" },
+  autoDuration: { he: (m: number) => `משך: ${m} דק'`, ru: (m: number) => `Длительность: ${m} мин.` },
+  liveTimer: { he: "טיימר חי", ru: "Таймер" },
+  tapToStart: { he: "לחץ להתחיל", ru: "Нажмите чтобы начать" },
+  tapToStop: { he: "לחץ לסיום", ru: "Нажмите для остановки" },
+  timerRunning: { he: "מודד...", ru: "Идёт отсчёт..." },
   amountMl: { he: 'כמות (מ"ל)', ru: "Количество (мл)" },
   exAmount: { he: "לדוגמה: 120", ru: "Например: 120" },
   orAnd: { he: "או / וגם", ru: "ИЛИ / И" },
@@ -68,9 +79,13 @@ const t = {
   cancel: { he: "ביטול", ru: "Отмена" },
   delete: { he: "מחק", ru: "Удалить" },
   sleepingShort: { he: "ישן...", ru: "Спит..." },
+  editEvent: { he: "עריכת אירוע", ru: "Изменить событие" },
+  saveChanges: { he: "שמור שינויים", ru: "Сохранить изменения" },
+  today: { he: "היום", ru: "Сегодня" },
+  yesterday: { he: "אתמול", ru: "Вчера" },
 
   // Header
-  babyTracker: { he: "מעקב תינוק", ru: "Трекер малыша" },
+  babyTracker: { he: "יומן אדם", ru: "Журнал Адама" },
   agePrefix: { he: "בן/בת", ru: "возраст" },
 
   // Push prompt
@@ -85,11 +100,18 @@ const t = {
   hoursAgo: { he: (h: number) => `לפני ${h}ש'`, ru: (h: number) => `${h} ч. назад` },
   hoursMinutesAgo: { he: (h: number, m: number) => `לפני ${h}ש' ${m}ד'`, ru: (h: number, m: number) => `${h} ч. ${m} мин. назад` },
 
-  // Sleep duration
+  // Duration formatting
   sleepDuration: { he: (h: number, m: number) => `${h}ש' ${m}ד'`, ru: (h: number, m: number) => `${h} ч. ${m} мин.` },
   feedingDuration: { he: (d: number) => `${d} דק'`, ru: (d: number) => `${d} мин.` },
   feedingAmount: { he: (a: number) => `${a} מ"ל`, ru: (a: number) => `${a} мл` },
   sleepGoalDuration: { he: (h: number, m: number) => `${h}ש' ${m}ד'`, ru: (h: number, m: number) => `${h} ч. ${m} мин.` },
+
+  // Share feature
+  shareTitle: { he: (date: string) => `עדכון אדם — ${date}`, ru: (date: string) => `Обновление Адама — ${date}` },
+  shareFeedings: { he: (n: number, ml: number) => `🍼 האכלות: ${n} פעמים · ${ml} מ"ל`, ru: (n: number, ml: number) => `🍼 Кормления: ${n} раз · ${ml} мл` },
+  shareSleep: { he: (h: number, m: number) => `😴 שינה: ${h} שעות ${m} דקות`, ru: (h: number, m: number) => `😴 Сон: ${h} ч. ${m} мин.` },
+  shareDiapers: { he: (n: number) => `🧷 טיטולים: ${n}`, ru: (n: number) => `🧷 Подгузников: ${n}` },
+  shareFooter: { he: "נשלח מיומן אדם 👶", ru: "Отправлено из Журнала Адама 👶" },
 };
 
 export function tr<K extends keyof typeof t>(

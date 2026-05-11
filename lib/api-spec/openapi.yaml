@@ -3,7 +3,7 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: Newborn Tracker API
+  description: Adam's Journal API
 servers:
   - url: /api
     description: Base API path
@@ -209,6 +209,31 @@ paths:
       responses:
         "204":
           description: Deleted
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update an existing event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventInput"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          description: Event not found
 
   /summary:
     get:
@@ -314,6 +339,8 @@ components:
           type: ["string", "null"]
         startedAt:
           type: ["string", "null"]
+        endedAt:
+          type: ["string", "null"]
 
     SleepInput:
       type: object
@@ -337,6 +364,23 @@ components:
         startedAt:
           type: ["string", "null"]
       required: [diaperType]
+
+    UpdateEventInput:
+      type: object
+      properties:
+        amountMl:
+          type: ["integer", "null"]
+        durationMinutes:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+        diaperType:
+          type: ["string", "null"]
+          enum: [pee, poop, both, null]
+        startedAt:
+          type: ["string", "null"]
+        endedAt:
+          type: ["string", "null"]
 
     ActiveSleepResult:
       type: object

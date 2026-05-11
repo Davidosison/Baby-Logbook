@@ -9,11 +9,11 @@
 /**
  * @nullable
  */
-export type EventDiaperType =
-  | (typeof EventDiaperType)[keyof typeof EventDiaperType]
+export type UpdateEventInputDiaperType =
+  | (typeof UpdateEventInputDiaperType)[keyof typeof UpdateEventInputDiaperType]
   | null;
 
-export const EventDiaperType = {
+export const UpdateEventInputDiaperType = {
   pee: "pee",
   poop: "poop",
   both: "both",

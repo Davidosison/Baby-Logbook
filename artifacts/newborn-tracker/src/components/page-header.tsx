@@ -11,26 +11,23 @@ export function PageHeader({ hebrewTitle, russianTitle }: { title?: string; hebr
     query: { queryKey: getGetAuthStatusQueryKey() },
   });
 
-  const babyInfo = authStatus?.babyName ?? tr("babyTracker", lang);
   let ageInfo = "";
   if (authStatus?.babyBirthDate) {
     const locale = lang === "he" ? he : ru;
     const age = formatDistanceToNow(new Date(authStatus.babyBirthDate), { locale });
-    ageInfo = ` · ${tr("agePrefix", lang)} ${age}`;
+    ageInfo = `${tr("agePrefix", lang)} ${age}`;
   }
 
-  const title = lang === "he" ? hebrewTitle : (russianTitle ?? hebrewTitle);
+  const title = lang === "he" ? (hebrewTitle ?? tr("appName", lang)) : (russianTitle ?? tr("appName", lang));
 
   return (
     <div className="sticky top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border pt-safe" dir={dir}>
       <div className="px-4 py-3 flex flex-col items-center justify-center">
         <div className="w-full flex justify-between items-center mb-1">
-          <span className="text-xs font-medium text-muted-foreground">{babyInfo}{ageInfo}</span>
+          <span className="text-xs font-medium text-muted-foreground">{ageInfo}</span>
           <LiveClock />
         </div>
-        {title && (
-          <h1 className="text-2xl font-bold tracking-tight mt-1">{title}</h1>
-        )}
+        <h1 className="text-2xl font-bold tracking-tight mt-1">{title}</h1>
       </div>
     </div>
   );

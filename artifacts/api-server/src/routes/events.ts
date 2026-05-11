@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, eventsTable } from "@workspace/db";
-import { and, eq, gte, lte, desc, isNull } from "drizzle-orm";
+import { and, eq, gte, lte, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -37,37 +37,54 @@ function getDateRange(dateStr?: string): { start: Date; end: Date } {
 
 router.get("/events", requireAuth, async (req, res): Promise<void> => {
   const dateStr = typeof req.query["date"] === "string" ? req.query["date"] : undefined;
-  const { start, end } = getDateRange(dateStr);
+  const limitStr = typeof req.query["limit"] === "string" ? req.query["limit"] : undefined;
+  const limit = limitStr ? parseInt(limitStr) : undefined;
 
-  const events = await db
+  let query = db
     .select()
     .from(eventsTable)
-    .where(
+    .$dynamic();
+
+  if (!limit) {
+    const { start, end } = getDateRange(dateStr);
+    query = query.where(
       and(
         gte(eventsTable.startedAt, start),
         lte(eventsTable.startedAt, end),
       ),
-    )
-    .orderBy(desc(eventsTable.startedAt));
+    );
+  }
 
+  query = query.orderBy(desc(eventsTable.startedAt));
+  if (limit) query = query.limit(limit);
+
+  const events = await query;
   res.json(events.map(formatEvent));
 });
 
 router.post("/events/feeding", requireAuth, async (req, res): Promise<void> => {
-  const { amountMl, durationMinutes, notes, startedAt } = req.body as {
+  const { amountMl, durationMinutes, notes, startedAt, endedAt } = req.body as {
     amountMl?: number;
     durationMinutes?: number;
     notes?: string;
     startedAt?: string;
+    endedAt?: string;
   };
+
+  const startDate = startedAt ? new Date(startedAt) : new Date();
+  const endDate = endedAt ? new Date(endedAt) : undefined;
+  const computedDuration = endDate && !durationMinutes
+    ? Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / 60000))
+    : durationMinutes ?? null;
 
   const [event] = await db
     .insert(eventsTable)
     .values({
       type: "feeding",
-      startedAt: startedAt ? new Date(startedAt) : new Date(),
+      startedAt: startDate,
+      endedAt: endDate ?? null,
       amountMl: amountMl ?? null,
-      durationMinutes: durationMinutes ?? null,
+      durationMinutes: computedDuration,
       notes: notes ?? null,
       isActive: false,
     })
@@ -77,7 +94,6 @@ router.post("/events/feeding", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.post("/events/sleep/start", requireAuth, async (req, res): Promise<void> => {
-  // Stop any active sleep first
   const [activeSleep] = await db
     .select()
     .from(eventsTable)
@@ -97,11 +113,7 @@ router.post("/events/sleep/start", requireAuth, async (req, res): Promise<void> 
 
   const [event] = await db
     .insert(eventsTable)
-    .values({
-      type: "sleep",
-      startedAt: new Date(),
-      isActive: true,
-    })
+    .values({ type: "sleep", startedAt: new Date(), isActive: true })
     .returning();
 
   res.status(201).json(formatEvent(event!));
@@ -152,14 +164,7 @@ router.post("/events/sleep", requireAuth, async (req, res): Promise<void> => {
 
   const [event] = await db
     .insert(eventsTable)
-    .values({
-      type: "sleep",
-      startedAt: start,
-      endedAt: end,
-      durationMinutes,
-      notes: notes ?? null,
-      isActive: false,
-    })
+    .values({ type: "sleep", startedAt: start, endedAt: end, durationMinutes, notes: notes ?? null, isActive: false })
     .returning();
 
   res.status(201).json(formatEvent(event!));
@@ -179,13 +184,7 @@ router.post("/events/diaper", requireAuth, async (req, res): Promise<void> => {
 
   const [event] = await db
     .insert(eventsTable)
-    .values({
-      type: "diaper",
-      startedAt: startedAt ? new Date(startedAt) : new Date(),
-      diaperType,
-      notes: notes ?? null,
-      isActive: false,
-    })
+    .values({ type: "diaper", startedAt: startedAt ? new Date(startedAt) : new Date(), diaperType, notes: notes ?? null, isActive: false })
     .returning();
 
   res.status(201).json(formatEvent(event!));
@@ -204,14 +203,8 @@ router.get("/events/active-sleep", requireAuth, async (req, res): Promise<void> 
     return;
   }
 
-  const elapsedMinutes = Math.round(
-    (Date.now() - activeSleep.startedAt.getTime()) / 60000,
-  );
-
-  res.json({
-    event: formatEvent(activeSleep),
-    elapsedMinutes,
-  });
+  const elapsedMinutes = Math.round((Date.now() - activeSleep.startedAt.getTime()) / 60000);
+  res.json({ event: formatEvent(activeSleep), elapsedMinutes });
 });
 
 router.delete("/events/:id", requireAuth, async (req, res): Promise<void> => {
@@ -225,6 +218,53 @@ router.delete("/events/:id", requireAuth, async (req, res): Promise<void> => {
 
   await db.delete(eventsTable).where(eq(eventsTable.id, id));
   res.sendStatus(204);
+});
+
+router.patch("/events/:id", requireAuth, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params["id"]) ? req.params["id"][0] : req.params["id"];
+  const id = parseInt(raw ?? "", 10);
+
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  const { amountMl, durationMinutes, notes, diaperType, startedAt, endedAt } = req.body as {
+    amountMl?: number | null;
+    durationMinutes?: number | null;
+    notes?: string | null;
+    diaperType?: string | null;
+    startedAt?: string | null;
+    endedAt?: string | null;
+  };
+
+  const updates: Partial<typeof eventsTable.$inferInsert> = {};
+  if (amountMl !== undefined) updates.amountMl = amountMl;
+  if (durationMinutes !== undefined) updates.durationMinutes = durationMinutes;
+  if (notes !== undefined) updates.notes = notes;
+  if (diaperType !== undefined) updates.diaperType = diaperType;
+  if (startedAt !== undefined) updates.startedAt = startedAt ? new Date(startedAt) : new Date();
+  if (endedAt !== undefined) updates.endedAt = endedAt ? new Date(endedAt) : null;
+
+  // Auto-compute duration if both times given
+  if (updates.startedAt && updates.endedAt && durationMinutes === undefined) {
+    updates.durationMinutes = Math.max(1, Math.round(
+      (updates.endedAt.getTime() - updates.startedAt.getTime()) / 60000
+    ));
+  }
+
+  const [event] = await db
+    .update(eventsTable)
+    .set(updates)
+    .where(eq(eventsTable.id, id))
+    .returning();
+
+  if (!event) {
+    res.status(404).json({ error: "Event not found" });
+    return;
+  }
+
+  res.json(formatEvent(event));
 });
 
 export default router;

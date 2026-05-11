@@ -1,6 +1,6 @@
 {
-  "name": "The Newborn Tracker",
-  "short_name": "Baby Tracker",
+  "name": "Adam's Journal",
+  "short_name": "Adam's Journal",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

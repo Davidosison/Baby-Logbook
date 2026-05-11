@@ -5,14 +5,17 @@
  * Adam's Journal API
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateEventInputDiaperType } from "./updateEventInputDiaperType";
 
-export interface FeedingInput {
+export interface UpdateEventInput {
   /** @nullable */
   amountMl?: number | null;
   /** @nullable */
   durationMinutes?: number | null;
   /** @nullable */
   notes?: string | null;
+  /** @nullable */
+  diaperType?: UpdateEventInputDiaperType;
   /** @nullable */
   startedAt?: string | null;
   /** @nullable */
