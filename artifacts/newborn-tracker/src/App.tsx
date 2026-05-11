@@ -18,10 +18,7 @@ import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
+    queries: { retry: false, refetchOnWindowFocus: false },
   },
 });
 
@@ -41,31 +38,27 @@ function Router() {
       <Route path="/pin" component={PinPage} />
       <Route path="/">
         <AuthWrapper>
-          <MainLayout>
-            <DashboardPage />
-          </MainLayout>
+          <MainLayout><DashboardPage /></MainLayout>
         </AuthWrapper>
       </Route>
       <Route path="/history">
         <AuthWrapper>
-          <MainLayout>
-            <HistoryPage />
-          </MainLayout>
+          <MainLayout><HistoryPage /></MainLayout>
         </AuthWrapper>
       </Route>
       <Route path="/feeding">
         <AuthWrapper>
-          <FeedingPage />
+          <MainLayout><FeedingPage /></MainLayout>
         </AuthWrapper>
       </Route>
       <Route path="/sleep">
         <AuthWrapper>
-          <SleepPage />
+          <MainLayout><SleepPage /></MainLayout>
         </AuthWrapper>
       </Route>
       <Route path="/diaper">
         <AuthWrapper>
-          <DiaperPage />
+          <MainLayout><DiaperPage /></MainLayout>
         </AuthWrapper>
       </Route>
       <Route component={NotFound} />

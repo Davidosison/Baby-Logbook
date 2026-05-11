@@ -10,7 +10,6 @@ import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Timer, StopCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 function timeToTodayISO(timeStr: string): string {
   const [h, m] = timeStr.split(":").map(Number);
@@ -36,11 +35,9 @@ export default function FeedingPage() {
   const [endTime, setEndTime] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Live timer state
   const [timerActive, setTimerActive] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerStartRef = useRef<Date | null>(null);
 
   const autoDuration = computeAutoMinutes(startTime, endTime);
 
@@ -50,21 +47,23 @@ export default function FeedingPage() {
 
   const startTimer = () => {
     const now = new Date();
-    timerStartRef.current = now;
     setStartTime(format(now, "HH:mm"));
     setEndTime("");
     setTimerSeconds(0);
     setTimerActive(true);
-    timerRef.current = setInterval(() => {
-      setTimerSeconds((s) => s + 1);
-    }, 1000);
+    timerRef.current = setInterval(() => setTimerSeconds((s) => s + 1), 1000);
   };
 
   const stopTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const now = new Date();
-    setEndTime(format(now, "HH:mm"));
+    setEndTime(format(new Date(), "HH:mm"));
     setTimerActive(false);
+  };
+
+  const formatTimerDisplay = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
   const logFeeding = useLogFeeding({
@@ -79,8 +78,7 @@ export default function FeedingPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = () => {
     logFeeding.mutate({
       data: {
         amountMl: amountMl ? parseInt(amountMl) : undefined,
@@ -92,23 +90,17 @@ export default function FeedingPage() {
     });
   };
 
-  const formatTimerDisplay = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  };
-
-  const canSave = !logFeeding.isPending && (!!amountMl || !!startTime || !!autoDuration);
+  const canSave = !logFeeding.isPending && (!!amountMl || !!startTime);
 
   return (
     <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
-      <PageHeader hebrewTitle="האכלה" russianTitle="Кормление" />
+      <PageHeader hebrewTitle="האכלה" russianTitle="Кормление" showBack />
 
-      <div className="p-4 max-w-md mx-auto space-y-5">
+      <div className="p-4 max-w-md mx-auto space-y-4">
 
-        {/* Live Timer Feature */}
-        <div className="bg-blue-500/5 border border-blue-500/20 rounded-3xl p-5">
-          <div className={cn("flex items-center justify-between mb-4", dir === "rtl" ? "flex-row" : "flex-row")}>
+        {/* Live Timer */}
+        <div className="bg-blue-500/5 border border-blue-500/20 rounded-3xl p-4">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
               <Timer className="w-4 h-4" />
               {tr("liveTimer", lang)}
@@ -123,43 +115,44 @@ export default function FeedingPage() {
             type="button"
             onClick={timerActive ? stopTimer : startTimer}
             data-testid="button-timer-toggle"
-            className={cn(
-              "w-full h-14 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-95",
+            className={[
+              "w-full h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95",
               timerActive
                 ? "bg-red-500/10 border-2 border-red-500 text-red-500"
-                : "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-            )}
+                : "bg-blue-600 text-white",
+            ].join(" ")}
           >
             {timerActive
-              ? <><StopCircle className="w-5 h-5" />{tr("tapToStop", lang)}</>
-              : <><Timer className="w-5 h-5" />{tr("tapToStart", lang)}</>
+              ? <><StopCircle className="w-4 h-4" />{tr("tapToStop", lang)}</>
+              : <><Timer className="w-4 h-4" />{tr("tapToStart", lang)}</>
             }
           </button>
-          {timerActive && (
-            <p className="text-xs text-center text-muted-foreground mt-2">{tr("timerRunning", lang)}</p>
-          )}
         </div>
 
-        {/* Start / End Time */}
-        <div className="bg-card border border-border rounded-3xl p-5 space-y-4">
+        {/* Start / End time */}
+        <div className="bg-card border border-border rounded-3xl p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("startTime", lang)}</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                {tr("startTime", lang)}
+              </label>
               <Input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="h-12 text-base bg-background"
+                className="h-12 text-base border-border bg-background"
                 data-testid="input-start-time"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("endTime", lang)}</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                {tr("endTime", lang)}
+              </label>
               <Input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="h-12 text-base bg-background"
+                className="h-12 text-base border-border bg-background"
                 data-testid="input-end-time"
               />
             </div>
@@ -172,8 +165,10 @@ export default function FeedingPage() {
         </div>
 
         {/* Amount */}
-        <div className="bg-card border border-border rounded-3xl p-5">
-          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("amountMl", lang)}</label>
+        <div className="bg-card border border-border rounded-3xl p-4">
+          <label className="block text-xs font-semibold text-muted-foreground mb-2">
+            {tr("amountMl", lang)}
+          </label>
           <Input
             type="number"
             pattern="[0-9]*"
@@ -181,7 +176,7 @@ export default function FeedingPage() {
             value={amountMl}
             onChange={(e) => setAmountMl(e.target.value)}
             placeholder={tr("exAmount", lang)}
-            className="h-12 text-base bg-background"
+            className="h-12 text-base border-border bg-background"
             data-testid="input-amount-ml"
           />
         </div>
@@ -193,14 +188,13 @@ export default function FeedingPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder={tr("exNotes", lang)}
-            className="resize-none h-24 bg-card"
+            className="resize-none h-24 bg-card border-border"
             data-testid="input-notes"
           />
         </div>
 
         <Button
-          type="button"
-          onClick={(e) => handleSubmit(e as any)}
+          onClick={handleSave}
           disabled={!canSave}
           data-testid="button-save-feeding"
           className="w-full h-16 text-lg font-bold rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20 active:scale-95 transition-transform"

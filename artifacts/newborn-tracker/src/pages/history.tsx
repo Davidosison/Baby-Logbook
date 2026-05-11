@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { useListEvents, getListEventsQueryKey, useDeleteEvent, useUpdateEvent, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@workspace/api-client-react";
+import {
+  useListEvents, getListEventsQueryKey,
+  useDeleteEvent, useUpdateEvent,
+  getGetRecentActivityQueryKey, getGetDailySummaryQueryKey,
+} from "@workspace/api-client-react";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
@@ -12,21 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type EventItem = {
   id: number;
@@ -41,38 +35,35 @@ type EventItem = {
 };
 
 function EventIcon({ type, className }: { type: string; className?: string }) {
-  if (type === "feeding") return <Utensils className={cn("w-5 h-5", className)} />;
-  if (type === "sleep") return <Moon className={cn("w-5 h-5", className)} />;
-  if (type === "diaper") return <Droplet className={cn("w-5 h-5", className)} />;
+  if (type === "feeding") return <Utensils className={cn("w-4 h-4", className)} />;
+  if (type === "sleep") return <Moon className={cn("w-4 h-4", className)} />;
+  if (type === "diaper") return <Droplet className={cn("w-4 h-4", className)} />;
   return null;
 }
 
+// Isolated edit sheet — always remounted via key prop, so state is always fresh
 function EditSheet({
   event,
-  open,
   onClose,
   onSave,
   lang,
   dir,
 }: {
-  event: EventItem | null;
-  open: boolean;
+  event: EventItem;
   onClose: () => void;
-  onSave: (id: number, data: any) => void;
+  onSave: (id: number, data: Record<string, unknown>) => void;
   lang: "he" | "ru";
   dir: "rtl" | "ltr";
 }) {
-  const [amountMl, setAmountMl] = useState(event?.amountMl?.toString() ?? "");
-  const [startTime, setStartTime] = useState(event ? format(new Date(event.startedAt), "HH:mm") : "");
-  const [endTime, setEndTime] = useState(event?.endedAt ? format(new Date(event.endedAt), "HH:mm") : "");
-  const [diaperType, setDiaperType] = useState<"pee" | "poop" | "both" | "">(
-    (event?.diaperType as any) ?? ""
+  const [amountMl, setAmountMl] = useState(event.amountMl?.toString() ?? "");
+  const [startTime, setStartTime] = useState(format(new Date(event.startedAt), "HH:mm"));
+  const [endTime, setEndTime] = useState(event.endedAt ? format(new Date(event.endedAt), "HH:mm") : "");
+  const [diaperType, setDiaperType] = useState<"pee" | "poop" | "both">(
+    (event.diaperType as "pee" | "poop" | "both") ?? "pee"
   );
-  const [notes, setNotes] = useState(event?.notes ?? "");
+  const [notes, setNotes] = useState(event.notes ?? "");
 
-  if (!event) return null;
-
-  function toTodayISO(timeStr: string, baseISO: string): string {
+  function applyTime(timeStr: string, baseISO: string): string {
     const base = new Date(baseISO);
     const [h, m] = timeStr.split(":").map(Number);
     base.setHours(h!, m!, 0, 0);
@@ -80,111 +71,154 @@ function EditSheet({
   }
 
   const handleSave = () => {
-    const data: any = { notes: notes || null };
+    const data: Record<string, unknown> = { notes: notes || null };
+
     if (event.type === "feeding") {
-      if (amountMl) data.amountMl = parseInt(amountMl);
-      if (startTime) data.startedAt = toTodayISO(startTime, event.startedAt);
-      if (endTime) data.endedAt = toTodayISO(endTime, event.startedAt);
+      data.amountMl = amountMl ? parseInt(amountMl) : null;
+      data.startedAt = applyTime(startTime, event.startedAt);
+      if (endTime) data.endedAt = applyTime(endTime, event.startedAt);
     }
     if (event.type === "sleep") {
-      if (startTime) data.startedAt = toTodayISO(startTime, event.startedAt);
-      if (endTime) data.endedAt = toTodayISO(endTime, event.startedAt);
+      data.startedAt = applyTime(startTime, event.startedAt);
+      if (endTime) data.endedAt = applyTime(endTime, event.startedAt);
     }
-    if (event.type === "diaper" && diaperType) {
+    if (event.type === "diaper") {
       data.diaperType = diaperType;
     }
+
     onSave(event.id, data);
   };
 
+  const canSave =
+    event.type === "feeding" ? true
+    : event.type === "sleep" ? !!startTime
+    : event.type === "diaper" ? !!diaperType
+    : true;
+
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-[2rem] bg-card border-border p-6 max-h-[80vh] overflow-y-auto" dir={dir}>
-        <SheetHeader className="mb-5">
-          <SheetTitle className="text-xl font-bold">{tr("editEvent", lang)}</SheetTitle>
-        </SheetHeader>
+    <SheetContent
+      side="bottom"
+      className="rounded-t-[2rem] bg-card border-border p-6 max-h-[85vh] overflow-y-auto"
+      dir={dir}
+    >
+      <SheetHeader className="mb-5">
+        <SheetTitle className="text-xl font-bold text-center">{tr("editEvent", lang)}</SheetTitle>
+      </SheetHeader>
 
-        <div className="space-y-4">
-          {/* Feeding fields */}
-          {event.type === "feeding" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("startTime", lang)}</label>
-                  <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="h-12 bg-background" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("endTime", lang)}</label>
-                  <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="h-12 bg-background" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("amountMl", lang)}</label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  value={amountMl}
-                  onChange={(e) => setAmountMl(e.target.value)}
-                  placeholder={tr("exAmount", lang)}
-                  className="h-12 bg-background"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Sleep fields */}
-          {event.type === "sleep" && (
+      <div className="space-y-4">
+        {/* Feeding */}
+        {event.type === "feeding" && (
+          <>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("startTime", lang)}</label>
-                <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="h-12 bg-background" />
+                <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                  {tr("startTime", lang)}
+                </label>
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="h-12 border-border bg-background"
+                />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("endTime", lang)}</label>
-                <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="h-12 bg-background" />
+                <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                  {tr("endTime", lang)}
+                </label>
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="h-12 border-border bg-background"
+                />
               </div>
             </div>
-          )}
-
-          {/* Diaper fields */}
-          {event.type === "diaper" && (
-            <div className="grid grid-cols-3 gap-2">
-              {(["pee", "poop", "both"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setDiaperType(t)}
-                  className={cn(
-                    "h-14 rounded-2xl border-2 font-bold transition-all",
-                    diaperType === t
-                      ? "bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400"
-                      : "bg-background border-border text-muted-foreground"
-                  )}
-                >
-                  {tr(t, lang)}
-                </button>
-              ))}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                {tr("amountMl", lang)}
+              </label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                value={amountMl}
+                onChange={(e) => setAmountMl(e.target.value)}
+                placeholder={tr("exAmount", lang)}
+                className="h-12 border-border bg-background"
+              />
             </div>
-          )}
+          </>
+        )}
 
-          {/* Notes */}
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{tr("notesOptional", lang)}</label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="resize-none h-20 bg-background"
-            />
+        {/* Sleep */}
+        {event.type === "sleep" && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                {tr("startTime", lang)}
+              </label>
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="h-12 border-border bg-background"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                {tr("endTime", lang)}
+              </label>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="h-12 border-border bg-background"
+              />
+            </div>
           </div>
+        )}
 
-          <Button
-            onClick={handleSave}
-            className="w-full h-14 text-base font-bold rounded-2xl"
-          >
-            {tr("saveChanges", lang)}
-          </Button>
+        {/* Diaper */}
+        {event.type === "diaper" && (
+          <div className="grid grid-cols-3 gap-2">
+            {(["pee", "poop", "both"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setDiaperType(t)}
+                className={cn(
+                  "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+                  diaperType === t
+                    ? "bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400"
+                    : "bg-background border-border text-muted-foreground"
+                )}
+              >
+                {tr(t, lang)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Notes */}
+        <div>
+          <label className="block text-xs font-semibold text-muted-foreground mb-2">
+            {tr("notesOptional", lang)}
+          </label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="resize-none h-20 border-border bg-background"
+          />
         </div>
-      </SheetContent>
-    </Sheet>
+
+        <Button
+          onClick={handleSave}
+          disabled={!canSave}
+          className="w-full h-14 text-base font-bold rounded-2xl"
+        >
+          {tr("saveChanges", lang)}
+        </Button>
+      </div>
+    </SheetContent>
   );
 }
 
@@ -243,7 +277,6 @@ export default function HistoryPage() {
     return format(d, lang === "he" ? "EEEE, d בMMMM" : "EEEE, d MMMM", { locale: dateLocale });
   };
 
-  // Group by date, latest date first
   const groupedEvents = events?.reduce(
     (acc, event) => {
       const date = format(new Date(event.startedAt), "yyyy-MM-dd");
@@ -264,48 +297,48 @@ export default function HistoryPage() {
 
       <div className="p-4 space-y-8">
         {isLoading && (
-          <div className="text-center text-muted-foreground py-8 animate-pulse">{tr("loadingHistory", lang)}</div>
+          <div className="text-center text-muted-foreground py-8 animate-pulse">
+            {tr("loadingHistory", lang)}
+          </div>
         )}
         {!isLoading && events?.length === 0 && (
           <div className="text-center text-muted-foreground py-12">{tr("noEvents", lang)}</div>
         )}
 
         {sortedDates.map((date) => (
-          <div key={date} className="space-y-3">
-            <h3 className="font-semibold text-lg sticky top-20 bg-background/95 backdrop-blur py-2 z-10 text-start">
+          <div key={date} className="space-y-2">
+            <h3 className="font-semibold text-base sticky top-20 bg-background/95 backdrop-blur py-2 z-10">
               {dateHeading(date)}
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {groupedEvents![date]!.map((event) => (
                 <div
                   key={event.id}
                   data-testid={`history-event-${event.id}`}
-                  className="flex gap-3 bg-card border border-border rounded-2xl p-4 shadow-sm items-center"
+                  className="flex gap-2 bg-card border border-border rounded-2xl px-3 py-3 shadow-sm items-center"
                   dir={dir}
                 >
-                  {/* Icon — inline-start (right in RTL) */}
-                  <div
-                    className={cn(
-                      "w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-background border border-border",
-                      event.type === "feeding" && "text-blue-500",
-                      event.type === "sleep" && "text-purple-500",
-                      event.type === "diaper" && "text-amber-500",
-                    )}
-                  >
+                  {/* Icon */}
+                  <div className={cn(
+                    "w-9 h-9 shrink-0 rounded-full flex items-center justify-center bg-background border border-border",
+                    event.type === "feeding" && "text-blue-500",
+                    event.type === "sleep" && "text-purple-500",
+                    event.type === "diaper" && "text-amber-500",
+                  )}>
                     <EventIcon type={event.type} />
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-0.5" dir={dir}>
-                      <span className="text-xs text-muted-foreground font-medium shrink-0">
+                    <div className="flex items-center justify-between gap-1" dir={dir}>
+                      <span className="text-[11px] text-muted-foreground shrink-0">
                         {format(new Date(event.startedAt), "HH:mm")}
-                        {event.endedAt ? ` – ${format(new Date(event.endedAt), "HH:mm")}` : ""}
+                        {event.endedAt ? `–${format(new Date(event.endedAt), "HH:mm")}` : ""}
                       </span>
-                      <span className="font-semibold">{typeLabel(event.type)}</span>
+                      <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
                     </div>
-                    <div className={cn("text-sm text-muted-foreground truncate", dir === "rtl" ? "text-right" : "text-left")}>
+                    <div className={cn("text-xs text-muted-foreground truncate mt-0.5", dir === "rtl" ? "text-right" : "text-left")}>
                       {event.type === "feeding" && (
                         <>
                           {event.amountMl ? tr("feedingAmount", lang, event.amountMl) : ""}
@@ -313,40 +346,31 @@ export default function HistoryPage() {
                           {event.durationMinutes ? tr("feedingDuration", lang, event.durationMinutes) : ""}
                         </>
                       )}
-                      {event.type === "sleep" && (
-                        <>
-                          {event.isActive
-                            ? tr("sleepingShort", lang)
-                            : event.durationMinutes
-                            ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60)
-                            : ""}
-                        </>
-                      )}
-                      {event.type === "diaper" && <span>{diaperLabel(event.diaperType)}</span>}
+                      {event.type === "sleep" && (event.isActive
+                        ? tr("sleepingShort", lang)
+                        : event.durationMinutes
+                          ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60)
+                          : "")}
+                      {event.type === "diaper" && diaperLabel(event.diaperType)}
                     </div>
-                    {event.notes && (
-                      <div className={cn("text-xs text-muted-foreground/70 italic mt-0.5 truncate", dir === "rtl" ? "text-right" : "text-left")}>
-                        {event.notes}
-                      </div>
-                    )}
                   </div>
 
-                  {/* Edit button */}
+                  {/* Edit */}
                   <button
                     onClick={() => setEditEvent(event as EventItem)}
                     data-testid={`button-edit-${event.id}`}
-                    className="w-9 h-9 shrink-0 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-primary/10"
+                    className="w-8 h-8 shrink-0 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-primary/10"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Delete button */}
+                  {/* Delete */}
                   <button
                     onClick={() => setDeleteId(event.id)}
                     data-testid={`button-delete-${event.id}`}
-                    className="w-9 h-9 shrink-0 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-destructive/10"
+                    className="w-8 h-8 shrink-0 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-destructive/10"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
@@ -355,15 +379,19 @@ export default function HistoryPage() {
         ))}
       </div>
 
-      {/* Edit Sheet */}
-      <EditSheet
-        event={editEvent}
-        open={editEvent !== null}
-        onClose={() => setEditEvent(null)}
-        onSave={(id, data) => updateEventMutation.mutate({ id, data })}
-        lang={lang}
-        dir={dir}
-      />
+      {/* Edit Sheet — key forces remount with fresh state for each event */}
+      <Sheet open={editEvent !== null} onOpenChange={(open) => !open && setEditEvent(null)}>
+        {editEvent && (
+          <EditSheet
+            key={editEvent.id}
+            event={editEvent}
+            onClose={() => setEditEvent(null)}
+            onSave={(id, data) => updateEventMutation.mutate({ id, data: data as any })}
+            lang={lang}
+            dir={dir}
+          />
+        )}
+      </Sheet>
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>

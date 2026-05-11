@@ -1,8 +1,7 @@
 import type { Language } from "@/contexts/language-context";
 
 const t = {
-  // App name
-  appName: { he: "יומן אדם", ru: "Журнал Адама" },
+  appName: { he: "היומן של אדם ❤️‍🔥", ru: "Журнал Адама ❤️‍🔥" },
 
   // PIN page
   welcome: { he: "ברוכים הבאים", ru: "Добро пожаловать" },
@@ -52,20 +51,21 @@ const t = {
   timerRunning: { he: "מודד...", ru: "Идёт отсчёт..." },
   amountMl: { he: 'כמות (מ"ל)', ru: "Количество (мл)" },
   exAmount: { he: "לדוגמה: 120", ru: "Например: 120" },
-  orAnd: { he: "או / וגם", ru: "ИЛИ / И" },
-  durationMin: { he: "משך (דקות)", ru: "Длительность (мин)" },
-  exDuration: { he: "לדוגמה: 20", ru: "Например: 20" },
   notesOptional: { he: "הערות (אופציונלי)", ru: "Примечания (необязательно)" },
   exNotes: { he: "לדוגמה: צד שמאל קודם...", ru: "Например: сначала левая сторона..." },
   saveFeeding: { he: "שמור האכלה", ru: "Сохранить кормление" },
 
   // Sleep page
+  activeSleepBanner: { he: "שינה פעילה", ru: "Активный сон" },
+  stopSleepNow: { he: "עצור שינה", ru: "Остановить сон" },
   asleep: { he: "ישן", ru: "Спит" },
   babyAwake: { he: "התינוק ער", ru: "Малыш не спит" },
   wakeUp: { he: "התעורר", ru: "Разбудить" },
   stopSleep: { he: "להפסיק שינה", ru: "Остановить сон" },
   startSleepLabel: { he: "שינה", ru: "Сон" },
   startSleepSub: { he: "להתחיל שינה", ru: "Начать сон" },
+  saveSleep: { he: "שמור שינה", ru: "Сохранить сон" },
+  manualEntry: { he: "רישום ידני", ru: "Ручной ввод" },
 
   // Diaper page
   exDiaperNotes: { he: "לדוגמה: הפריחה נראית טוב יותר...", ru: "Например: сыпь выглядит лучше..." },
@@ -84,8 +84,8 @@ const t = {
   today: { he: "היום", ru: "Сегодня" },
   yesterday: { he: "אתמול", ru: "Вчера" },
 
-  // Header
-  babyTracker: { he: "יומן אדם", ru: "Журнал Адама" },
+  // Header / app
+  babyTracker: { he: "היומן של אדם ❤️‍🔥", ru: "Журнал Адама ❤️‍🔥" },
   agePrefix: { he: "בן/בת", ru: "возраст" },
 
   // Push prompt
