@@ -173,6 +173,17 @@ export type ListEventsParams = {
   limit?: number;
 };
 
+export type ListEventsRangeParams = {
+  /**
+   * Start date (YYYY-MM-DD)
+   */
+  startDate: string;
+  /**
+   * End date (YYYY-MM-DD)
+   */
+  endDate: string;
+};
+
 export type GetDailySummaryParams = {
   /**
    * ISO date string (YYYY-MM-DD), defaults to today

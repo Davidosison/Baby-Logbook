@@ -27,6 +27,7 @@ import type {
   GetDailySummaryParams,
   HealthStatus,
   ListEventsParams,
+  ListEventsRangeParams,
   PinInput,
   RecentActivity,
   SleepInput,
@@ -866,6 +867,100 @@ export const useLogDiaper = <
 > => {
   return useMutation(getLogDiaperMutationOptions(options));
 };
+
+/**
+ * @summary List events across a date range
+ */
+export const getListEventsRangeUrl = (params: ListEventsRangeParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/events/range?${stringifiedParams}`
+    : `/api/events/range`;
+};
+
+export const listEventsRange = async (
+  params: ListEventsRangeParams,
+  options?: RequestInit,
+): Promise<Event[]> => {
+  return customFetch<Event[]>(getListEventsRangeUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListEventsRangeQueryKey = (params?: ListEventsRangeParams) => {
+  return [`/api/events/range`, ...(params ? [params] : [])] as const;
+};
+
+export const getListEventsRangeQueryOptions = <
+  TData = Awaited<ReturnType<typeof listEventsRange>>,
+  TError = ErrorType<unknown>,
+>(
+  params: ListEventsRangeParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listEventsRange>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListEventsRangeQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listEventsRange>>> = ({
+    signal,
+  }) => listEventsRange(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listEventsRange>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListEventsRangeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listEventsRange>>
+>;
+export type ListEventsRangeQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List events across a date range
+ */
+
+export function useListEventsRange<
+  TData = Awaited<ReturnType<typeof listEventsRange>>,
+  TError = ErrorType<unknown>,
+>(
+  params: ListEventsRangeParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listEventsRange>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListEventsRangeQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Get the current active (ongoing) sleep session if any

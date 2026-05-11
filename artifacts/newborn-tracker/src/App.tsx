@@ -14,6 +14,7 @@ import FeedingPage from "@/pages/feeding";
 import SleepPage from "@/pages/sleep";
 import DiaperPage from "@/pages/diaper";
 import HistoryPage from "@/pages/history";
+import SchedulePage from "@/pages/schedule";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -37,29 +38,22 @@ function Router() {
     <Switch>
       <Route path="/pin" component={PinPage} />
       <Route path="/">
-        <AuthWrapper>
-          <MainLayout><DashboardPage /></MainLayout>
-        </AuthWrapper>
+        <AuthWrapper><MainLayout><DashboardPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/history">
-        <AuthWrapper>
-          <MainLayout><HistoryPage /></MainLayout>
-        </AuthWrapper>
+        <AuthWrapper><MainLayout><HistoryPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/feeding">
-        <AuthWrapper>
-          <MainLayout><FeedingPage /></MainLayout>
-        </AuthWrapper>
+        <AuthWrapper><MainLayout><FeedingPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/sleep">
-        <AuthWrapper>
-          <MainLayout><SleepPage /></MainLayout>
-        </AuthWrapper>
+        <AuthWrapper><MainLayout><SleepPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/diaper">
-        <AuthWrapper>
-          <MainLayout><DiaperPage /></MainLayout>
-        </AuthWrapper>
+        <AuthWrapper><MainLayout><DiaperPage /></MainLayout></AuthWrapper>
+      </Route>
+      <Route path="/schedule">
+        <AuthWrapper><MainLayout><SchedulePage /></MainLayout></AuthWrapper>
       </Route>
       <Route component={NotFound} />
     </Switch>

@@ -15,8 +15,15 @@ const t = {
   // Navigation
   home: { he: "בית", ru: "Главная" },
   history: { he: "היסטוריה", ru: "История" },
+  schedule: { he: "לוח", ru: "График" },
+  settings: { he: "הגדרות", ru: "Настройки" },
   theme: { he: "ערכת נושא", ru: "Тема" },
+  language: { he: "שפה", ru: "Язык" },
   logEvent: { he: "תיעוד אירוע", ru: "Записать" },
+  dark: { he: "כהה", ru: "Тёмная" },
+  light: { he: "בהיר", ru: "Светлая" },
+  hebrew: { he: "עברית", ru: "Иврит" },
+  russian: { he: "רוסית", ru: "Русский" },
 
   // Event types
   feeding: { he: "האכלה", ru: "Кормление" },
@@ -83,6 +90,13 @@ const t = {
   saveChanges: { he: "שמור שינויים", ru: "Сохранить изменения" },
   today: { he: "היום", ru: "Сегодня" },
   yesterday: { he: "אתמול", ru: "Вчера" },
+
+  // Schedule page
+  scheduleTitle: { he: "לוח זמנים", ru: "Расписание" },
+  weekly: { he: "שבועי", ru: "Неделя" },
+  daily: { he: "יומי", ru: "День" },
+  loadingSchedule: { he: "טוען לוח...", ru: "Загрузка..." },
+  noScheduleData: { he: "אין נתונים לתצוגה", ru: "Нет данных" },
 
   // Header / app
   babyTracker: { he: "היומן של אדם ❤️‍🔥", ru: "Журнал Адама ❤️‍🔥" },

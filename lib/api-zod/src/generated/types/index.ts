@@ -19,6 +19,7 @@ export * from "./feedingInput";
 export * from "./getDailySummaryParams";
 export * from "./healthStatus";
 export * from "./listEventsParams";
+export * from "./listEventsRangeParams";
 export * from "./pinInput";
 export * from "./recentActivity";
 export * from "./sleepInput";

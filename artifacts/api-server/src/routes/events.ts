@@ -190,6 +190,29 @@ router.post("/events/diaper", requireAuth, async (req, res): Promise<void> => {
   res.status(201).json(formatEvent(event!));
 });
 
+router.get("/events/range", requireAuth, async (req, res): Promise<void> => {
+  const startDateStr = typeof req.query["startDate"] === "string" ? req.query["startDate"] : undefined;
+  const endDateStr = typeof req.query["endDate"] === "string" ? req.query["endDate"] : undefined;
+
+  if (!startDateStr || !endDateStr) {
+    res.status(400).json({ error: "startDate and endDate are required" });
+    return;
+  }
+
+  const start = new Date(startDateStr);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(endDateStr);
+  end.setHours(23, 59, 59, 999);
+
+  const events = await db
+    .select()
+    .from(eventsTable)
+    .where(and(gte(eventsTable.startedAt, start), lte(eventsTable.startedAt, end)))
+    .orderBy(desc(eventsTable.startedAt));
+
+  res.json(events.map(formatEvent));
+});
+
 router.get("/events/active-sleep", requireAuth, async (req, res): Promise<void> => {
   const [activeSleep] = await db
     .select()

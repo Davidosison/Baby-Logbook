@@ -54,6 +54,7 @@ export default function SleepPage() {
       }, 1000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [activeSleep]);
 
   const invalidateAll = () => {
@@ -115,7 +116,7 @@ export default function SleepPage() {
               </span>
             </div>
             <Button
-              onClick={() => stopSleep.mutate({})}
+              onClick={() => stopSleep.mutate()}
               disabled={stopSleep.isPending || isLoading}
               data-testid="button-stop-sleep"
               className="w-full h-14 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-base flex items-center justify-center gap-2"

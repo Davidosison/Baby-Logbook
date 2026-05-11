@@ -118,6 +118,34 @@ export const LogDiaperBody = zod.object({
 });
 
 /**
+ * @summary List events across a date range
+ */
+export const ListEventsRangeQueryParams = zod.object({
+  startDate: zod.coerce.string().describe("Start date (YYYY-MM-DD)"),
+  endDate: zod.coerce.string().describe("End date (YYYY-MM-DD)"),
+});
+
+export const ListEventsRangeResponseItem = zod.object({
+  id: zod.number(),
+  type: zod.enum(["feeding", "sleep", "diaper"]),
+  startedAt: zod.string(),
+  endedAt: zod.string().nullish(),
+  durationMinutes: zod.number().nullish(),
+  amountMl: zod.number().nullish(),
+  diaperType: zod
+    .union([
+      zod.literal("pee"),
+      zod.literal("poop"),
+      zod.literal("both"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  notes: zod.string().nullish(),
+  isActive: zod.boolean(),
+});
+export const ListEventsRangeResponse = zod.array(ListEventsRangeResponseItem);
+
+/**
  * @summary Get the current active (ongoing) sleep session if any
  */
 export const GetActiveSleepResponse = zod.object({
