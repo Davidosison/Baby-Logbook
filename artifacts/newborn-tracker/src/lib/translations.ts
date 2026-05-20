@@ -120,6 +120,28 @@ const t = {
   feedingAmount: { he: (a: number) => `${a} מ"ל`, ru: (a: number) => `${a} мл` },
   sleepGoalDuration: { he: (h: number, m: number) => `${h}ש' ${m}ד'`, ru: (h: number, m: number) => `${h} ч. ${m} мин.` },
 
+  // Name / person greeting
+  whoAreYou: { he: "מה שמך?", ru: "Как тебя зовут?" },
+  whoAreYouSub: { he: "כדי שנדע מי מתעד", ru: "Чтобы мы знали, кто записывает" },
+  yourNamePlaceholder: { he: "השם שלך...", ru: "Твоё имя..." },
+  letsGo: { he: "בוא נתחיל 👶", ru: "Начнём 👶" },
+  helloName: { he: (n: string) => `שלום ${n}! 👋`, ru: (n: string) => `Привет ${n}! 👋` },
+  changeName: { he: "שנה שם", ru: "Изменить имя" },
+  yourName: { he: "השם שלך", ru: "Твоё имя" },
+
+  // Install guide
+  installTitle: { he: "הוסף למסך הבית", ru: "Добавить на экран" },
+  installSubtitle: { he: "פתח את האפליקציה כמו אפליקציה אמיתית", ru: "Открывай как обычное приложение" },
+  installIOS1: { he: "פתח ב-Safari (לא Chrome)", ru: "Открой в Safari (не Chrome)" },
+  installIOS2: { he: "לחץ על כפתור השיתוף בתחתית", ru: "Нажми кнопку «Поделиться» внизу" },
+  installIOS3: { he: "בחר «הוסף למסך הבית»", ru: "Выбери «На экран «Домой»»" },
+  installAndroid1: { he: "פתח ב-Chrome", ru: "Открой в Chrome" },
+  installAndroid2: { he: "לחץ על תפריט ⋮ בפינה הימנית", ru: "Нажми меню ⋮ в правом углу" },
+  installAndroid3: { he: "בחר «הוסף לדף הבית»", ru: "Выбери «Добавить на гл. экран»" },
+  installDismiss: { he: "הבנתי, תודה!", ru: "Понятно, спасибо!" },
+  installIphone: { he: "iPhone / iPad", ru: "iPhone / iPad" },
+  installAndroid: { he: "אנדרואיד", ru: "Android" },
+
   // Share feature
   shareTitle: { he: (date: string) => `עדכון אדם — ${date}`, ru: (date: string) => `Обновление Адама — ${date}` },
   shareFeedings: { he: (n: number, ml: number) => `🍼 האכלות: ${n} פעמים · ${ml} מ"ל`, ru: (n: number, ml: number) => `🍼 Кормления: ${n} раз · ${ml} мл` },

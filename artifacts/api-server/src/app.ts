@@ -4,6 +4,8 @@ import pinoHttp from "pino-http";
 import session from "express-session";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import path from "path";
+import { fileURLToPath } from "url";
 
 declare module "express-session" {
   interface SessionData {
@@ -60,5 +62,17 @@ app.use(
 );
 
 app.use("/api", router);
+
+// Serve the built React frontend in production
+const _dirname = path.dirname(fileURLToPath(import.meta.url));
+const frontendDist = path.join(_dirname, "..", "..", "newborn-tracker", "dist", "public");
+
+app.use(express.static(frontendDist));
+
+app.get(/.*/, (_req, res) => {
+  res.sendFile(path.join(frontendDist, "index.html"), (err) => {
+    if (err) res.status(404).send("Not found");
+  });
+});
 
 export default app;

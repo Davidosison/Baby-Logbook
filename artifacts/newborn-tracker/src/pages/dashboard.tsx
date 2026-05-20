@@ -1,6 +1,7 @@
 import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey } from "@workspace/api-client-react";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
+import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
@@ -17,6 +18,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
 
 export default function DashboardPage() {
   const { lang, dir } = useLanguage();
+  const { name } = usePerson();
   const today = format(new Date(), "yyyy-MM-dd");
   const dateLocale = lang === "he" ? he : ru;
 
@@ -82,6 +84,14 @@ export default function DashboardPage() {
   return (
     <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
       <PageHeader hebrewTitle="יומן אדם" russianTitle="Журнал Адама" />
+
+      {name && (
+        <div className="px-4 pt-3 pb-0" dir={dir}>
+          <p className="text-base font-semibold text-primary">
+            {tr("helloName", lang, name)}
+          </p>
+        </div>
+      )}
 
       <div className="p-4 space-y-6">
         {/* Recent Activity Cards */}

@@ -4,9 +4,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/contexts/language-context";
+import { PersonProvider } from "@/contexts/person-context";
 import { AuthWrapper } from "@/components/auth-wrapper";
 import { BottomNav } from "@/components/bottom-nav";
 import { PushPrompt } from "@/components/push-prompt";
+import { NameSetup } from "@/components/name-setup";
+import { InstallGuide } from "@/components/install-guide";
 
 import PinPage from "@/pages/pin";
 import DashboardPage from "@/pages/dashboard";
@@ -26,6 +29,8 @@ const queryClient = new QueryClient({
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <NameSetup />
+      <InstallGuide />
       {children}
       <PushPrompt />
       <BottomNav />
@@ -64,6 +69,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="newborn-tracker-theme">
       <LanguageProvider>
+      <PersonProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
@@ -72,6 +78,7 @@ function App() {
             <Toaster />
           </TooltipProvider>
         </QueryClientProvider>
+      </PersonProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
