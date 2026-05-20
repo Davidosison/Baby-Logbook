@@ -1,0 +1,42 @@
+modules = ["nodejs-24"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 8082
+externalPort = 3002
+
+[[ports]]
+localPort = 21639
+externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BFzSZMgcFS7qRzBm8b8tiF7NXAvrcbLvJigUWxqniVJ2IsLPB_ieFV5rG6GGHyvcnzq5Wa-0RMHRyC430EK7k9w"
+VAPID_PRIVATE_KEY = "-BiG-hYY4GKSE93oTr9Wl1mq96udxjC1pxA5pGP7UD0"

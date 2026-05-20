@@ -1,0 +1,13 @@
+[build]
+  base = "../../"
+  command = "pnpm install --frozen-lockfile && pnpm --filter @workspace/newborn-tracker build"
+  publish = "artifacts/newborn-tracker/dist/public"
+
+[build.environment]
+  BASE_PATH = "/"
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
