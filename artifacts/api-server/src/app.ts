@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import path from "path";
@@ -46,9 +47,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const sessionSecret = process.env["SESSION_SECRET"] ?? "newborn-tracker-secret-change-me";
+const PgSession = connectPgSimple(session);
 
 app.use(
   session({
+    store: process.env["DATABASE_URL"]
+      ? new PgSession({
+          conString: process.env["DATABASE_URL"],
+          tableName: "session",
+          createTableIfMissing: true,
+        })
+      : undefined,
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
@@ -63,16 +72,19 @@ app.use(
 
 app.use("/api", router);
 
-// Serve the built React frontend in production
-const _dirname = path.dirname(fileURLToPath(import.meta.url));
-const frontendDist = path.join(_dirname, "..", "..", "newborn-tracker", "dist", "public");
+// Serve the built React frontend when running as a standalone server (Render / Railway).
+// On Vercel the CDN handles static files, so we skip this.
+if (!process.env["VERCEL"]) {
+  const _dirname = path.dirname(fileURLToPath(import.meta.url));
+  const frontendDist = path.join(_dirname, "..", "..", "newborn-tracker", "dist", "public");
 
-app.use(express.static(frontendDist));
+  app.use(express.static(frontendDist));
 
-app.get(/.*/, (_req, res) => {
-  res.sendFile(path.join(frontendDist, "index.html"), (err) => {
-    if (err) res.status(404).send("Not found");
+  app.get(/.*/, (_req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"), (err) => {
+      if (err) res.status(404).send("Not found");
+    });
   });
-});
+}
 
 export default app;
