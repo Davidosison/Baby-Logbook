@@ -1,5 +1,5 @@
 {
-  "buildCommand": "BASE_PATH=/ PORT=3000 pnpm install --frozen-lockfile && BASE_PATH=/ PORT=3000 pnpm run build",
+  "buildCommand": "pnpm install && BASE_PATH=/ PORT=3000 pnpm --filter @workspace/newborn-tracker run build",
   "outputDirectory": "artifacts/newborn-tracker/dist/public",
   "functions": {
     "api/index.ts": {
