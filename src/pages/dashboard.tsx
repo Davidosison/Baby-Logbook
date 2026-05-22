@@ -7,14 +7,14 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Share2, StopCircle } from "lucide-react";
+import { Droplet, Moon, Utensils, Share2, StopCircle, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 function EventIcon({ type, className }: { type: string; className?: string }) {
-  if (type === "feeding") return <Utensils className={cn("w-5 h-5", className)} />;
-  if (type === "sleep") return <Moon className={cn("w-5 h-5", className)} />;
-  if (type === "diaper") return <Droplet className={cn("w-5 h-5", className)} />;
+  if (type === "feeding") return <Utensils className={cn("w-4 h-4", className)} />;
+  if (type === "sleep") return <Moon className={cn("w-4 h-4", className)} />;
+  if (type === "diaper") return <Droplet className={cn("w-4 h-4", className)} />;
   return null;
 }
 
@@ -119,56 +119,59 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden" dir={dir}>
       <PageHeader hebrewTitle="יומן אדם" russianTitle="Журнал Адама" />
 
-      {name && (
-        <div className="px-4 pt-3 pb-0" dir={dir}>
-          <p className="text-base font-semibold text-primary">
+      {/* Main content — fills space between header and bottom nav */}
+      <div
+        className="flex-1 flex flex-col overflow-hidden px-3 pt-2 gap-2 min-h-0"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
+      >
+
+        {/* Hello */}
+        {name && (
+          <p className="text-sm font-semibold text-primary shrink-0" dir={dir}>
             {tr("helloName", lang, name)}
           </p>
-        </div>
-      )}
+        )}
 
-      <div className="p-4 space-y-6">
-
-        {/* Live sleep banner — shared between all users */}
+        {/* Live sleep banner */}
         {activeSleep && (
-          <div className="bg-purple-500/10 border-2 border-purple-500 rounded-3xl p-4 flex items-center gap-4" dir={dir}>
-            <Moon className="w-8 h-8 text-purple-500 shrink-0 animate-pulse" />
+          <div className="bg-purple-500/10 border-2 border-purple-500 rounded-2xl px-3 py-2.5 flex items-center gap-3 shrink-0" dir={dir}>
+            <Moon className="w-6 h-6 text-purple-500 shrink-0 animate-pulse" />
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-purple-600 dark:text-purple-400 text-base">{tr("sleepingNow", lang)}</div>
-              <div className="text-3xl font-mono font-bold tabular-nums text-purple-600 dark:text-purple-400 leading-tight">
+              <div className="font-bold text-purple-600 dark:text-purple-400 text-xs leading-none mb-0.5">{tr("sleepingNow", lang)}</div>
+              <div className="text-2xl font-mono font-bold tabular-nums text-purple-600 dark:text-purple-400 leading-none">
                 {formatSleepTime(sleepElapsed)}
               </div>
             </div>
             <button
               onClick={() => stopSleepMutation.mutate()}
               disabled={stopSleepMutation.isPending}
-              className="shrink-0 h-14 px-4 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+              className="shrink-0 h-10 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50"
             >
-              <StopCircle className="w-5 h-5" />
+              <StopCircle className="w-4 h-4" />
               {tr("stopSleep", lang)}
             </button>
           </div>
         )}
 
         {/* Recent Activity Cards */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 shrink-0">
           {(["feeding", "sleep", "diaper"] as const).map((type) => {
             const minsAgo =
               type === "feeding" ? recent?.lastFeedingMinutesAgo
               : type === "sleep" ? recent?.lastSleepMinutesAgo
               : recent?.lastDiaperMinutesAgo;
             const icon =
-              type === "feeding" ? <Utensils className="w-6 h-6 text-blue-500 mb-2" />
-              : type === "sleep" ? <Moon className="w-6 h-6 text-purple-500 mb-2" />
-              : <Droplet className="w-6 h-6 text-amber-500 mb-2" />;
+              type === "feeding" ? <Utensils className="w-5 h-5 text-blue-500 mb-1" />
+              : type === "sleep" ? <Moon className="w-5 h-5 text-purple-500 mb-1" />
+              : <Droplet className="w-5 h-5 text-amber-500 mb-1" />;
             return (
-              <div key={type} className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
+              <div key={type} className="bg-card border border-border rounded-2xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
                 {icon}
-                <div className="text-sm font-medium mb-1">{typeLabel(type)}</div>
-                <div className="text-xs text-muted-foreground font-medium">{getRecentText(minsAgo)}</div>
+                <div className="text-xs font-semibold mb-0.5">{typeLabel(type)}</div>
+                <div className="text-[10px] text-muted-foreground font-medium leading-tight">{getRecentText(minsAgo)}</div>
               </div>
             );
           })}
@@ -176,99 +179,88 @@ export default function DashboardPage() {
 
         {/* Daily Progress */}
         {summary && (
-          <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-5">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">{tr("dailyGoals", lang)}</h3>
+          <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-sm shrink-0">
+            <div className="flex items-center justify-between mb-2.5">
               <button
                 onClick={handleShare}
                 data-testid="button-share"
-                className="flex items-center gap-1.5 text-sm font-medium text-primary px-3 py-1.5 rounded-xl bg-primary/10 active:bg-primary/20 transition-colors"
+                className="flex items-center gap-1 text-xs font-medium text-primary px-2.5 py-1 rounded-xl bg-primary/10 active:bg-primary/20 transition-colors"
               >
-                <Share2 className="w-4 h-4" />
+                <Share2 className="w-3 h-3" />
                 {tr("share", lang)}
               </button>
+              <h3 className="font-semibold text-sm">{tr("dailyGoals", lang)}</h3>
             </div>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">{tr("feedings", lang)}</span>
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{summary.feedingCount} / {summary.feedingGoalMin}–{summary.feedingGoalMax}</span>
+                <span className="font-medium">{tr("feedings", lang)}</span>
               </div>
-              <Progress value={Math.min(100, (summary.feedingCount / summary.feedingGoalMin) * 100)} className="h-2 bg-secondary" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">{tr("sleep", lang)}</span>
+              <Progress value={Math.min(100, (summary.feedingCount / summary.feedingGoalMin) * 100)} className="h-1.5 bg-secondary" />
+              <div className="flex justify-between text-xs mt-1.5">
                 <span className="text-muted-foreground">{tr("sleepGoalDuration", lang, Math.floor(summary.totalSleepMinutes / 60), summary.totalSleepMinutes % 60)}</span>
+                <span className="font-medium">{tr("sleep", lang)}</span>
               </div>
-              <Progress value={Math.min(100, (summary.totalSleepMinutes / summary.sleepGoalMinutes) * 100)} className="h-2 bg-secondary [&>div]:bg-purple-500" />
+              <Progress value={Math.min(100, (summary.totalSleepMinutes / summary.sleepGoalMinutes) * 100)} className="h-1.5 bg-secondary [&>div]:bg-purple-500" />
             </div>
           </div>
         )}
 
-        {/* Timeline */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={handleRefresh} data-testid="button-refresh" className="text-sm text-primary font-medium p-2 active:opacity-50">{tr("refresh", lang)}</button>
-            <h3 className="font-semibold text-lg">{tr("todayTimeline", lang)}</h3>
+        {/* Timeline — fills remaining space, scrolls internally */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-2 shrink-0" dir={dir}>
+            <button onClick={handleRefresh} data-testid="button-refresh" className="flex items-center gap-1 text-xs text-primary font-medium active:opacity-50">
+              <RefreshCw className="w-3 h-3" />
+              {tr("refresh", lang)}
+            </button>
+            <h3 className="font-semibold text-sm">{tr("todayTimeline", lang)}</h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-2">
             {isLoadingEvents && (
-              <div className="text-center text-muted-foreground py-8 animate-pulse">{tr("loading", lang)}</div>
+              <div className="text-center text-muted-foreground py-6 animate-pulse text-sm">{tr("loading", lang)}</div>
             )}
             {!isLoadingEvents && events?.length === 0 && (
-              <div className="text-center text-muted-foreground py-8 bg-card border border-border rounded-2xl">
+              <div className="text-center text-muted-foreground py-6 bg-card border border-border rounded-2xl text-sm">
                 {tr("noEventsToday", lang)}
               </div>
             )}
 
-            {events?.map((event, i) => (
-              <div key={event.id} className="flex gap-3 relative items-start" data-testid={`event-item-${event.id}`} dir={dir}>
-                {/* Timeline vertical line — anchored to icon column on the inline-start side */}
-                {i !== events.length - 1 && (
-                  <div className="absolute top-12 bottom-[-16px] w-[2px] bg-border z-0 inline-start-5" style={{ [dir === "rtl" ? "right" : "left"]: "20px" }} />
-                )}
-
-                {/* Icon — inline-start = right in RTL, left in LTR */}
+            {events?.map((event) => (
+              <div key={event.id} className="bg-card border border-border rounded-2xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
                 <div className={cn(
-                  "w-10 h-10 shrink-0 rounded-full flex items-center justify-center z-10 bg-card border border-border shadow-sm",
+                  "w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-background border border-border",
                   event.type === "feeding" && "text-blue-500",
                   event.type === "sleep" && "text-purple-500",
                   event.type === "diaper" && "text-amber-500",
                 )}>
                   <EventIcon type={event.type} />
                 </div>
-
-                {/* Content card */}
-                <div className="flex-1 bg-card border border-border rounded-2xl p-4 shadow-sm min-w-0">
-                  {/* Category name + time — name on inline-start (right in RTL) */}
-                  <div className="flex justify-between items-start mb-1" dir={dir}>
-                    <span className="text-xs text-muted-foreground font-medium">{format(new Date(event.startedAt), "HH:mm")}</span>
-                    <span className="font-bold text-base">{typeLabel(event.type)}</span>
+                <div className="flex-1 min-w-0" dir={dir}>
+                  <div className="flex justify-between items-center" dir={dir}>
+                    <span className="text-[11px] text-muted-foreground">{format(new Date(event.startedAt), "HH:mm")}</span>
+                    <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
                   </div>
-                  {event.type === "feeding" && (
-                    <div className={cn("text-sm text-muted-foreground", dir === "rtl" ? "text-right" : "text-left")}>
-                      {event.amountMl ? tr("feedingAmount", lang, event.amountMl) : ""}
-                      {event.amountMl && event.durationMinutes ? " · " : ""}
-                      {event.durationMinutes ? tr("feedingDuration", lang, event.durationMinutes) : ""}
-                    </div>
-                  )}
-                  {event.type === "sleep" && (
-                    <div className={cn("text-sm text-muted-foreground", dir === "rtl" ? "text-right" : "text-left")}>
-                      {event.isActive ? tr("sleepingNow", lang) : event.durationMinutes ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60) : ""}
-                    </div>
-                  )}
-                  {event.type === "diaper" && (
-                    <div className={cn("text-sm text-muted-foreground", dir === "rtl" ? "text-right" : "text-left")}>
-                      {diaperLabel(event.diaperType)}
-                    </div>
-                  )}
-                  {event.notes && <div className={cn("text-sm mt-2 italic opacity-80", dir === "rtl" ? "text-right" : "text-left")}>{event.notes}</div>}
+                  <div className={cn("text-xs text-muted-foreground truncate", dir === "rtl" ? "text-right" : "text-left")}>
+                    {event.type === "feeding" && (
+                      <>
+                        {event.amountMl ? tr("feedingAmount", lang, event.amountMl) : ""}
+                        {event.amountMl && event.durationMinutes ? " · " : ""}
+                        {event.durationMinutes ? tr("feedingDuration", lang, event.durationMinutes) : ""}
+                      </>
+                    )}
+                    {event.type === "sleep" && (
+                      event.isActive ? tr("sleepingNow", lang) : event.durationMinutes ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60) : ""
+                    )}
+                    {event.type === "diaper" && diaperLabel(event.diaperType)}
+                    {event.notes ? ` · ${event.notes}` : ""}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );

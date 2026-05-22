@@ -27,19 +27,19 @@ export function BottomNav() {
       href={path}
       data-testid={testId}
       className={cn(
-        "flex flex-col items-center justify-center w-14 h-full text-muted-foreground transition-colors",
+        "flex flex-col items-center justify-center w-16 h-full text-muted-foreground transition-colors",
         isActive(path) && "text-primary",
       )}
     >
-      <Icon className="w-6 h-6 mb-1" />
-      <span className="text-[10px] font-medium">{label}</span>
+      <Icon className="w-7 h-7 mb-1" />
+      <span className="text-xs font-medium">{label}</span>
     </Link>
   );
 
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 h-20 bg-background/90 backdrop-blur-xl border-t border-border flex items-center justify-around px-2 pb-safe z-50"
+        className="fixed bottom-0 left-0 right-0 h-24 bg-background/90 backdrop-blur-xl border-t border-border flex items-center justify-around px-2 pb-safe z-50"
         dir={dir}
       >
         {/* Home */}
@@ -98,10 +98,10 @@ export function BottomNav() {
           <SheetTrigger asChild>
             <button
               data-testid="nav-settings"
-              className="flex flex-col items-center justify-center w-14 h-full text-muted-foreground hover:text-foreground transition-colors"
+              className="flex flex-col items-center justify-center w-16 h-full text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Settings className="w-6 h-6 mb-1" />
-              <span className="text-[10px] font-medium">{tr("settings", lang)}</span>
+              <Settings className="w-7 h-7 mb-1" />
+              <span className="text-xs font-medium">{tr("settings", lang)}</span>
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-[2rem] bg-card border-border p-6" dir={dir}>
@@ -227,7 +227,7 @@ export function BottomNav() {
           </SheetContent>
         </Sheet>
       </div>
-      <div className="h-20" />
+      <div className="h-24" />
     </>
   );
 }
