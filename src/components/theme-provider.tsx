@@ -18,6 +18,16 @@ function getAutoTheme(): "dark" | "light" {
   return h >= 6 && h < 20 ? "light" : "dark";
 }
 
+const THEME_COLORS = { light: "#faf8f4", dark: "#0d121b" };
+
+function applyThemeColor(resolved: "dark" | "light") {
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => m.remove());
+  const meta = document.createElement("meta");
+  meta.name = "theme-color";
+  meta.content = THEME_COLORS[resolved];
+  document.head.appendChild(meta);
+}
+
 const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
@@ -43,13 +53,16 @@ export function ThemeProvider({
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
       root.classList.add(systemTheme)
+      applyThemeColor(systemTheme)
       return
     }
 
     if (theme === "auto") {
       const apply = () => {
+        const resolved = getAutoTheme()
         root.classList.remove("light", "dark")
-        root.classList.add(getAutoTheme())
+        root.classList.add(resolved)
+        applyThemeColor(resolved)
       }
       apply()
       const interval = setInterval(apply, 60_000)
@@ -57,6 +70,7 @@ export function ThemeProvider({
     }
 
     root.classList.add(theme)
+    applyThemeColor(theme as "dark" | "light")
   }, [theme])
 
   const value = {
