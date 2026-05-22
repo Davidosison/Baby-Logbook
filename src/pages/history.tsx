@@ -2,14 +2,15 @@ import { useState } from "react";
 import {
   useListEvents, getListEventsQueryKey,
   useDeleteEvent, useUpdateEvent,
+  useListEventsRange, getListEventsRangeQueryKey,
   getGetRecentActivityQueryKey, getGetDailySummaryQueryKey,
 } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
-import { format, isToday, isYesterday } from "date-fns";
+import { format, isToday, isYesterday, subDays, startOfDay, endOfDay } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Trash2, Pencil } from "lucide-react";
+import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -223,6 +224,83 @@ function EditSheet({
   );
 }
 
+function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
+  const today = new Date();
+  const startDate = format(subDays(today, 6), "yyyy-MM-dd");
+  const endDate = format(today, "yyyy-MM-dd");
+  const dateLocale = lang === "he" ? he : ru;
+
+  const { data: events } = useListEventsRange(
+    { startDate, endDate },
+    { query: { queryKey: getListEventsRangeQueryKey({ startDate, endDate }) } },
+  );
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = subDays(today, 6 - i);
+    const dateStr = format(d, "yyyy-MM-dd");
+    const dayEvents = events?.filter((e) => format(new Date(e.startedAt), "yyyy-MM-dd") === dateStr) ?? [];
+    return {
+      label: format(d, "EEE", { locale: dateLocale }),
+      isToday: i === 6,
+      feedings: dayEvents.filter((e) => e.type === "feeding").length,
+      sleepH: Math.round(dayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0) / 60 * 10) / 10,
+      diapers: dayEvents.filter((e) => e.type === "diaper").length,
+    };
+  });
+
+  const maxFeedings = Math.max(1, ...days.map((d) => d.feedings));
+  const maxSleep = Math.max(1, ...days.map((d) => d.sleepH));
+  const maxDiapers = Math.max(1, ...days.map((d) => d.diapers));
+
+  const Bar = ({ value, max, color }: { value: number; max: number; color: string }) => (
+    <div className="flex-1 flex flex-col items-center justify-end h-10">
+      <div
+        className={cn("w-full rounded-sm min-h-[2px] transition-all", color)}
+        style={{ height: `${Math.max(4, (value / max) * 40)}px` }}
+      />
+    </div>
+  );
+
+  return (
+    <div className="bg-card border border-border rounded-2xl p-4 mb-4 shadow-sm">
+      <div className="flex items-center gap-2 mb-3" dir={dir}>
+        <BarChart2 className="w-4 h-4 text-primary" />
+        <h3 className="font-semibold text-sm">{lang === "he" ? "7 ימים אחרונים" : "7 последних дней"}</h3>
+      </div>
+
+      {/* Day labels */}
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {days.map((d, i) => (
+          <div key={i} className={cn("text-center text-[10px] font-medium", d.isToday ? "text-primary" : "text-muted-foreground")}>
+            {d.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Feeding bars */}
+      <div className="flex items-end gap-1 mb-0.5">
+        <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Utensils className="w-2.5 h-2.5" /></span>
+        {days.map((d, i) => <Bar key={i} value={d.feedings} max={maxFeedings} color="bg-blue-500" />)}
+        <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.feedings}</span>
+      </div>
+
+      {/* Sleep bars */}
+      <div className="flex items-end gap-1 mb-0.5">
+        <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Moon className="w-2.5 h-2.5" /></span>
+        {days.map((d, i) => <Bar key={i} value={d.sleepH} max={maxSleep} color="bg-purple-500" />)}
+        <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.sleepH}h</span>
+      </div>
+
+      {/* Diaper bars */}
+      <div className="flex items-end gap-1">
+        <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Droplet className="w-2.5 h-2.5" /></span>
+        {days.map((d, i) => <Bar key={i} value={d.diapers} max={maxDiapers} color="bg-amber-500" />)}
+        <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.diapers}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function HistoryPage() {
   const queryClient = useQueryClient();
   const { lang, dir } = useLanguage();
@@ -297,6 +375,8 @@ export default function HistoryPage() {
       <PageHeader hebrewTitle="היסטוריה" russianTitle="История" />
 
       <div className="p-4 space-y-8">
+        <WeeklyStats lang={lang} dir={dir} />
+
         {isLoading && (
           <div className="text-center text-muted-foreground py-8 animate-pulse">
             {tr("loadingHistory", lang)}

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2 } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
+import { useGoals } from "@/hooks/use-goals";
 import { tr } from "@/lib/translations";
 import {
   Sheet, SheetContent, SheetTrigger, SheetTitle,
@@ -16,6 +17,7 @@ export function BottomNav() {
   const { theme, setTheme } = useTheme();
   const { lang, setLang, dir } = useLanguage();
   const { name, setName } = usePerson();
+  const { goals, setGoal } = useGoals();
   const [addOpen, setAddOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -180,6 +182,39 @@ export function BottomNav() {
                   <span className="text-xs text-primary font-semibold">{tr("changeName", lang)}</span>
                 </button>
               )}
+            </div>
+
+            {/* Goals */}
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">{tr("dailyGoals", lang)}</p>
+              <div className="space-y-3">
+                {/* Feeding goal */}
+                <div className="bg-background border border-border rounded-2xl p-3">
+                  <p className="text-xs text-muted-foreground mb-2">{tr("feedings", lang)}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setGoal("feedingGoalMin", Math.max(1, goals.feedingGoalMin - 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Minus className="w-4 h-4 text-primary" /></button>
+                      <span className="w-6 text-center font-bold text-base">{goals.feedingGoalMin}</span>
+                      <button onClick={() => setGoal("feedingGoalMin", Math.min(goals.feedingGoalMax - 1, goals.feedingGoalMin + 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Plus className="w-4 h-4 text-primary" /></button>
+                    </div>
+                    <span className="text-muted-foreground text-sm">–</span>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setGoal("feedingGoalMax", Math.max(goals.feedingGoalMin + 1, goals.feedingGoalMax - 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Minus className="w-4 h-4 text-primary" /></button>
+                      <span className="w-6 text-center font-bold text-base">{goals.feedingGoalMax}</span>
+                      <button onClick={() => setGoal("feedingGoalMax", Math.min(20, goals.feedingGoalMax + 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Plus className="w-4 h-4 text-primary" /></button>
+                    </div>
+                  </div>
+                </div>
+                {/* Sleep goal */}
+                <div className="bg-background border border-border rounded-2xl p-3">
+                  <p className="text-xs text-muted-foreground mb-2">{tr("sleep", lang)}</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setGoal("sleepGoalHours", Math.max(8, goals.sleepGoalHours - 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Minus className="w-4 h-4 text-primary" /></button>
+                    <span className="flex-1 text-center font-bold text-base">{goals.sleepGoalHours}{lang === "he" ? " שע'" : " ч."}</span>
+                    <button onClick={() => setGoal("sleepGoalHours", Math.min(22, goals.sleepGoalHours + 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Plus className="w-4 h-4 text-primary" /></button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Theme */}

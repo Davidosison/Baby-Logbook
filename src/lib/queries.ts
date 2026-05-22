@@ -9,6 +9,7 @@ import {
   getSupabase, initSupabaseWithJWT, clearSession, hasValidSession,
   supabase, toEvent, type Event, type EventRow,
 } from "./supabase";
+import { getGoals } from "@/hooks/use-goals";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -237,9 +238,9 @@ export function useGetDailySummary(
         diaperCount: diapers.length,
         peeDiapers: diapers.filter((e) => e.diaperType === "pee").length,
         poopDiapers: diapers.filter((e) => e.diaperType === "poop" || e.diaperType === "both").length,
-        feedingGoalMin: 8,
-        feedingGoalMax: 12,
-        sleepGoalMinutes: 960,
+        feedingGoalMin: getGoals().feedingGoalMin,
+        feedingGoalMax: getGoals().feedingGoalMax,
+        sleepGoalMinutes: getGoals().sleepGoalHours * 60,
       };
     },
     ...restOpts,
