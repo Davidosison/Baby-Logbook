@@ -5,14 +5,15 @@ import {
   type UseMutationOptions,
   type UseQueryOptions,
 } from "@tanstack/react-query";
-import { supabase, toEvent, type Event, type EventRow } from "./supabase";
+import {
+  getSupabase, initSupabaseWithJWT, clearSession, hasValidSession,
+  toEvent, type Event, type EventRow,
+} from "./supabase";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
-const AUTH_KEY = "baby-logbook-auth";
-
 export function isAuthenticated(): boolean {
-  return localStorage.getItem(AUTH_KEY) === "true";
+  return hasValidSession();
 }
 
 export function getGetAuthStatusQueryKey() {
@@ -27,11 +28,11 @@ async function hashPin(pin: string): Promise<string> {
 
 // Safe insert: if the DB is missing logged_by column, retry without it
 async function safeInsert(table: string, payload: Record<string, unknown>) {
-  const { data, error } = await supabase.from(table).insert(payload).select().single();
+  const { data, error } = await getSupabase().from(table).insert(payload).select().single();
   if (error) {
     if ((error.code === "42703" || error.message?.includes("logged_by")) && "logged_by" in payload) {
       const { logged_by: _lb, ...rest } = payload;
-      const { data: d2, error: e2 } = await supabase.from(table).insert(rest).select().single();
+      const { data: d2, error: e2 } = await getSupabase().from(table).insert(rest).select().single();
       if (e2) throw e2;
       return d2;
     }
@@ -62,17 +63,26 @@ export function useVerifyPin(options?: {
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
     mutationFn: async ({ data: { pin } }: { data: { pin: string } }) => {
-      const pinHash = import.meta.env.VITE_FAMILY_PIN_HASH as string | undefined;
-      let success: boolean;
-      if (pinHash) {
-        const entered = await hashPin(pin);
-        success = entered === pinHash;
-      } else {
-        // Legacy fallback – plain comparison
-        success = pin === (import.meta.env.VITE_FAMILY_PIN as string);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/verify-pin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ pin }),
+      });
+
+      if (res.status === 429) throw new Error("too_many_attempts");
+      if (!res.ok) throw new Error("network_error");
+
+      const result: { success: boolean; token?: string } = await res.json();
+      if (result.success && result.token) {
+        initSupabaseWithJWT(result.token);
       }
-      if (success) localStorage.setItem(AUTH_KEY, "true");
-      return { success };
+      return { success: result.success };
     },
     onSuccess: (data, vars, ctx) => {
       queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
@@ -87,7 +97,7 @@ export function useLogout(options?: { mutation?: UseMutationOptions<void, Error,
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
     mutationFn: async () => {
-      localStorage.removeItem(AUTH_KEY);
+      clearSession();
     },
     onSuccess: (data, vars, ctx) => {
       queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
@@ -129,7 +139,7 @@ export function useListEvents(
   return useQuery({
     queryKey: getListEventsQueryKey(params),
     queryFn: async () => {
-      let q = supabase
+      let q = getSupabase()
         .from("events")
         .select("*")
         .order("started_at", { ascending: false });
@@ -357,7 +367,7 @@ export function useStartSleep(options?: { mutation?: UseMutationOptions<Event, E
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
     mutationFn: async ({ loggedBy }: { loggedBy?: string | null } = {}) => {
-      await supabase.from("events").update({ is_active: false }).eq("type", "sleep").eq("is_active", true);
+      await getSupabase().from("events").update({ is_active: false }).eq("type", "sleep").eq("is_active", true);
       const row = await safeInsert("events", {
         type: "sleep",
         started_at: new Date().toISOString(),
@@ -477,7 +487,7 @@ export function useDeleteEvent(options?: {
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
     mutationFn: async ({ id }: { id: number }) => {
-      const { error } = await supabase.from("events").delete().eq("id", id);
+      const { error } = await getSupabase().from("events").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: (data, vars, ctx) => {

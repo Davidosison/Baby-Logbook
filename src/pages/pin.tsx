@@ -26,9 +26,13 @@ export default function PinPage() {
           toast({ title: tr("wrongPin", lang), description: tr("tryAgain", lang), variant: "destructive" });
         }
       },
-      onError: () => {
+      onError: (error) => {
         setPin("");
-        toast({ title: tr("error", lang), description: tr("cannotVerifyPin", lang), variant: "destructive" });
+        if (error instanceof Error && error.message === "too_many_attempts") {
+          toast({ title: tr("tooManyAttempts", lang), description: tr("tryAgainLater", lang), variant: "destructive" });
+        } else {
+          toast({ title: tr("error", lang), description: tr("cannotVerifyPin", lang), variant: "destructive" });
+        }
       },
     },
   });

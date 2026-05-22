@@ -8,6 +8,10 @@ import { LanguageProvider } from "@/contexts/language-context";
 import { PersonProvider } from "@/contexts/person-context";
 import { AuthWrapper } from "@/components/auth-wrapper";
 import { BottomNav } from "@/components/bottom-nav";
+import { restoreSession } from "@/lib/supabase";
+
+// Restore JWT from localStorage on app load (synchronous, runs before first render)
+restoreSession();
 import { PushPrompt } from "@/components/push-prompt";
 import { NameSetup } from "@/components/name-setup";
 import { InstallGuide } from "@/components/install-guide";
