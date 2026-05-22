@@ -102,14 +102,14 @@ export default function FeedingPage() {
       <div className="p-4 max-w-md mx-auto space-y-4">
 
         {/* Live Timer */}
-        <div className="bg-blue-500/5 border border-blue-500/20 rounded-3xl p-4">
+        <div className="bg-sky-400/5 border border-sky-400/20 rounded-3xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+            <span className="text-sm font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-2">
               <Timer className="w-4 h-4" />
               {tr("liveTimer", lang)}
             </span>
             {timerActive && (
-              <span className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+              <span className="text-2xl font-mono font-bold text-sky-600 dark:text-sky-400 tabular-nums">
                 {formatTimerDisplay(timerSeconds)}
               </span>
             )}
@@ -122,7 +122,7 @@ export default function FeedingPage() {
               "w-full h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95",
               timerActive
                 ? "bg-red-500/10 border-2 border-red-500 text-red-500"
-                : "bg-blue-600 text-white",
+                : "bg-sky-500 text-white",
             ].join(" ")}
           >
             {timerActive
@@ -161,7 +161,7 @@ export default function FeedingPage() {
             </div>
           </div>
           {autoDuration !== null && (
-            <div className="text-center text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 rounded-xl py-2">
+            <div className="text-center text-sm font-semibold text-sky-600 dark:text-sky-400 bg-sky-400/10 rounded-xl py-2">
               {tr("autoDuration", lang, autoDuration)}
             </div>
           )}
@@ -200,7 +200,7 @@ export default function FeedingPage() {
           onClick={handleSave}
           disabled={!canSave}
           data-testid="button-save-feeding"
-          className="w-full h-16 text-lg font-bold rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20 active:scale-95 transition-transform"
+          className="w-full h-16 text-lg font-bold rounded-2xl bg-sky-500 hover:bg-sky-600 text-white shadow-xl shadow-sky-400/20 active:scale-95 transition-transform"
         >
           {tr("saveFeeding", lang)}
         </Button>

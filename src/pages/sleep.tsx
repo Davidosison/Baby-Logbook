@@ -113,20 +113,20 @@ export default function SleepPage() {
           <button
             onClick={() => startSleep.mutate({ loggedBy: name ?? null })}
             disabled={startSleep.isPending}
-            className="w-full bg-purple-500/10 border-2 border-purple-500/40 hover:border-purple-500 rounded-3xl p-6 flex flex-col items-center gap-4 transition-all active:scale-95 disabled:opacity-50"
+            className="w-full bg-indigo-500/10 border-2 border-indigo-400/40 hover:border-indigo-400 rounded-3xl p-6 flex flex-col items-center gap-4 transition-all active:scale-95 disabled:opacity-50"
           >
-            <div className="w-24 h-24 rounded-full bg-purple-500/20 flex items-center justify-center">
-              <Moon className="w-12 h-12 text-purple-500" />
+            <div className="w-24 h-24 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <Moon className="w-12 h-12 text-indigo-400" />
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                 {tr("startSleepLabel", lang)}
               </div>
               <div className="text-sm text-muted-foreground mt-1">
                 {tr("startSleepSub", lang)}
               </div>
             </div>
-            <div className="flex items-center gap-2 text-purple-500 font-semibold text-sm">
+            <div className="flex items-center gap-2 text-indigo-400 font-semibold text-sm">
               <PlayCircle className="w-4 h-4" />
               {tr("tapToStart", lang)}
             </div>
@@ -135,15 +135,15 @@ export default function SleepPage() {
 
         {/* Active sleep banner */}
         {isSleeping && (
-          <div className="bg-purple-500/10 border-2 border-purple-500 rounded-3xl p-5">
+          <div className="bg-indigo-500/10 border-2 border-indigo-400/60 rounded-3xl p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Moon className="w-5 h-5 text-purple-500" />
-                <span className="font-semibold text-purple-600 dark:text-purple-400">
+                <Moon className="w-5 h-5 text-indigo-400" />
+                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
                   {tr("activeSleepBanner", lang)}
                 </span>
               </div>
-              <span className="text-2xl font-mono font-bold text-purple-600 dark:text-purple-400 tabular-nums">
+              <span className="text-2xl font-mono font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">
                 {formatElapsed(elapsed)}
               </span>
             </div>
@@ -151,7 +151,7 @@ export default function SleepPage() {
               onClick={() => stopSleep.mutate()}
               disabled={stopSleep.isPending || isLoading}
               data-testid="button-stop-sleep"
-              className="w-full h-14 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-base flex items-center justify-center gap-2"
+              className="w-full h-14 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-base flex items-center justify-center gap-2"
             >
               <StopCircle className="w-5 h-5" />
               {tr("stopSleepNow", lang)}
@@ -193,7 +193,7 @@ export default function SleepPage() {
 
           {/* Auto duration display */}
           {autoDuration !== null && (
-            <div className="text-center text-sm font-semibold text-purple-600 dark:text-purple-400 bg-purple-500/10 rounded-xl py-2">
+            <div className="text-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 rounded-xl py-2">
               {tr("autoDuration", lang, autoDuration)}
             </div>
           )}
@@ -215,7 +215,7 @@ export default function SleepPage() {
           onClick={handleSave}
           disabled={logSleep.isPending || !startTime || !endTime}
           data-testid="button-save-sleep"
-          className="w-full h-16 text-lg font-bold rounded-2xl bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-500/20 active:scale-95 transition-transform"
+          className="w-full h-16 text-lg font-bold rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 active:scale-95 transition-transform"
         >
           {tr("saveSleep", lang)}
         </Button>

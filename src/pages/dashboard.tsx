@@ -137,18 +137,18 @@ export default function DashboardPage() {
 
         {/* Live sleep banner */}
         {activeSleep && (
-          <div className="bg-purple-500/10 border-2 border-purple-500 rounded-2xl px-3 py-2.5 flex items-center gap-3 shrink-0" dir={dir}>
-            <Moon className="w-6 h-6 text-purple-500 shrink-0 animate-pulse" />
+          <div className="bg-indigo-500/10 border-2 border-indigo-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3 shrink-0" dir={dir}>
+            <Moon className="w-6 h-6 text-indigo-400 shrink-0 animate-pulse" />
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-purple-600 dark:text-purple-400 text-xs leading-none mb-0.5">{tr("sleepingNow", lang)}</div>
-              <div className="text-2xl font-mono font-bold tabular-nums text-purple-600 dark:text-purple-400 leading-none">
+              <div className="font-bold text-indigo-600 dark:text-indigo-400 text-xs leading-none mb-0.5">{tr("sleepingNow", lang)}</div>
+              <div className="text-2xl font-mono font-bold tabular-nums text-indigo-600 dark:text-indigo-400 leading-none">
                 {formatSleepTime(sleepElapsed)}
               </div>
             </div>
             <button
               onClick={() => stopSleepMutation.mutate()}
               disabled={stopSleepMutation.isPending}
-              className="shrink-0 h-10 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50"
+              className="shrink-0 h-10 px-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50"
             >
               <StopCircle className="w-4 h-4" />
               {tr("stopSleep", lang)}
@@ -164,9 +164,9 @@ export default function DashboardPage() {
               : type === "sleep" ? recent?.lastSleepMinutesAgo
               : recent?.lastDiaperMinutesAgo;
             const icon =
-              type === "feeding" ? <Utensils className="w-5 h-5 text-blue-500 mb-1" />
-              : type === "sleep" ? <Moon className="w-5 h-5 text-purple-500 mb-1" />
-              : <Droplet className="w-5 h-5 text-amber-500 mb-1" />;
+              type === "feeding" ? <Utensils className="w-5 h-5 text-sky-400 mb-1" />
+              : type === "sleep" ? <Moon className="w-5 h-5 text-indigo-400 mb-1" />
+              : <Droplet className="w-5 h-5 text-amber-400 mb-1" />;
             return (
               <div key={type} className="bg-card border border-border rounded-2xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
                 {icon}
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                 <span className="text-muted-foreground">{tr("sleepGoalDuration", lang, Math.floor(summary.totalSleepMinutes / 60), summary.totalSleepMinutes % 60)}</span>
                 <span className="font-medium">{tr("sleep", lang)}</span>
               </div>
-              <Progress value={Math.min(100, (summary.totalSleepMinutes / summary.sleepGoalMinutes) * 100)} className="h-1.5 bg-secondary [&>div]:bg-purple-500" />
+              <Progress value={Math.min(100, (summary.totalSleepMinutes / summary.sleepGoalMinutes) * 100)} className="h-1.5 bg-secondary [&>div]:bg-indigo-400" />
             </div>
           </div>
         )}
@@ -230,9 +230,9 @@ export default function DashboardPage() {
               <div key={event.id} className="bg-card border border-border rounded-2xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
                 <div className={cn(
                   "w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-background border border-border",
-                  event.type === "feeding" && "text-blue-500",
-                  event.type === "sleep" && "text-purple-500",
-                  event.type === "diaper" && "text-amber-500",
+                  event.type === "feeding" && "text-sky-400",
+                  event.type === "sleep" && "text-indigo-400",
+                  event.type === "diaper" && "text-amber-400",
                 )}>
                   <EventIcon type={event.type} />
                 </div>

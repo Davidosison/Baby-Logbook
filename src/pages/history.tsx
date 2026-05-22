@@ -190,7 +190,7 @@ function EditSheet({
                 className={cn(
                   "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
                   diaperType === t
-                    ? "bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400"
+                    ? "bg-amber-400/20 border-amber-400 text-amber-700 dark:text-amber-400"
                     : "bg-background border-border text-muted-foreground"
                 )}
               >
@@ -280,21 +280,21 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
       {/* Feeding bars */}
       <div className="flex items-end gap-1 mb-0.5">
         <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Utensils className="w-2.5 h-2.5" /></span>
-        {days.map((d, i) => <Bar key={i} value={d.feedings} max={maxFeedings} color="bg-blue-500" />)}
+        {days.map((d, i) => <Bar key={i} value={d.feedings} max={maxFeedings} color="bg-sky-400" />)}
         <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.feedings}</span>
       </div>
 
       {/* Sleep bars */}
       <div className="flex items-end gap-1 mb-0.5">
         <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Moon className="w-2.5 h-2.5" /></span>
-        {days.map((d, i) => <Bar key={i} value={d.sleepH} max={maxSleep} color="bg-purple-500" />)}
+        {days.map((d, i) => <Bar key={i} value={d.sleepH} max={maxSleep} color="bg-indigo-400" />)}
         <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.sleepH}h</span>
       </div>
 
       {/* Diaper bars */}
       <div className="flex items-end gap-1">
         <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Droplet className="w-2.5 h-2.5" /></span>
-        {days.map((d, i) => <Bar key={i} value={d.diapers} max={maxDiapers} color="bg-amber-500" />)}
+        {days.map((d, i) => <Bar key={i} value={d.diapers} max={maxDiapers} color="bg-amber-400" />)}
         <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.diapers}</span>
       </div>
     </div>
@@ -403,9 +403,9 @@ export default function HistoryPage() {
                   {/* Icon */}
                   <div className={cn(
                     "w-9 h-9 shrink-0 rounded-full flex items-center justify-center bg-background border border-border",
-                    event.type === "feeding" && "text-blue-500",
-                    event.type === "sleep" && "text-purple-500",
-                    event.type === "diaper" && "text-amber-500",
+                    event.type === "feeding" && "text-sky-400",
+                    event.type === "sleep" && "text-indigo-400",
+                    event.type === "diaper" && "text-amber-400",
                   )}>
                     <EventIcon type={event.type} />
                   </div>

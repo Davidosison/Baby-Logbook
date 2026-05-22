@@ -68,21 +68,21 @@ export function BottomNav() {
               <div className="flex-1 flex flex-col justify-center gap-4">
                 <Link href="/feeding" data-testid="nav-feeding"
                   onClick={() => setAddOpen(false)}
-                  className="w-full flex items-center bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 p-4 rounded-2xl transition-colors">
+                  className="w-full flex items-center bg-sky-400/10 hover:bg-sky-400/20 text-sky-600 dark:text-sky-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-2xl font-bold">{tr("feeding", lang)}</div>
                   </div>
                 </Link>
                 <Link href="/sleep" data-testid="nav-sleep"
                   onClick={() => setAddOpen(false)}
-                  className="w-full flex items-center bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 p-4 rounded-2xl transition-colors">
+                  className="w-full flex items-center bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-2xl font-bold">{tr("sleep", lang)}</div>
                   </div>
                 </Link>
                 <Link href="/diaper" data-testid="nav-diaper"
                   onClick={() => setAddOpen(false)}
-                  className="w-full flex items-center bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-500 p-4 rounded-2xl transition-colors">
+                  className="w-full flex items-center bg-amber-400/10 hover:bg-amber-400/20 text-amber-600 dark:text-amber-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-2xl font-bold">{tr("diaper", lang)}</div>
                   </div>
