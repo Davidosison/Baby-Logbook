@@ -239,63 +239,78 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
     const d = subDays(today, 6 - i);
     const dateStr = format(d, "yyyy-MM-dd");
     const dayEvents = events?.filter((e) => format(new Date(e.startedAt), "yyyy-MM-dd") === dateStr) ?? [];
+    const sleepMin = dayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
     return {
       label: format(d, "EEE", { locale: dateLocale }),
       isToday: i === 6,
       feedings: dayEvents.filter((e) => e.type === "feeding").length,
-      sleepH: Math.round(dayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0) / 60 * 10) / 10,
+      sleepLabel: sleepMin === 0 ? "—" : `${Math.floor(sleepMin / 60)}:${String(sleepMin % 60).padStart(2, "0")}`,
       diapers: dayEvents.filter((e) => e.type === "diaper").length,
     };
   });
 
-  const maxFeedings = Math.max(1, ...days.map((d) => d.feedings));
-  const maxSleep = Math.max(1, ...days.map((d) => d.sleepH));
-  const maxDiapers = Math.max(1, ...days.map((d) => d.diapers));
-
-  const Bar = ({ value, max, color }: { value: number; max: number; color: string }) => (
-    <div className="flex-1 flex flex-col items-center justify-end h-10">
-      <div
-        className={cn("w-full rounded-sm min-h-[2px] transition-all", color)}
-        style={{ height: `${Math.max(4, (value / max) * 40)}px` }}
-      />
-    </div>
-  );
+  const rows = [
+    {
+      icon: <Utensils className="w-3 h-3" />,
+      color: "text-sky-400",
+      values: days.map((d) => ({ val: d.feedings === 0 ? "—" : String(d.feedings), isToday: d.isToday })),
+    },
+    {
+      icon: <Moon className="w-3 h-3" />,
+      color: "text-indigo-400",
+      values: days.map((d) => ({ val: d.sleepLabel, isToday: d.isToday })),
+    },
+    {
+      icon: <Droplet className="w-3 h-3" />,
+      color: "text-amber-400",
+      values: days.map((d) => ({ val: d.diapers === 0 ? "—" : String(d.diapers), isToday: d.isToday })),
+    },
+  ];
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 mb-4 shadow-sm">
-      <div className="flex items-center gap-2 mb-3" dir={dir}>
+    <div className="bg-card border border-border rounded-2xl p-4 mb-4 shadow-sm" dir={dir}>
+      <div className="flex items-center gap-2 mb-3">
         <BarChart2 className="w-4 h-4 text-primary" />
         <h3 className="font-semibold text-sm">{lang === "he" ? "7 ימים אחרונים" : "7 последних дней"}</h3>
       </div>
 
-      {/* Day labels */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      {/* Table */}
+      <div className="grid grid-cols-[20px_repeat(7,1fr)] gap-y-1">
+        {/* Header: day labels */}
+        <div />
         {days.map((d, i) => (
-          <div key={i} className={cn("text-center text-[10px] font-medium", d.isToday ? "text-primary" : "text-muted-foreground")}>
+          <div
+            key={i}
+            className={cn(
+              "text-center text-[10px] font-semibold pb-1.5",
+              d.isToday ? "text-primary" : "text-muted-foreground/60",
+            )}
+          >
             {d.label}
           </div>
         ))}
-      </div>
 
-      {/* Feeding bars */}
-      <div className="flex items-end gap-1 mb-0.5">
-        <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Utensils className="w-2.5 h-2.5" /></span>
-        {days.map((d, i) => <Bar key={i} value={d.feedings} max={maxFeedings} color="bg-sky-400" />)}
-        <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.feedings}</span>
-      </div>
-
-      {/* Sleep bars */}
-      <div className="flex items-end gap-1 mb-0.5">
-        <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Moon className="w-2.5 h-2.5" /></span>
-        {days.map((d, i) => <Bar key={i} value={d.sleepH} max={maxSleep} color="bg-indigo-400" />)}
-        <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.sleepH}h</span>
-      </div>
-
-      {/* Diaper bars */}
-      <div className="flex items-end gap-1">
-        <span className="text-[9px] text-muted-foreground w-3 shrink-0 flex items-center"><Droplet className="w-2.5 h-2.5" /></span>
-        {days.map((d, i) => <Bar key={i} value={d.diapers} max={maxDiapers} color="bg-amber-400" />)}
-        <span className="text-[9px] text-muted-foreground w-4 text-right shrink-0">{days[6]?.diapers}</span>
+        {/* Data rows */}
+        {rows.map((row, ri) => (
+          <>
+            <div key={`icon-${ri}`} className={cn("flex items-center justify-center", row.color)}>
+              {row.icon}
+            </div>
+            {row.values.map((cell, ci) => (
+              <div
+                key={ci}
+                className={cn(
+                  "text-center text-[11px] font-semibold py-1 rounded-lg",
+                  cell.isToday
+                    ? "bg-primary/10 text-foreground"
+                    : "text-muted-foreground",
+                )}
+              >
+                {cell.val}
+              </div>
+            ))}
+          </>
+        ))}
       </div>
     </div>
   );
