@@ -279,7 +279,12 @@ function DailyTimeline({ events, lang }: { events: EventItem[]; lang: "he" | "ru
                     <span className="truncate">
                       {ev.type === "feeding" && (ev.amountMl ? `${ev.amountMl}מ"ל` : tr("feeding", lang))}
                       {ev.type === "sleep" && tr("sleep", lang)}
-                      {ev.type === "diaper" && (ev.diaperType ?? tr("diaper", lang))}
+                      {ev.type === "diaper" && (
+                        ev.diaperType === "pee" ? tr("pee", lang)
+                        : ev.diaperType === "poop" ? tr("poop", lang)
+                        : ev.diaperType === "both" ? tr("both", lang)
+                        : tr("diaper", lang)
+                      )}
                     </span>
                   )}
                 </div>
