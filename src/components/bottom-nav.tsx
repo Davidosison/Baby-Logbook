@@ -16,6 +16,7 @@ export function BottomNav() {
   const { theme, setTheme } = useTheme();
   const { lang, setLang, dir } = useLanguage();
   const { name, setName } = usePerson();
+  const [addOpen, setAddOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
 
@@ -49,7 +50,7 @@ export function BottomNav() {
 
         {/* Plus — center floating */}
         <div className="relative -top-6 flex-shrink-0">
-          <Sheet>
+          <Sheet open={addOpen} onOpenChange={setAddOpen}>
             <SheetTrigger asChild>
               <button
                 data-testid="nav-add"
@@ -64,18 +65,21 @@ export function BottomNav() {
               </VisuallyHidden>
               <div className="flex-1 flex flex-col justify-center gap-4">
                 <Link href="/feeding" data-testid="nav-feeding"
+                  onClick={() => setAddOpen(false)}
                   className="w-full flex items-center bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-2xl font-bold">{tr("feeding", lang)}</div>
                   </div>
                 </Link>
                 <Link href="/sleep" data-testid="nav-sleep"
+                  onClick={() => setAddOpen(false)}
                   className="w-full flex items-center bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-2xl font-bold">{tr("sleep", lang)}</div>
                   </div>
                 </Link>
                 <Link href="/diaper" data-testid="nav-diaper"
+                  onClick={() => setAddOpen(false)}
                   className="w-full flex items-center bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-500 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-2xl font-bold">{tr("diaper", lang)}</div>

@@ -131,28 +131,28 @@ export default function FeedingPage() {
 
         {/* Start / End time */}
         <div className="bg-card border border-border rounded-3xl p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="min-w-0">
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
                 {tr("startTime", lang)}
               </label>
               <Input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="h-12 text-base border-border bg-background"
+                className="h-10 text-sm border-border bg-background px-2"
                 data-testid="input-start-time"
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+            <div className="min-w-0">
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
                 {tr("endTime", lang)}
               </label>
               <Input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="h-12 text-base border-border bg-background"
+                className="h-10 text-sm border-border bg-background px-2"
                 data-testid="input-end-time"
               />
             </div>

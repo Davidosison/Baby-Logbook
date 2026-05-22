@@ -20,6 +20,7 @@ const t = {
   theme: { he: "ערכת נושא", ru: "Тема" },
   language: { he: "שפה", ru: "Язык" },
   logEvent: { he: "תיעוד אירוע", ru: "Записать" },
+  time: { he: "שעה", ru: "Время" },
   dark: { he: "כהה", ru: "Тёмная" },
   light: { he: "בהיר", ru: "Светлая" },
   hebrew: { he: "עברית", ru: "Иврит" },
@@ -100,7 +101,7 @@ const t = {
 
   // Header / app
   babyTracker: { he: "היומן של אדם ❤️‍🔥", ru: "Журнал Адама ❤️‍🔥" },
-  agePrefix: { he: "בן/בת", ru: "возраст" },
+  agePrefix: { he: "בן", ru: "возраст" },
 
   // Push prompt
   enablePushTitle: { he: "הפעל התראות האכלה", ru: "Включить напоминания" },

@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useLogDiaper, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
@@ -10,11 +11,19 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
+function timeToTodayISO(timeStr: string): string {
+  const [h, m] = timeStr.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h!, m!, 0, 0);
+  return d.toISOString();
+}
+
 export default function DiaperPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { lang, dir } = useLanguage();
   const [diaperType, setDiaperType] = useState<"pee" | "poop" | "both" | null>(null);
+  const [time, setTime] = useState(format(new Date(), "HH:mm"));
   const [notes, setNotes] = useState("");
 
   const logDiaper = useLogDiaper({
@@ -69,6 +78,20 @@ export default function DiaperPage() {
           </button>
         </div>
 
+        {/* Time picker */}
+        <div className="bg-card border border-border rounded-3xl p-4">
+          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+            {tr("time", lang)}
+          </label>
+          <Input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="h-10 text-sm border-border bg-background px-2"
+            data-testid="input-diaper-time"
+          />
+        </div>
+
         <div>
           <label className="block text-sm font-medium mb-2">{tr("notesOptional", lang)}</label>
           <Textarea
@@ -83,7 +106,7 @@ export default function DiaperPage() {
         <Button
           onClick={() => {
             if (!diaperType) return;
-            logDiaper.mutate({ data: { diaperType, notes: notes || undefined, startedAt: new Date().toISOString() } });
+            logDiaper.mutate({ data: { diaperType, notes: notes || undefined, startedAt: timeToTodayISO(time) } });
           }}
           disabled={logDiaper.isPending || !diaperType}
           data-testid="button-save-diaper"
