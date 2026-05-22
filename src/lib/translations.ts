@@ -124,6 +124,10 @@ const t = {
   // Name / person greeting
   whoAreYou: { he: "מה שמך?", ru: "Как тебя зовут?" },
   whoAreYouSub: { he: "כדי שנדע מי מתעד", ru: "Чтобы мы знали, кто записывает" },
+  whoIsLogging: { he: "מי מתעד?", ru: "Кто записывает?" },
+  pickYourName: { he: "בחר את שמך", ru: "Выбери своё имя" },
+  otherPerson: { he: "+ אדם אחר", ru: "+ Другой человек" },
+  backToList: { he: "חזרה לרשימה", ru: "Назад к списку" },
   yourNamePlaceholder: { he: "השם שלך...", ru: "Твоё имя..." },
   letsGo: { he: "בוא נתחיל 👶", ru: "Начнём 👶" },
   helloName: { he: (n: string) => `שלום ${n}! 👋`, ru: (n: string) => `Привет ${n}! 👋` },
