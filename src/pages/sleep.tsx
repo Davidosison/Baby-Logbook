@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   useGetActiveSleep, getGetActiveSleepQueryKey,
-  useStopSleep, useLogSleep,
+  useStartSleep, useStopSleep, useLogSleep,
   getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey,
 } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
@@ -14,7 +14,7 @@ import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
-import { Moon, StopCircle } from "lucide-react";
+import { Moon, StopCircle, PlayCircle } from "lucide-react";
 
 function timeToISO(timeStr: string, baseDate: Date): string {
   const [h, m] = timeStr.split(":").map(Number);
@@ -66,6 +66,10 @@ export default function SleepPage() {
     queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey({ date: today }) });
   };
 
+  const startSleep = useStartSleep({
+    mutation: { onSuccess: () => { invalidateAll(); } },
+  });
+
   const stopSleep = useStopSleep({
     mutation: { onSuccess: () => { invalidateAll(); setLocation("/"); } },
   });
@@ -103,6 +107,31 @@ export default function SleepPage() {
       <PageHeader hebrewTitle="שינה" russianTitle="Сон" showBack />
 
       <div className="p-4 max-w-md mx-auto space-y-5">
+
+        {/* Start live sleep button — shown when not sleeping */}
+        {!isSleeping && !isLoading && (
+          <button
+            onClick={() => startSleep.mutate({ loggedBy: name ?? null })}
+            disabled={startSleep.isPending}
+            className="w-full bg-purple-500/10 border-2 border-purple-500/40 hover:border-purple-500 rounded-3xl p-6 flex flex-col items-center gap-4 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <div className="w-24 h-24 rounded-full bg-purple-500/20 flex items-center justify-center">
+              <Moon className="w-12 h-12 text-purple-500" />
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {tr("startSleepLabel", lang)}
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                {tr("startSleepSub", lang)}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-purple-500 font-semibold text-sm">
+              <PlayCircle className="w-4 h-4" />
+              {tr("tapToStart", lang)}
+            </div>
+          </button>
+        )}
 
         {/* Active sleep banner */}
         {isSleeping && (

@@ -240,6 +240,7 @@ export function useGetActiveSleep(options?: { query?: Partial<UseQueryOptions<Ev
   const { queryKey: _userKey, ...restOpts } = options?.query ?? {};
   return useQuery({
     queryKey: getGetActiveSleepQueryKey(),
+    refetchInterval: 15_000, // poll every 15s so all users stay in sync
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")

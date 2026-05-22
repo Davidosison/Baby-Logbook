@@ -1,11 +1,13 @@
-import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey } from "@/lib/queries";
+import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey, useGetActiveSleep, getGetActiveSleepQueryKey, useStopSleep } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Share2 } from "lucide-react";
+import { Droplet, Moon, Utensils, Share2, StopCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +23,41 @@ export default function DashboardPage() {
   const { name } = usePerson();
   const today = format(new Date(), "yyyy-MM-dd");
   const dateLocale = lang === "he" ? he : ru;
+  const queryClient = useQueryClient();
+
+  const { data: activeSleep } = useGetActiveSleep({
+    query: { queryKey: getGetActiveSleepQueryKey() },
+  });
+
+  const [sleepElapsed, setSleepElapsed] = useState(0);
+  useEffect(() => {
+    if (activeSleep?.startedAt) {
+      const start = new Date(activeSleep.startedAt).getTime();
+      setSleepElapsed(Math.floor((Date.now() - start) / 1000));
+      const iv = setInterval(() => setSleepElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+      return () => clearInterval(iv);
+    }
+    return undefined;
+  }, [activeSleep]);
+
+  const stopSleepMutation = useStopSleep({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetActiveSleepQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey({ date: today }) });
+      },
+    },
+  });
+
+  const formatSleepTime = (secs: number) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
 
   const { data: events, isLoading: isLoadingEvents, refetch: refetchEvents } = useListEvents(
     { date: today },
@@ -94,6 +131,28 @@ export default function DashboardPage() {
       )}
 
       <div className="p-4 space-y-6">
+
+        {/* Live sleep banner — shared between all users */}
+        {activeSleep && (
+          <div className="bg-purple-500/10 border-2 border-purple-500 rounded-3xl p-4 flex items-center gap-4" dir={dir}>
+            <Moon className="w-8 h-8 text-purple-500 shrink-0 animate-pulse" />
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-purple-600 dark:text-purple-400 text-base">{tr("sleepingNow", lang)}</div>
+              <div className="text-3xl font-mono font-bold tabular-nums text-purple-600 dark:text-purple-400 leading-tight">
+                {formatSleepTime(sleepElapsed)}
+              </div>
+            </div>
+            <button
+              onClick={() => stopSleepMutation.mutate()}
+              disabled={stopSleepMutation.isPending}
+              className="shrink-0 h-14 px-4 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+            >
+              <StopCircle className="w-5 h-5" />
+              {tr("stopSleep", lang)}
+            </button>
+          </div>
+        )}
+
         {/* Recent Activity Cards */}
         <div className="grid grid-cols-3 gap-3">
           {(["feeding", "sleep", "diaper"] as const).map((type) => {
