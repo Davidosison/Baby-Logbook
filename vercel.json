@@ -1,16 +1,7 @@
 {
-  "framework": null,
-  "buildCommand": "pnpm install && BASE_PATH=/ PORT=3000 pnpm --filter @workspace/newborn-tracker run build",
-  "outputDirectory": "artifacts/newborn-tracker/dist/public",
-  "functions": {
-    "api/index.ts": {
-      "runtime": "nodejs22.x",
-      "memory": 512,
-      "maxDuration": 10
-    }
-  },
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/:path*",     "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
