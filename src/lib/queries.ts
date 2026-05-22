@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import {
   getSupabase, initSupabaseWithJWT, clearSession, hasValidSession,
-  toEvent, type Event, type EventRow,
+  supabase, toEvent, type Event, type EventRow,
 } from "./supabase";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
