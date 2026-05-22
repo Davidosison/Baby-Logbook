@@ -45,6 +45,28 @@ function minutesFromMidnight(iso: string) {
   return d.getHours() * 60 + d.getMinutes();
 }
 
+type LayoutEvent = EventItem & { col: number; totalCols: number; startMin: number; durMin: number };
+
+function assignColumns(events: EventItem[]): LayoutEvent[] {
+  const sorted = [...events].sort(
+    (a, b) => minutesFromMidnight(a.startedAt) - minutesFromMidnight(b.startedAt)
+  );
+  const colEnds: number[] = [];
+  const assigned = sorted.map((event) => {
+    const startMin = minutesFromMidnight(event.startedAt);
+    const durMin = displayDuration(event);
+    const endMin = startMin + durMin;
+    let col = colEnds.findIndex((end) => end <= startMin);
+    if (col === -1) { col = colEnds.length; colEnds.push(endMin); }
+    else { colEnds[col] = endMin; }
+    return { event, col, startMin, durMin };
+  });
+  const maxCols = Math.max(1, colEnds.length);
+  return assigned.map(({ event, col, startMin, durMin }) => ({
+    ...event, col, totalCols: maxCols, startMin, durMin,
+  }));
+}
+
 function displayDuration(event: EventItem) {
   if (event.durationMinutes) return event.durationMinutes;
   if (event.type === "diaper") return DIAPER_DISPLAY_MIN;
@@ -199,7 +221,7 @@ function DailyTimeline({ events, lang }: { events: EventItem[]; lang: "he" | "ru
         </div>
         <div className="bg-purple-500/10 rounded-2xl p-3 text-center">
           <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
-            {Math.floor(sleepMin / 60)}h{sleepMin % 60}m
+            {tr("sleepGoalDuration", lang, Math.floor(sleepMin / 60), sleepMin % 60)}
           </div>
           <div className="text-[10px] text-muted-foreground">{tr("sleep", lang)}</div>
         </div>
@@ -239,25 +261,25 @@ function DailyTimeline({ events, lang }: { events: EventItem[]; lang: "he" | "ru
               </div>
             </div>
 
-            {/* Events */}
-            {todayEvents.map((event) => {
-              const startMin = minutesFromMidnight(event.startedAt);
-              const durMin = displayDuration(event);
-              const top = (startMin / (24 * 60)) * TOTAL_PX;
-              const height = Math.max(16, (durMin / (24 * 60)) * TOTAL_PX);
-              const color = TYPE_COLORS[event.type] ?? "bg-gray-400";
+            {/* Events — with column layout to avoid overlaps */}
+            {assignColumns(todayEvents).map((ev) => {
+              const top = (ev.startMin / (24 * 60)) * TOTAL_PX;
+              const height = Math.max(16, (ev.durMin / (24 * 60)) * TOTAL_PX);
+              const color = TYPE_COLORS[ev.type] ?? "bg-gray-400";
+              const widthPct = 100 / ev.totalCols;
+              const leftPct = ev.col * widthPct;
 
               return (
                 <div
-                  key={event.id}
-                  className={cn("absolute inset-x-2 rounded-xl flex items-center px-2 overflow-hidden", color, "text-white text-[10px] font-semibold")}
-                  style={{ top, height }}
+                  key={ev.id}
+                  className={cn("absolute rounded-xl flex items-center px-1.5 overflow-hidden", color, "text-white text-[10px] font-semibold")}
+                  style={{ top, height, left: `${leftPct}%`, width: `calc(${widthPct}% - 3px)` }}
                 >
                   {height >= 16 && (
                     <span className="truncate">
-                      {event.type === "feeding" && (event.amountMl ? `${event.amountMl}מ"ל` : tr("feeding", lang))}
-                      {event.type === "sleep" && tr("sleep", lang)}
-                      {event.type === "diaper" && (event.diaperType ?? tr("diaper", lang))}
+                      {ev.type === "feeding" && (ev.amountMl ? `${ev.amountMl}מ"ל` : tr("feeding", lang))}
+                      {ev.type === "sleep" && tr("sleep", lang)}
+                      {ev.type === "diaper" && (ev.diaperType ?? tr("diaper", lang))}
                     </span>
                   )}
                 </div>

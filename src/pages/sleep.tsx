@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/language-context";
+import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,6 +35,7 @@ export default function SleepPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { lang, dir } = useLanguage();
+  const { name } = usePerson();
   const today = format(new Date(), "yyyy-MM-dd");
 
   const [startTime, setStartTime] = useState("");
@@ -46,8 +48,8 @@ export default function SleepPage() {
 
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    if (activeSleep?.event?.startedAt) {
-      const start = new Date(activeSleep.event.startedAt).getTime();
+    if (activeSleep?.startedAt) {
+      const start = new Date(activeSleep.startedAt).getTime();
       setElapsed(Math.floor((Date.now() - start) / 1000));
       const interval = setInterval(() => {
         setElapsed(Math.floor((Date.now() - start) / 1000));
@@ -72,7 +74,7 @@ export default function SleepPage() {
     mutation: { onSuccess: () => { invalidateAll(); setLocation("/"); } },
   });
 
-  const isSleeping = !!activeSleep?.event;
+  const isSleeping = !!activeSleep;
   const autoDuration = computeMinutes(startTime, endTime);
 
   const handleSave = () => {
@@ -83,6 +85,7 @@ export default function SleepPage() {
         startedAt: timeToISO(startTime, base),
         endedAt: timeToISO(endTime, base),
         notes: notes || undefined,
+        loggedBy: name ?? null,
       },
     });
   };

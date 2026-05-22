@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/language-context";
+import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ export default function DiaperPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { lang, dir } = useLanguage();
+  const { name } = usePerson();
   const [diaperType, setDiaperType] = useState<"pee" | "poop" | "both" | null>(null);
   const [time, setTime] = useState(format(new Date(), "HH:mm"));
   const [notes, setNotes] = useState("");
@@ -106,7 +108,7 @@ export default function DiaperPage() {
         <Button
           onClick={() => {
             if (!diaperType) return;
-            logDiaper.mutate({ data: { diaperType, notes: notes || undefined, startedAt: timeToTodayISO(time) } });
+            logDiaper.mutate({ data: { diaperType, notes: notes || undefined, startedAt: timeToTodayISO(time), loggedBy: name ?? null } });
           }}
           disabled={logDiaper.isPending || !diaperType}
           data-testid="button-save-diaper"

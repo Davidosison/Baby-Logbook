@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "dark" | "light" | "system"
+type Theme = "dark" | "light" | "system" | "auto"
 
 type ThemeProviderProps = {
   children: React.ReactNode
@@ -11,6 +11,11 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme
   setTheme: (theme: Theme) => void
+}
+
+function getAutoTheme(): "dark" | "light" {
+  const h = new Date().getHours();
+  return h >= 6 && h < 20 ? "light" : "dark";
 }
 
 const initialState: ThemeProviderState = {
@@ -36,13 +41,19 @@ export function ThemeProvider({
     root.classList.remove("light", "dark")
 
     if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
       root.classList.add(systemTheme)
       return
+    }
+
+    if (theme === "auto") {
+      const apply = () => {
+        root.classList.remove("light", "dark")
+        root.classList.add(getAutoTheme())
+      }
+      apply()
+      const interval = setInterval(apply, 60_000)
+      return () => clearInterval(interval)
     }
 
     root.classList.add(theme)

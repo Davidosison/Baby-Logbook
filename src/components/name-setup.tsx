@@ -3,10 +3,11 @@ import { usePerson } from "@/contexts/person-context";
 import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
 import { UserCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function NameSetup() {
   const { name, knownNames, setName } = usePerson();
-  const { lang, dir } = useLanguage();
+  const { lang, dir, setLang } = useLanguage();
   const [showInput, setShowInput] = useState(false);
   const [input, setInput] = useState("");
 
@@ -16,6 +17,33 @@ export function NameSetup() {
     if (input.trim()) setName(input.trim());
   };
 
+  const LangPicker = () => (
+    <div className="flex gap-2 justify-center w-full">
+      <button
+        onClick={() => setLang("he")}
+        className={cn(
+          "flex-1 h-10 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+          lang === "he"
+            ? "bg-primary/10 border-primary text-primary"
+            : "bg-card border-border text-muted-foreground"
+        )}
+      >
+        🇮🇱 עברית
+      </button>
+      <button
+        onClick={() => setLang("ru")}
+        className={cn(
+          "flex-1 h-10 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+          lang === "ru"
+            ? "bg-primary/10 border-primary text-primary"
+            : "bg-card border-border text-muted-foreground"
+        )}
+      >
+        🇷🇺 Русский
+      </button>
+    </div>
+  );
+
   // No saved names yet — show plain text input
   if (knownNames.length === 0 || showInput) {
     return (
@@ -23,13 +51,15 @@ export function NameSetup() {
         className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center p-8"
         dir={dir}
       >
-        <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
+        <div className="w-full max-w-sm flex flex-col items-center gap-5 text-center">
           <div className="text-7xl">👶</div>
 
           <div>
             <h1 className="text-3xl font-bold mb-1">{tr("whoAreYou", lang)}</h1>
             <p className="text-sm text-muted-foreground">{tr("whoAreYouSub", lang)}</p>
           </div>
+
+          <LangPicker />
 
           <input
             autoFocus
@@ -69,13 +99,15 @@ export function NameSetup() {
       className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center p-8"
       dir={dir}
     >
-      <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
+      <div className="w-full max-w-sm flex flex-col items-center gap-5 text-center">
         <div className="text-7xl">👶</div>
 
         <div>
           <h1 className="text-3xl font-bold mb-1">{tr("whoIsLogging", lang)}</h1>
           <p className="text-sm text-muted-foreground">{tr("pickYourName", lang)}</p>
         </div>
+
+        <LangPicker />
 
         <div className="w-full flex flex-col gap-3">
           {knownNames.map((n) => (

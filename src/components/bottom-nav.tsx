@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, Settings, CalendarDays, UserCircle2 } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
@@ -185,11 +185,11 @@ export function BottomNav() {
             {/* Theme */}
             <div>
               <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">{tr("theme", lang)}</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setTheme("dark")}
                   className={cn(
-                    "h-14 rounded-2xl border-2 font-bold text-base transition-all active:scale-95 flex items-center justify-center gap-2",
+                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1",
                     theme === "dark"
                       ? "bg-primary/10 border-primary text-primary"
                       : "bg-background border-border text-muted-foreground"
@@ -199,9 +199,21 @@ export function BottomNav() {
                   {tr("dark", lang)}
                 </button>
                 <button
+                  onClick={() => setTheme("auto")}
+                  className={cn(
+                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1",
+                    theme === "auto"
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-background border-border text-muted-foreground"
+                  )}
+                >
+                  <SunMoon className="w-4 h-4" />
+                  {tr("autoTheme", lang)}
+                </button>
+                <button
                   onClick={() => setTheme("light")}
                   className={cn(
-                    "h-14 rounded-2xl border-2 font-bold text-base transition-all active:scale-95 flex items-center justify-center gap-2",
+                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1",
                     theme === "light"
                       ? "bg-primary/10 border-primary text-primary"
                       : "bg-background border-border text-muted-foreground"

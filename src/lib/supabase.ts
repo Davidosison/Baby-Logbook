@@ -15,6 +15,7 @@ export type EventRow = {
   diaper_type: string | null;
   notes: string | null;
   is_active: boolean;
+  logged_by: string | null;
   created_at: string;
 };
 
@@ -28,6 +29,7 @@ export type Event = {
   diaperType: string | null;
   notes: string | null;
   isActive: boolean;
+  loggedBy: string | null;
   createdAt: string;
 };
 
@@ -42,6 +44,7 @@ export function toEvent(row: EventRow): Event {
     diaperType: row.diaper_type,
     notes: row.notes,
     isActive: row.is_active,
+    loggedBy: (row as any).logged_by ?? null,
     createdAt: row.created_at,
   };
 }

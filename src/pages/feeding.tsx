@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/language-context";
+import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ export default function FeedingPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { lang, dir } = useLanguage();
+  const { name } = usePerson();
   const [amountMl, setAmountMl] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -86,6 +88,7 @@ export default function FeedingPage() {
         notes: notes || undefined,
         startedAt: startTime ? timeToTodayISO(startTime) : new Date().toISOString(),
         endedAt: endTime ? timeToTodayISO(endTime) : undefined,
+        loggedBy: name ?? null,
       },
     });
   };

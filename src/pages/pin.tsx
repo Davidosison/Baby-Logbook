@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useVerifyPin } from "@/lib/queries";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
+import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { motion } from "framer-motion";
 import { Moon } from "lucide-react";
@@ -12,11 +13,13 @@ export default function PinPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { lang, dir } = useLanguage();
+  const { clearName } = usePerson();
 
   const verifyPin = useVerifyPin({
     mutation: {
       onSuccess: (data) => {
         if (data.success) {
+          clearName(); // Reset so name picker shows after every login
           setLocation("/");
         } else {
           setPin("");
@@ -73,6 +76,7 @@ export default function PinPage() {
             onClick={() => handleKeyPress(num)}
             disabled={verifyPin.isPending}
             data-testid={`pin-button-${num}`}
+            style={{ touchAction: "manipulation" }}
             className="w-full aspect-square rounded-full bg-card border border-border text-2xl font-medium active:bg-accent transition-colors flex items-center justify-center active:scale-95"
           >
             {num}
@@ -83,7 +87,8 @@ export default function PinPage() {
           onClick={() => handleKeyPress(0)}
           disabled={verifyPin.isPending}
           data-testid="pin-button-0"
-          className="w-full aspect-square rounded-full bg-card border border-border text-2xl font-medium active:bg-accent transition-colors flex items-center justify-center active:scale-95"
+          style={{ touchAction: "manipulation" }}
+            className="w-full aspect-square rounded-full bg-card border border-border text-2xl font-medium active:bg-accent transition-colors flex items-center justify-center active:scale-95"
         >
           0
         </button>
@@ -91,6 +96,7 @@ export default function PinPage() {
           onClick={handleDelete}
           disabled={verifyPin.isPending}
           data-testid="pin-button-delete"
+          style={{ touchAction: "manipulation" }}
           className="w-full aspect-square rounded-full text-base font-medium active:bg-accent/50 transition-colors flex items-center justify-center text-muted-foreground"
         >
           {tr("deleteKey", lang)}

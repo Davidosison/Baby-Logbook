@@ -32,6 +32,7 @@ type EventItem = {
   diaperType?: string | null;
   notes?: string | null;
   isActive: boolean;
+  loggedBy?: string | null;
 };
 
 function EventIcon({ type, className }: { type: string; className?: string }) {
@@ -109,7 +110,7 @@ function EditSheet({
         {/* Feeding */}
         {event.type === "feeding" && (
           <>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-2">
                   {tr("startTime", lang)}
@@ -118,7 +119,7 @@ function EditSheet({
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="h-12 border-border bg-background"
+                  className="w-full h-12 border-border bg-background"
                 />
               </div>
               <div>
@@ -129,7 +130,7 @@ function EditSheet({
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="h-12 border-border bg-background"
+                  className="w-full h-12 border-border bg-background"
                 />
               </div>
             </div>
@@ -151,7 +152,7 @@ function EditSheet({
 
         {/* Sleep */}
         {event.type === "sleep" && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-2">
                 {tr("startTime", lang)}
@@ -160,7 +161,7 @@ function EditSheet({
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="h-12 border-border bg-background"
+                className="w-full h-12 border-border bg-background"
               />
             </div>
             <div>
@@ -171,7 +172,7 @@ function EditSheet({
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="h-12 border-border bg-background"
+                className="w-full h-12 border-border bg-background"
               />
             </div>
           </div>
@@ -336,7 +337,14 @@ export default function HistoryPage() {
                         {format(new Date(event.startedAt), "HH:mm")}
                         {event.endedAt ? `–${format(new Date(event.endedAt), "HH:mm")}` : ""}
                       </span>
-                      <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
+                      <div className="flex items-center gap-1.5">
+                        {event.loggedBy && (
+                          <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+                            👤 {event.loggedBy}
+                          </span>
+                        )}
+                        <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
+                      </div>
                     </div>
                     <div className={cn("text-xs text-muted-foreground truncate mt-0.5", dir === "rtl" ? "text-right" : "text-left")}>
                       {event.type === "feeding" && (

@@ -74,7 +74,7 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="newborn-tracker-theme">
+    <ThemeProvider defaultTheme="auto" storageKey="newborn-tracker-theme">
       <LanguageProvider>
       <PersonProvider>
         <QueryClientProvider client={queryClient}>

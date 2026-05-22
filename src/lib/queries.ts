@@ -19,6 +19,27 @@ export function getGetAuthStatusQueryKey() {
   return ["auth-status"] as const;
 }
 
+async function hashPin(pin: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const buf = await crypto.subtle.digest("SHA-256", encoder.encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Safe insert: if the DB is missing logged_by column, retry without it
+async function safeInsert(table: string, payload: Record<string, unknown>) {
+  const { data, error } = await supabase.from(table).insert(payload).select().single();
+  if (error) {
+    if ((error.code === "42703" || error.message?.includes("logged_by")) && "logged_by" in payload) {
+      const { logged_by: _lb, ...rest } = payload;
+      const { data: d2, error: e2 } = await supabase.from(table).insert(rest).select().single();
+      if (e2) throw e2;
+      return d2;
+    }
+    throw error;
+  }
+  return data;
+}
+
 export function useGetAuthStatus(options?: {
   query?: Partial<UseQueryOptions<{ authenticated: boolean; babyName: string; babyBirthDate: string }>>;
 }) {
@@ -26,8 +47,8 @@ export function useGetAuthStatus(options?: {
     queryKey: getGetAuthStatusQueryKey(),
     queryFn: () => ({
       authenticated: isAuthenticated(),
-      babyName: "Adam",
-      babyBirthDate: "2026-05-05",
+      babyName: (import.meta.env.VITE_BABY_NAME as string) || "אדם",
+      babyBirthDate: (import.meta.env.VITE_BABY_BIRTH_DATE as string) || "2026-05-05",
     }),
     staleTime: Infinity,
     ...options?.query,
@@ -41,8 +62,15 @@ export function useVerifyPin(options?: {
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
     mutationFn: async ({ data: { pin } }: { data: { pin: string } }) => {
-      const familyPin = import.meta.env.VITE_FAMILY_PIN as string;
-      const success = pin === familyPin;
+      const pinHash = import.meta.env.VITE_FAMILY_PIN_HASH as string | undefined;
+      let success: boolean;
+      if (pinHash) {
+        const entered = await hashPin(pin);
+        success = entered === pinHash;
+      } else {
+        // Legacy fallback – plain comparison
+        success = pin === (import.meta.env.VITE_FAMILY_PIN as string);
+      }
       if (success) localStorage.setItem(AUTH_KEY, "true");
       return { success };
     },
@@ -261,7 +289,7 @@ function invalidateEventCaches(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["daily-summary"] });
 }
 
-type FeedingInput = { startedAt: string; endedAt?: string | null; durationMinutes?: number | null; amountMl?: number | null; notes?: string | null };
+type FeedingInput = { startedAt: string; endedAt?: string | null; durationMinutes?: number | null; amountMl?: number | null; notes?: string | null; loggedBy?: string | null };
 
 export function useLogFeeding(options?: {
   mutation?: UseMutationOptions<Event, Error, { data: FeedingInput }>;
@@ -270,20 +298,16 @@ export function useLogFeeding(options?: {
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
     mutationFn: async ({ data }: { data: FeedingInput }) => {
-      const { data: row, error } = await supabase
-        .from("events")
-        .insert({
-          type: "feeding",
-          started_at: data.startedAt,
-          ended_at: data.endedAt ?? null,
-          duration_minutes: data.durationMinutes ?? null,
-          amount_ml: data.amountMl ?? null,
-          notes: data.notes ?? null,
-          is_active: false,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const row = await safeInsert("events", {
+        type: "feeding",
+        started_at: data.startedAt,
+        ended_at: data.endedAt ?? null,
+        duration_minutes: data.durationMinutes ?? null,
+        amount_ml: data.amountMl ?? null,
+        notes: data.notes ?? null,
+        is_active: false,
+        logged_by: data.loggedBy ?? null,
+      });
       return toEvent(row as EventRow);
     },
     onSuccess: (data, vars, ctx) => {
@@ -294,7 +318,7 @@ export function useLogFeeding(options?: {
   });
 }
 
-type SleepInput = { startedAt: string; endedAt?: string | null; durationMinutes?: number | null; notes?: string | null };
+type SleepInput = { startedAt: string; endedAt?: string | null; durationMinutes?: number | null; notes?: string | null; loggedBy?: string | null };
 
 export function useLogSleep(options?: {
   mutation?: UseMutationOptions<Event, Error, { data: SleepInput }>;
@@ -308,19 +332,15 @@ export function useLogSleep(options?: {
       const durationMinutes =
         data.durationMinutes ??
         (endedAt ? Math.round((endedAt.getTime() - startedAt.getTime()) / 60000) : null);
-      const { data: row, error } = await supabase
-        .from("events")
-        .insert({
-          type: "sleep",
-          started_at: data.startedAt,
-          ended_at: data.endedAt ?? null,
-          duration_minutes: durationMinutes,
-          notes: data.notes ?? null,
-          is_active: false,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const row = await safeInsert("events", {
+        type: "sleep",
+        started_at: data.startedAt,
+        ended_at: data.endedAt ?? null,
+        duration_minutes: durationMinutes,
+        notes: data.notes ?? null,
+        is_active: false,
+        logged_by: data.loggedBy ?? null,
+      });
       return toEvent(row as EventRow);
     },
     onSuccess: (data, vars, ctx) => {
@@ -331,18 +351,18 @@ export function useLogSleep(options?: {
   });
 }
 
-export function useStartSleep(options?: { mutation?: UseMutationOptions<Event, Error, void> }) {
+export function useStartSleep(options?: { mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }> }) {
   const queryClient = useQueryClient();
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ loggedBy }: { loggedBy?: string | null } = {}) => {
       await supabase.from("events").update({ is_active: false }).eq("type", "sleep").eq("is_active", true);
-      const { data: row, error } = await supabase
-        .from("events")
-        .insert({ type: "sleep", started_at: new Date().toISOString(), is_active: true })
-        .select()
-        .single();
-      if (error) throw error;
+      const row = await safeInsert("events", {
+        type: "sleep",
+        started_at: new Date().toISOString(),
+        is_active: true,
+        logged_by: loggedBy ?? null,
+      });
       return toEvent(row as EventRow);
     },
     onSuccess: (data, vars, ctx) => {
@@ -390,7 +410,7 @@ export function useStopSleep(options?: { mutation?: UseMutationOptions<Event, Er
   });
 }
 
-type DiaperInput = { diaperType: "pee" | "poop" | "both"; notes?: string | null; startedAt?: string };
+type DiaperInput = { diaperType: "pee" | "poop" | "both"; notes?: string | null; startedAt?: string; loggedBy?: string | null };
 
 export function useLogDiaper(options?: {
   mutation?: UseMutationOptions<Event, Error, { data: DiaperInput }>;
@@ -399,18 +419,14 @@ export function useLogDiaper(options?: {
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
     mutationFn: async ({ data }: { data: DiaperInput }) => {
-      const { data: row, error } = await supabase
-        .from("events")
-        .insert({
-          type: "diaper",
-          started_at: data.startedAt ?? new Date().toISOString(),
-          diaper_type: data.diaperType,
-          notes: data.notes ?? null,
-          is_active: false,
-        })
-        .select()
-        .single();
-      if (error) throw error;
+      const row = await safeInsert("events", {
+        type: "diaper",
+        started_at: data.startedAt ?? new Date().toISOString(),
+        diaper_type: data.diaperType,
+        notes: data.notes ?? null,
+        is_active: false,
+        logged_by: data.loggedBy ?? null,
+      });
       return toEvent(row as EventRow);
     },
     onSuccess: (data, vars, ctx) => {

@@ -22,6 +22,7 @@ const t = {
   logEvent: { he: "תיעוד אירוע", ru: "Записать" },
   time: { he: "שעה", ru: "Время" },
   dark: { he: "כהה", ru: "Тёмная" },
+  autoTheme: { he: "אוטו", ru: "Авто" },
   light: { he: "בהיר", ru: "Светлая" },
   hebrew: { he: "עברית", ru: "Иврит" },
   russian: { he: "רוסית", ru: "Русский" },
