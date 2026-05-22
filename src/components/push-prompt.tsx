@@ -5,14 +5,17 @@ import { tr } from "@/lib/translations";
 import { Bell, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const DISMISSED_KEY = "push-prompt-dismissed";
+
 export function PushPrompt() {
   const { permission, isSubscribed, requestPermission } = usePushNotifications();
   const { lang, dir } = useLanguage();
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => !!localStorage.getItem(DISMISSED_KEY));
   const [loading, setLoading] = useState(false);
   const [justEnabled, setJustEnabled] = useState(false);
 
   if (permission === "unsupported" || permission === "denied") return null;
+  if (permission === "granted") return null;
   if (dismissed) return null;
   if (isSubscribed && !justEnabled) return null;
 
@@ -22,7 +25,10 @@ export function PushPrompt() {
     setLoading(false);
     if (success) {
       setJustEnabled(true);
-      setTimeout(() => setDismissed(true), 2500);
+      setTimeout(() => {
+        localStorage.setItem(DISMISSED_KEY, "1");
+        setDismissed(true);
+      }, 2500);
     }
   };
 
@@ -64,7 +70,7 @@ export function PushPrompt() {
                 {loading ? "..." : tr("enable", lang)}
               </button>
               <button
-                onClick={() => setDismissed(true)}
+                onClick={() => { localStorage.setItem(DISMISSED_KEY, "1"); setDismissed(true); }}
                 data-testid="button-dismiss-push"
                 className="text-muted-foreground p-1 rounded-full hover:bg-accent transition-colors shrink-0"
               >
