@@ -87,7 +87,7 @@ export default function DiaperPage() {
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="h-10 text-sm border-border bg-background px-2"
+            className="w-full h-12 text-base border-border bg-background"
             data-testid="input-diaper-time"
           />
         </div>

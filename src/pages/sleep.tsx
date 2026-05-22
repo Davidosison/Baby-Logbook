@@ -132,7 +132,7 @@ export default function SleepPage() {
           <p className="text-sm font-semibold text-muted-foreground">{tr("manualEntry", lang)}</p>
 
           {/* Start / End time row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-2">
                 {tr("startTime", lang)}
@@ -141,7 +141,7 @@ export default function SleepPage() {
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="h-12 text-base border-border bg-background"
+                className="w-full h-12 text-base border-border bg-background"
                 data-testid="input-sleep-start"
               />
             </div>
@@ -153,7 +153,7 @@ export default function SleepPage() {
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="h-12 text-base border-border bg-background"
+                className="w-full h-12 text-base border-border bg-background"
                 data-testid="input-sleep-end"
               />
             </div>
