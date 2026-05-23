@@ -28,9 +28,12 @@ export default function BathPage() {
   const [notes, setNotes] = useState("");
   const [showVitaminD, setShowVitaminD] = useState(false);
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const logBath = useLogBath({
     mutation: {
       onSuccess: () => {
+        setSaveError(null);
         const today = format(new Date(), "yyyy-MM-dd");
         queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
@@ -40,6 +43,11 @@ export default function BathPage() {
         } else {
           setLocation("/");
         }
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { message?: string })?.message ?? String(err);
+        setSaveError(msg);
+        console.error("Bath save error:", err);
       },
     },
   });
@@ -83,14 +91,21 @@ export default function BathPage() {
           />
         </div>
 
+        {saveError && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm rounded-2xl p-3 text-center">
+            {saveError}
+          </div>
+        )}
+
         <Button
-          onClick={() =>
-            logBath.mutate({ data: { notes: notes || undefined, startedAt: timeToTodayISO(time), loggedBy: name ?? null } })
-          }
+          onClick={() => {
+            setSaveError(null);
+            logBath.mutate({ data: { notes: notes || undefined, startedAt: timeToTodayISO(time), loggedBy: name ?? null } });
+          }}
           disabled={logBath.isPending}
           className="w-full h-16 text-lg font-bold rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-xl shadow-teal-400/20 active:scale-95 transition-transform"
         >
-          {tr("saveBath", lang)}
+          {logBath.isPending ? "..." : tr("saveBath", lang)}
         </Button>
       </div>
 
