@@ -36,7 +36,7 @@ export default function DiaperPage() {
         queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey({ date: today }) });
-        if (new Date().getHours() >= 19) {
+        if (new Date().getHours() >= 18) {
           setShowVitaminD(true);
         } else {
           setLocation("/");
