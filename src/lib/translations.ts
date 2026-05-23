@@ -33,6 +33,7 @@ const t = {
   feeding: { he: "האכלה", ru: "Кормление" },
   sleep: { he: "שינה", ru: "Сон" },
   diaper: { he: "טיטול", ru: "Подгузник" },
+  bath: { he: "מקלחת", ru: "Купание" },
 
   // Dashboard
   summary: { he: "סיכום", ru: "Сводка" },
@@ -81,6 +82,19 @@ const t = {
   // Diaper page
   exDiaperNotes: { he: "לדוגמה: הפריחה נראית טוב יותר...", ru: "Например: сыпь выглядит лучше..." },
   saveDiaper: { he: "שמור טיטול", ru: "Сохранить" },
+
+  // Bath page
+  saveBath: { he: "שמור מקלחת", ru: "Сохранить купание" },
+  bathNotes: { he: "לדוגמה: שמפו חדש...", ru: "Например: новый шампунь..." },
+
+  // Vitamin D reminder
+  vitaminDTitle: { he: "💊 תזכורת ויטמין D", ru: "💊 Напоминание — витамин D" },
+  vitaminDBody: { he: "אל תשכח לתת לאדם טיפה אחת של ויטמין D לפני השינה", ru: "Не забудь дать Адаму каплю витамина D перед сном" },
+  vitaminDOk: { he: "הבנתי 👍", ru: "Понял 👍" },
+
+  // Feeding timer (dashboard banner)
+  feedingActive: { he: "האכלה פעילה", ru: "Идёт кормление" },
+  goToFeeding: { he: "לדף האכלה ←", ru: "К кормлению ←" },
 
   // History page
   loadingHistory: { he: "טוען היסטוריה...", ru: "Загрузка истории..." },

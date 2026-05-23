@@ -364,7 +364,7 @@ function Legend({ lang }: { lang: "he" | "ru" }) {
 // ─── Schedule Page ────────────────────────────────────────────────────────────
 export default function SchedulePage() {
   const { lang, dir } = useLanguage();
-  const [tab, setTab] = useState<"weekly" | "daily">("weekly");
+  const [tab, setTab] = useState<"weekly" | "daily">("daily");
 
   const today = new Date();
   const endDate = format(today, "yyyy-MM-dd");

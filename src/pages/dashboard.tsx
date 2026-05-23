@@ -7,16 +7,20 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Share2, StopCircle, RefreshCw } from "lucide-react";
+import { Droplet, Moon, Utensils, Share2, StopCircle, RefreshCw, Timer, Bath } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
 
 function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "feeding") return <Utensils className={cn("w-4 h-4", className)} />;
   if (type === "sleep") return <Moon className={cn("w-4 h-4", className)} />;
   if (type === "diaper") return <Droplet className={cn("w-4 h-4", className)} />;
+  if (type === "bath") return <Bath className={cn("w-4 h-4", className)} />;
   return null;
 }
+
+const FEEDING_TIMER_KEY = "baby-feeding-timer-start";
 
 export default function DashboardPage() {
   const { lang, dir } = useLanguage();
@@ -25,6 +29,7 @@ export default function DashboardPage() {
   const dateLocale = lang === "he" ? he : ru;
   const queryClient = useQueryClient();
 
+  // ── Sleep timer ──────────────────────────────────────────────────────────────
   const { data: activeSleep } = useGetActiveSleep({
     query: { queryKey: getGetActiveSleepQueryKey() },
   });
@@ -51,7 +56,7 @@ export default function DashboardPage() {
     },
   });
 
-  const formatSleepTime = (secs: number) => {
+  const formatTimer = (secs: number) => {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
     const s = secs % 60;
@@ -59,6 +64,33 @@ export default function DashboardPage() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
+  // ── Feeding timer (localStorage) ─────────────────────────────────────────────
+  const [feedingTimerStart, setFeedingTimerStart] = useState<string | null>(
+    () => localStorage.getItem(FEEDING_TIMER_KEY)
+  );
+  const [feedingElapsed, setFeedingElapsed] = useState(0);
+
+  useEffect(() => {
+    const sync = () => setFeedingTimerStart(localStorage.getItem(FEEDING_TIMER_KEY));
+    window.addEventListener("baby-feeding-timer-change", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("baby-feeding-timer-change", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (feedingTimerStart) {
+      const start = new Date(feedingTimerStart).getTime();
+      setFeedingElapsed(Math.floor((Date.now() - start) / 1000));
+      const iv = setInterval(() => setFeedingElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+      return () => clearInterval(iv);
+    }
+    return undefined;
+  }, [feedingTimerStart]);
+
+  // ── Data ─────────────────────────────────────────────────────────────────────
   const { data: events, isLoading: isLoadingEvents, refetch: refetchEvents } = useListEvents(
     { date: today },
     { query: { queryKey: getListEventsQueryKey({ date: today }) } },
@@ -88,11 +120,8 @@ export default function DashboardPage() {
       tr("shareFooter", lang),
     ];
     const text = lines.join("\n");
-    if (navigator.share) {
-      navigator.share({ text });
-    } else {
-      navigator.clipboard.writeText(text);
-    }
+    if (navigator.share) navigator.share({ text });
+    else navigator.clipboard.writeText(text);
   };
 
   const getRecentText = (mins: number | null | undefined) => {
@@ -108,6 +137,7 @@ export default function DashboardPage() {
     if (type === "feeding") return tr("feeding", lang);
     if (type === "sleep") return tr("sleep", lang);
     if (type === "diaper") return tr("diaper", lang);
+    if (type === "bath") return tr("bath", lang);
     return type;
   };
 
@@ -122,27 +152,26 @@ export default function DashboardPage() {
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden" dir={dir}>
       <PageHeader hebrewTitle="יומן אדם" russianTitle="Журнал Адама" />
 
-      {/* Main content — fills space between header and bottom nav */}
+      {/* Main content — scrollable so banners never push cards off-screen */}
       <div
-        className="flex-1 flex flex-col overflow-hidden px-3 pt-2 gap-2 min-h-0"
+        className="flex-1 overflow-y-auto px-3 pt-2 space-y-2"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
       >
-
         {/* Hello */}
         {name && (
-          <p className="text-sm font-semibold text-primary shrink-0" dir={dir}>
+          <p className="text-sm font-semibold text-primary" dir={dir}>
             {tr("helloName", lang, name)}
           </p>
         )}
 
         {/* Live sleep banner */}
         {activeSleep && (
-          <div className="bg-indigo-500/10 border-2 border-indigo-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3 shrink-0" dir={dir}>
+          <div className="bg-indigo-500/10 border-2 border-indigo-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
             <Moon className="w-6 h-6 text-indigo-400 shrink-0 animate-pulse" />
             <div className="flex-1 min-w-0">
               <div className="font-bold text-indigo-600 dark:text-indigo-400 text-xs leading-none mb-0.5">{tr("sleepingNow", lang)}</div>
               <div className="text-2xl font-mono font-bold tabular-nums text-indigo-600 dark:text-indigo-400 leading-none">
-                {formatSleepTime(sleepElapsed)}
+                {formatTimer(sleepElapsed)}
               </div>
             </div>
             <button
@@ -156,8 +185,26 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Live feeding timer banner */}
+        {feedingTimerStart && (
+          <div className="bg-sky-400/10 border-2 border-sky-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
+            <Timer className="w-6 h-6 text-sky-400 shrink-0 animate-pulse" />
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-sky-600 dark:text-sky-400 text-xs leading-none mb-0.5">{tr("feedingActive", lang)}</div>
+              <div className="text-2xl font-mono font-bold tabular-nums text-sky-600 dark:text-sky-400 leading-none">
+                {formatTimer(feedingElapsed)}
+              </div>
+            </div>
+            <Link href="/feeding">
+              <button className="shrink-0 h-10 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-transform">
+                {tr("goToFeeding", lang)}
+              </button>
+            </Link>
+          </div>
+        )}
+
         {/* Recent Activity Cards */}
-        <div className="grid grid-cols-3 gap-2 shrink-0">
+        <div className="grid grid-cols-3 gap-2">
           {(["feeding", "sleep", "diaper"] as const).map((type) => {
             const minsAgo =
               type === "feeding" ? recent?.lastFeedingMinutesAgo
@@ -179,7 +226,7 @@ export default function DashboardPage() {
 
         {/* Daily Progress */}
         {summary && (
-          <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-sm shrink-0">
+          <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between mb-2.5">
               <button
                 onClick={handleShare}
@@ -206,9 +253,9 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Timeline — fills remaining space, scrolls internally */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex items-center justify-between mb-2 shrink-0" dir={dir}>
+        {/* Today's Timeline */}
+        <div>
+          <div className="flex items-center justify-between mb-2" dir={dir}>
             <button onClick={handleRefresh} data-testid="button-refresh" className="flex items-center gap-1 text-xs text-primary font-medium active:opacity-50">
               <RefreshCw className="w-3 h-3" />
               {tr("refresh", lang)}
@@ -216,7 +263,7 @@ export default function DashboardPage() {
             <h3 className="font-semibold text-sm">{tr("todayTimeline", lang)}</h3>
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0 space-y-2">
+          <div className="space-y-2">
             {isLoadingEvents && (
               <div className="text-center text-muted-foreground py-6 animate-pulse text-sm">{tr("loading", lang)}</div>
             )}
@@ -225,7 +272,6 @@ export default function DashboardPage() {
                 {tr("noEventsToday", lang)}
               </div>
             )}
-
             {events?.map((event) => (
               <div key={event.id} className="bg-card border border-border rounded-2xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
                 <div className={cn(
@@ -233,6 +279,7 @@ export default function DashboardPage() {
                   event.type === "feeding" && "text-sky-400",
                   event.type === "sleep" && "text-indigo-400",
                   event.type === "diaper" && "text-amber-400",
+                  event.type === "bath" && "text-teal-400",
                 )}>
                   <EventIcon type={event.type} />
                 </div>

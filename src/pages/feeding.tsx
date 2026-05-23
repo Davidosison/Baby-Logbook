@@ -37,27 +37,46 @@ export default function FeedingPage() {
   const [endTime, setEndTime] = useState("");
   const [notes, setNotes] = useState("");
 
-  const [timerActive, setTimerActive] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
+  const TIMER_KEY = "baby-feeding-timer-start";
+  const notifyTimerChange = () => window.dispatchEvent(new Event("baby-feeding-timer-change"));
+
+  // Restore timer from localStorage on mount
+  const [timerActive, setTimerActive] = useState(() => !!localStorage.getItem(TIMER_KEY));
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    const stored = localStorage.getItem(TIMER_KEY);
+    return stored ? Math.floor((Date.now() - new Date(stored).getTime()) / 1000) : 0;
+  });
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const autoDuration = computeAutoMinutes(startTime, endTime);
 
+  // Restore startTime from localStorage on mount
   useEffect(() => {
+    const stored = localStorage.getItem(TIMER_KEY);
+    if (stored) {
+      setStartTime(format(new Date(stored), "HH:mm"));
+      const start = new Date(stored).getTime();
+      timerRef.current = setInterval(() => setTimerSeconds(Math.floor((Date.now() - start) / 1000)), 1000);
+    }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
   const startTimer = () => {
     const now = new Date();
+    localStorage.setItem(TIMER_KEY, now.toISOString());
+    notifyTimerChange();
     setStartTime(format(now, "HH:mm"));
     setEndTime("");
     setTimerSeconds(0);
     setTimerActive(true);
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setTimerSeconds((s) => s + 1), 1000);
   };
 
   const stopTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    localStorage.removeItem(TIMER_KEY);
+    notifyTimerChange();
     setEndTime(format(new Date(), "HH:mm"));
     setTimerActive(false);
   };
@@ -71,6 +90,8 @@ export default function FeedingPage() {
   const logFeeding = useLogFeeding({
     mutation: {
       onSuccess: () => {
+        localStorage.removeItem(TIMER_KEY);
+        notifyTimerChange();
         const today = format(new Date(), "yyyy-MM-dd");
         queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });

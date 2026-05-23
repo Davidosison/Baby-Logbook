@@ -449,6 +449,32 @@ export function useLogDiaper(options?: {
   });
 }
 
+type BathInput = { notes?: string | null; startedAt?: string; loggedBy?: string | null };
+
+export function useLogBath(options?: {
+  mutation?: UseMutationOptions<Event, Error, { data: BathInput }>;
+}) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
+  return useMutation({
+    mutationFn: async ({ data }: { data: BathInput }) => {
+      const row = await safeInsert("events", {
+        type: "bath",
+        started_at: data.startedAt ?? new Date().toISOString(),
+        notes: data.notes ?? null,
+        is_active: false,
+        logged_by: data.loggedBy ?? null,
+      });
+      return toEvent(row as EventRow);
+    },
+    onSuccess: (data, vars, ctx) => {
+      invalidateEventCaches(queryClient);
+      userOnSuccess?.(data, vars, ctx);
+    },
+    ...restOpts,
+  });
+}
+
 export function useUpdateEvent(options?: {
   mutation?: UseMutationOptions<Event, Error, { id: number; data: Record<string, unknown> }>;
 }) {

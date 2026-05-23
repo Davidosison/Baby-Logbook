@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
@@ -61,31 +61,39 @@ export function BottomNav() {
                 <Plus className="w-8 h-8" />
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[50vh] rounded-t-[2rem] bg-card border-border flex flex-col p-6" dir={dir}>
+            <SheetContent side="bottom" className="rounded-t-[2rem] bg-card border-border flex flex-col p-6" dir={dir}>
               <VisuallyHidden>
                 <SheetTitle>{tr("logEvent", lang)}</SheetTitle>
               </VisuallyHidden>
-              <div className="flex-1 flex flex-col justify-center gap-4">
+              <div className="flex-1 flex flex-col justify-center gap-3 py-4">
                 <Link href="/feeding" data-testid="nav-feeding"
                   onClick={() => setAddOpen(false)}
                   className="w-full flex items-center bg-sky-400/10 hover:bg-sky-400/20 text-sky-600 dark:text-sky-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
-                    <div className="text-2xl font-bold">{tr("feeding", lang)}</div>
+                    <div className="text-xl font-bold">{tr("feeding", lang)}</div>
                   </div>
                 </Link>
                 <Link href="/sleep" data-testid="nav-sleep"
                   onClick={() => setAddOpen(false)}
                   className="w-full flex items-center bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
-                    <div className="text-2xl font-bold">{tr("sleep", lang)}</div>
+                    <div className="text-xl font-bold">{tr("sleep", lang)}</div>
                   </div>
                 </Link>
                 <Link href="/diaper" data-testid="nav-diaper"
                   onClick={() => setAddOpen(false)}
                   className="w-full flex items-center bg-amber-400/10 hover:bg-amber-400/20 text-amber-600 dark:text-amber-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
-                    <div className="text-2xl font-bold">{tr("diaper", lang)}</div>
+                    <div className="text-xl font-bold">{tr("diaper", lang)}</div>
                   </div>
+                </Link>
+                <Link href="/bath" data-testid="nav-bath"
+                  onClick={() => setAddOpen(false)}
+                  className="w-full flex items-center bg-teal-400/10 hover:bg-teal-400/20 text-teal-600 dark:text-teal-400 p-4 rounded-2xl transition-colors">
+                  <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
+                    <div className="text-xl font-bold">{tr("bath", lang)}</div>
+                  </div>
+                  <Bath className="w-5 h-5 opacity-60" />
                 </Link>
               </div>
             </SheetContent>
