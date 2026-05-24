@@ -11,6 +11,10 @@ import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+
+const VITAMIN_D_KEY = "vitamin-d-remind";
+const notifyVitaminD = () => window.dispatchEvent(new Event("vitamin-d-remind-change"));
 
 function timeToTodayISO(timeStr: string): string {
   const [h, m] = timeStr.split(":").map(Number);
@@ -90,13 +94,21 @@ export default function DiaperPage() {
           <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
             {tr("time", lang)}
           </label>
-          <Input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="w-full h-12 text-base border-border bg-background"
-            data-testid="input-diaper-time"
-          />
+          <div className="flex gap-2">
+            <Input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="flex-1 h-12 text-base border-border bg-background"
+              data-testid="input-diaper-time"
+            />
+            <button
+              onClick={() => setTime(format(new Date(), "HH:mm"))}
+              className="h-12 w-12 rounded-xl border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-transform shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div>
@@ -132,12 +144,29 @@ export default function DiaperPage() {
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
               {tr("vitaminDBody", lang)}
             </p>
-            <Button
-              onClick={() => setLocation("/")}
-              className="w-full h-12 rounded-2xl font-bold"
-            >
-              {tr("vitaminDOk", lang)}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  localStorage.removeItem(VITAMIN_D_KEY);
+                  notifyVitaminD();
+                  setLocation("/");
+                }}
+                className="w-full h-12 rounded-2xl font-bold"
+              >
+                {tr("vitaminDGave", lang)}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  localStorage.setItem(VITAMIN_D_KEY, "true");
+                  notifyVitaminD();
+                  setLocation("/");
+                }}
+                className="w-full h-12 rounded-2xl font-bold"
+              >
+                {tr("vitaminDRemindLater", lang)}
+              </Button>
+            </div>
           </div>
         </div>
       )}

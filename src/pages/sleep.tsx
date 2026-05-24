@@ -14,12 +14,17 @@ import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
-import { Moon, StopCircle, PlayCircle } from "lucide-react";
+import { Moon, StopCircle, PlayCircle, X } from "lucide-react";
 
-function timeToISO(timeStr: string, baseDate: Date): string {
+function timeToISO(timeStr: string, baseDate: Date, refTimeStr?: string): string {
   const [h, m] = timeStr.split(":").map(Number);
   const d = new Date(baseDate);
   d.setHours(h!, m!, 0, 0);
+  // If this time is before the reference time it means it crossed midnight → next day
+  if (refTimeStr) {
+    const [rh, rm] = refTimeStr.split(":").map(Number);
+    if (h! * 60 + m! < rh! * 60 + rm!) d.setDate(d.getDate() + 1);
+  }
   return d.toISOString();
 }
 
@@ -27,7 +32,8 @@ function computeMinutes(start: string, end: string): number | null {
   if (!start || !end) return null;
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
-  const diff = (eh! * 60 + em!) - (sh! * 60 + sm!);
+  let diff = (eh! * 60 + em!) - (sh! * 60 + sm!);
+  if (diff < 0) diff += 24 * 60; // crosses midnight
   return diff > 0 ? diff : null;
 }
 
@@ -87,7 +93,7 @@ export default function SleepPage() {
     logSleep.mutate({
       data: {
         startedAt: timeToISO(startTime, base),
-        endedAt: timeToISO(endTime, base),
+        endedAt: timeToISO(endTime, base, startTime), // pass startTime so we detect midnight crossing
         notes: notes || undefined,
         loggedBy: name ?? null,
       },
@@ -169,25 +175,39 @@ export default function SleepPage() {
               <label className="block text-xs font-semibold text-muted-foreground mb-2">
                 {tr("startTime", lang)}
               </label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-full h-12 text-base border-border bg-background"
-                data-testid="input-sleep-start"
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="flex-1 h-12 text-base border-border bg-background"
+                  data-testid="input-sleep-start"
+                />
+                {startTime && (
+                  <button onClick={() => setStartTime("")} className="h-12 w-12 rounded-xl border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-transform shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-2">
                 {tr("endTime", lang)}
               </label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="w-full h-12 text-base border-border bg-background"
-                data-testid="input-sleep-end"
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="flex-1 h-12 text-base border-border bg-background"
+                  data-testid="input-sleep-end"
+                />
+                {endTime && (
+                  <button onClick={() => setEndTime("")} className="h-12 w-12 rounded-xl border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-transform shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

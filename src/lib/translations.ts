@@ -91,6 +91,9 @@ const t = {
   vitaminDTitle: { he: "💊 תזכורת ויטמין D", ru: "💊 Напоминание — витамин D" },
   vitaminDBody: { he: "אל תשכח לתת לאדם טיפה אחת של ויטמין D לפני השינה", ru: "Не забудь дать Адаму каплю витамина D перед сном" },
   vitaminDOk: { he: "הבנתי 👍", ru: "Понял 👍" },
+  vitaminDGave: { he: "נתתי לו ✓", ru: "Дал(а) ✓" },
+  vitaminDRemindLater: { he: "תזכיר לי אח״כ", ru: "Напомни позже" },
+  vitaminDReminderBanner: { he: "⏰ תזכורת: ויטמין D לאדם", ru: "⏰ Напоминание: витамин D для Адама" },
 
   // Feeding timer (dashboard banner)
   feedingActive: { he: "האכלה פעילה", ru: "Идёт кормление" },

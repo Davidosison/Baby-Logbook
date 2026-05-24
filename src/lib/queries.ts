@@ -247,6 +247,89 @@ export function useGetDailySummary(
   });
 }
 
+export function getGetActiveFeedingQueryKey() {
+  return ["active-feeding"] as const;
+}
+
+export function useGetActiveFeeding(options?: { query?: Partial<UseQueryOptions<Event | null>> }) {
+  const { queryKey: _userKey, ...restOpts } = options?.query ?? {};
+  return useQuery({
+    queryKey: getGetActiveFeedingQueryKey(),
+    refetchInterval: 10_000, // poll every 10s so all users stay in sync
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("type", "feeding")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? toEvent(data as EventRow) : null;
+    },
+    ...restOpts,
+  });
+}
+
+export function useStartFeeding(options?: { mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }> }) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
+  return useMutation({
+    mutationFn: async ({ loggedBy }: { loggedBy?: string | null } = {}) => {
+      await getSupabase().from("events").update({ is_active: false }).eq("type", "feeding").eq("is_active", true);
+      const row = await safeInsert("events", {
+        type: "feeding",
+        started_at: new Date().toISOString(),
+        is_active: true,
+        logged_by: loggedBy ?? null,
+      });
+      return toEvent(row as EventRow);
+    },
+    onSuccess: (data, vars, ctx) => {
+      invalidateEventCaches(queryClient);
+      queryClient.invalidateQueries({ queryKey: getGetActiveFeedingQueryKey() });
+      userOnSuccess?.(data, vars, ctx);
+    },
+    ...restOpts,
+  });
+}
+
+export function useStopFeeding(options?: { mutation?: UseMutationOptions<Event, Error, void> }) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
+  return useMutation({
+    mutationFn: async () => {
+      const { data: active, error: findErr } = await supabase
+        .from("events")
+        .select("*")
+        .eq("type", "feeding")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      if (findErr) throw findErr;
+      if (!active) throw new Error("No active feeding session");
+      const endedAt = new Date().toISOString();
+      const durationMinutes = Math.round(
+        (new Date(endedAt).getTime() - new Date(active.started_at).getTime()) / 60000,
+      );
+      const { data: row, error } = await supabase
+        .from("events")
+        .update({ is_active: false, ended_at: endedAt, duration_minutes: durationMinutes })
+        .eq("id", active.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return toEvent(row as EventRow);
+    },
+    onSuccess: (data, vars, ctx) => {
+      invalidateEventCaches(queryClient);
+      queryClient.invalidateQueries({ queryKey: getGetActiveFeedingQueryKey() });
+      userOnSuccess?.(data, vars, ctx);
+    },
+    ...restOpts,
+  });
+}
+
 export function useGetActiveSleep(options?: { query?: Partial<UseQueryOptions<Event | null>> }) {
   const { queryKey: _userKey, ...restOpts } = options?.query ?? {};
   return useQuery({

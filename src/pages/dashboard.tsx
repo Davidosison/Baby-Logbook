@@ -1,4 +1,4 @@
-import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey, useGetActiveSleep, getGetActiveSleepQueryKey, useStopSleep } from "@/lib/queries";
+import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey, useGetActiveSleep, getGetActiveSleepQueryKey, useStopSleep, useGetActiveFeeding, getGetActiveFeedingQueryKey } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
@@ -20,7 +20,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   return null;
 }
 
-const FEEDING_TIMER_KEY = "baby-feeding-timer-start";
+const VITAMIN_D_KEY = "vitamin-d-remind";
 
 export default function DashboardPage() {
   const { lang, dir } = useLanguage();
@@ -64,31 +64,28 @@ export default function DashboardPage() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
-  // ── Feeding timer (localStorage) ─────────────────────────────────────────────
-  const [feedingTimerStart, setFeedingTimerStart] = useState<string | null>(
-    () => localStorage.getItem(FEEDING_TIMER_KEY)
-  );
+  // ── Feeding timer (DB-backed, syncs across all devices) ──────────────────────
+  const { data: activeFeeding } = useGetActiveFeeding({
+    query: { queryKey: getGetActiveFeedingQueryKey() },
+  });
   const [feedingElapsed, setFeedingElapsed] = useState(0);
-
   useEffect(() => {
-    const sync = () => setFeedingTimerStart(localStorage.getItem(FEEDING_TIMER_KEY));
-    window.addEventListener("baby-feeding-timer-change", sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener("baby-feeding-timer-change", sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (feedingTimerStart) {
-      const start = new Date(feedingTimerStart).getTime();
+    if (activeFeeding?.startedAt) {
+      const start = new Date(activeFeeding.startedAt).getTime();
       setFeedingElapsed(Math.floor((Date.now() - start) / 1000));
       const iv = setInterval(() => setFeedingElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
       return () => clearInterval(iv);
     }
     return undefined;
-  }, [feedingTimerStart]);
+  }, [activeFeeding]);
+
+  // ── Vitamin D reminder banner ─────────────────────────────────────────────────
+  const [vitaminDRemind, setVitaminDRemind] = useState(() => !!localStorage.getItem(VITAMIN_D_KEY));
+  useEffect(() => {
+    const sync = () => setVitaminDRemind(!!localStorage.getItem(VITAMIN_D_KEY));
+    window.addEventListener("vitamin-d-remind-change", sync);
+    return () => window.removeEventListener("vitamin-d-remind-change", sync);
+  }, []);
 
   // ── Data ─────────────────────────────────────────────────────────────────────
   const { data: events, isLoading: isLoadingEvents, refetch: refetchEvents } = useListEvents(
@@ -186,7 +183,7 @@ export default function DashboardPage() {
         )}
 
         {/* Live feeding timer banner */}
-        {feedingTimerStart && (
+        {activeFeeding && (
           <div className="bg-sky-400/10 border-2 border-sky-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
             <Timer className="w-6 h-6 text-sky-400 shrink-0 animate-pulse" />
             <div className="flex-1 min-w-0">
@@ -200,6 +197,27 @@ export default function DashboardPage() {
                 {tr("goToFeeding", lang)}
               </button>
             </Link>
+          </div>
+        )}
+
+        {/* Vitamin D reminder banner */}
+        {vitaminDRemind && (
+          <div className="bg-amber-400/10 border-2 border-amber-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
+            <span className="text-2xl shrink-0">💊</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-amber-600 dark:text-amber-400 text-sm leading-snug">
+                {tr("vitaminDReminderBanner", lang)}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem(VITAMIN_D_KEY);
+                setVitaminDRemind(false);
+              }}
+              className="shrink-0 h-10 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs active:scale-95 transition-transform"
+            >
+              {tr("vitaminDGave", lang)}
+            </button>
           </div>
         )}
 
