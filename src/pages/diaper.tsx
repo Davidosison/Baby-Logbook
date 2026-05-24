@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useLogDiaper, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@/lib/queries";
+import { useLogDiaper, useLogVitaminD, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,8 @@ export default function DiaperPage() {
   const [time, setTime] = useState(format(new Date(), "HH:mm"));
   const [notes, setNotes] = useState("");
   const [showVitaminD, setShowVitaminD] = useState(false);
+
+  const logVitaminD = useLogVitaminD();
 
   const logDiaper = useLogDiaper({
     mutation: {
@@ -147,6 +149,7 @@ export default function DiaperPage() {
             <div className="flex flex-col gap-2">
               <Button
                 onClick={() => {
+                  logVitaminD.mutate({ loggedBy: name ?? null });
                   localStorage.removeItem(VITAMIN_D_KEY);
                   notifyVitaminD();
                   setLocation("/");

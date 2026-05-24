@@ -40,6 +40,8 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "feeding") return <Utensils className={cn("w-4 h-4", className)} />;
   if (type === "sleep") return <Moon className={cn("w-4 h-4", className)} />;
   if (type === "diaper") return <Droplet className={cn("w-4 h-4", className)} />;
+  if (type === "bath") return <span className={cn("text-sm leading-none", className)}>🛁</span>;
+  if (type === "vitamin_d") return <span className={cn("text-sm leading-none", className)}>💊</span>;
   return null;
 }
 
@@ -354,6 +356,8 @@ export default function HistoryPage() {
     if (type === "feeding") return tr("feeding", lang);
     if (type === "sleep") return tr("sleep", lang);
     if (type === "diaper") return tr("diaper", lang);
+    if (type === "bath") return tr("bath", lang);
+    if (type === "vitamin_d") return tr("vitamin_d", lang);
     return type;
   };
 
@@ -421,6 +425,8 @@ export default function HistoryPage() {
                     event.type === "feeding" && "text-sky-400",
                     event.type === "sleep" && "text-indigo-400",
                     event.type === "diaper" && "text-amber-400",
+                    event.type === "bath" && "text-teal-400",
+                    event.type === "vitamin_d" && "text-purple-400",
                   )}>
                     <EventIcon type={event.type} />
                   </div>

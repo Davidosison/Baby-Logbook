@@ -446,15 +446,15 @@ export function useLogSleep(options?: {
   });
 }
 
-export function useStartSleep(options?: { mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }> }) {
+export function useStartSleep(options?: { mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null; startedAt?: string }> }) {
   const queryClient = useQueryClient();
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
-    mutationFn: async ({ loggedBy }: { loggedBy?: string | null } = {}) => {
+    mutationFn: async ({ loggedBy, startedAt }: { loggedBy?: string | null; startedAt?: string } = {}) => {
       await getSupabase().from("events").update({ is_active: false }).eq("type", "sleep").eq("is_active", true);
       const row = await safeInsert("events", {
         type: "sleep",
-        started_at: new Date().toISOString(),
+        started_at: startedAt ?? new Date().toISOString(),
         is_active: true,
         logged_by: loggedBy ?? null,
       });
@@ -599,6 +599,29 @@ export function useDeleteEvent(options?: {
     mutationFn: async ({ id }: { id: number }) => {
       const { error } = await getSupabase().from("events").delete().eq("id", id);
       if (error) throw error;
+    },
+    onSuccess: (data, vars, ctx) => {
+      invalidateEventCaches(queryClient);
+      userOnSuccess?.(data, vars, ctx);
+    },
+    ...restOpts,
+  });
+}
+
+export function useLogVitaminD(options?: {
+  mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }>;
+}) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
+  return useMutation({
+    mutationFn: async ({ loggedBy }: { loggedBy?: string | null } = {}) => {
+      const row = await safeInsert("events", {
+        type: "vitamin_d",
+        started_at: new Date().toISOString(),
+        is_active: false,
+        logged_by: loggedBy ?? null,
+      });
+      return toEvent(row as EventRow);
     },
     onSuccess: (data, vars, ctx) => {
       invalidateEventCaches(queryClient);

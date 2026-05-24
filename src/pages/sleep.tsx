@@ -47,6 +47,7 @@ export default function SleepPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [retroStart, setRetroStart] = useState(""); // retroactive start for live timer
 
   const { data: activeSleep, isLoading } = useGetActiveSleep({
     query: { queryKey: getGetActiveSleepQueryKey() },
@@ -116,27 +117,50 @@ export default function SleepPage() {
 
         {/* Start live sleep button — shown when not sleeping */}
         {!isSleeping && !isLoading && (
-          <button
-            onClick={() => startSleep.mutate({ loggedBy: name ?? null })}
-            disabled={startSleep.isPending}
-            className="w-full bg-indigo-500/10 border-2 border-indigo-400/40 hover:border-indigo-400 rounded-3xl p-6 flex flex-col items-center gap-4 transition-all active:scale-95 disabled:opacity-50"
-          >
-            <div className="w-24 h-24 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <Moon className="w-12 h-12 text-indigo-400" />
+          <div className="bg-indigo-500/10 border-2 border-indigo-400/40 rounded-3xl p-5 flex flex-col items-center gap-4">
+            <div className="w-20 h-20 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <Moon className="w-10 h-10 text-indigo-400" />
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                {tr("startSleepLabel", lang)}
+
+            {/* Optional retroactive start time */}
+            <div className="w-full">
+              <label className="block text-xs font-semibold text-indigo-400/80 mb-1.5 text-center">
+                {tr("sleepStartFrom", lang)}
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="time"
+                  value={retroStart}
+                  onChange={(e) => setRetroStart(e.target.value)}
+                  placeholder="עכשיו"
+                  className="flex-1 h-11 text-base border-indigo-400/30 bg-indigo-500/5 text-center"
+                />
+                {retroStart && (
+                  <button onClick={() => setRetroStart("")} className="h-11 w-11 rounded-xl border border-indigo-400/30 bg-indigo-500/5 flex items-center justify-center text-indigo-400 active:scale-95 shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
-                {tr("startSleepSub", lang)}
-              </div>
+              {retroStart && (
+                <p className="text-[10px] text-indigo-400/60 text-center mt-1">
+                  {lang === "he" ? `הטיימר יתחיל מ-${retroStart}` : `Таймер начнётся с ${retroStart}`}
+                </p>
+              )}
             </div>
-            <div className="flex items-center gap-2 text-indigo-400 font-semibold text-sm">
-              <PlayCircle className="w-4 h-4" />
+
+            <button
+              onClick={() => {
+                const startedAt = retroStart ? timeToISO(retroStart, new Date()) : undefined;
+                startSleep.mutate({ loggedBy: name ?? null, startedAt });
+                setRetroStart("");
+              }}
+              disabled={startSleep.isPending}
+              className="w-full h-12 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <PlayCircle className="w-5 h-5" />
               {tr("tapToStart", lang)}
-            </div>
-          </button>
+            </button>
+          </div>
         )}
 
         {/* Active sleep banner */}

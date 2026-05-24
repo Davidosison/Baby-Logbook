@@ -17,6 +17,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "sleep") return <Moon className={cn("w-4 h-4", className)} />;
   if (type === "diaper") return <Droplet className={cn("w-4 h-4", className)} />;
   if (type === "bath") return <Bath className={cn("w-4 h-4", className)} />;
+  if (type === "vitamin_d") return <span className="text-sm leading-none">💊</span>;
   return null;
 }
 
@@ -135,6 +136,7 @@ export default function DashboardPage() {
     if (type === "sleep") return tr("sleep", lang);
     if (type === "diaper") return tr("diaper", lang);
     if (type === "bath") return tr("bath", lang);
+    if (type === "vitamin_d") return tr("vitamin_d", lang);
     return type;
   };
 
@@ -298,6 +300,7 @@ export default function DashboardPage() {
                   event.type === "sleep" && "text-indigo-400",
                   event.type === "diaper" && "text-amber-400",
                   event.type === "bath" && "text-teal-400",
+                  event.type === "vitamin_d" && "text-purple-400",
                 )}>
                   <EventIcon type={event.type} />
                 </div>

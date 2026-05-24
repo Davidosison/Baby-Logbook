@@ -2,7 +2,7 @@
 
 create table if not exists events (
   id             serial primary key,
-  type           text    not null check (type in ('feeding', 'sleep', 'diaper', 'bath')),
+  type           text    not null check (type in ('feeding', 'sleep', 'diaper', 'bath', 'vitamin_d')),
   started_at     timestamptz not null default now(),
   ended_at       timestamptz,
   duration_minutes integer,

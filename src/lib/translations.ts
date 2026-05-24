@@ -34,6 +34,8 @@ const t = {
   sleep: { he: "שינה", ru: "Сон" },
   diaper: { he: "טיטול", ru: "Подгузник" },
   bath: { he: "מקלחת", ru: "Купание" },
+  vitamin_d: { he: "ויטמין D 💊", ru: "Витамин D 💊" },
+  sleepStartFrom: { he: "ישן מ-", ru: "Спит с" },
 
   // Dashboard
   summary: { he: "סיכום", ru: "Сводка" },

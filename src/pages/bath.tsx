@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useLogBath, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@/lib/queries";
+import { useLogBath, useLogVitaminD, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,8 @@ export default function BathPage() {
   const [showVitaminD, setShowVitaminD] = useState(false);
 
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const logVitaminD = useLogVitaminD();
 
   const logBath = useLogBath({
     mutation: {
@@ -132,6 +134,7 @@ export default function BathPage() {
             <div className="flex flex-col gap-2">
               <Button
                 onClick={() => {
+                  logVitaminD.mutate({ loggedBy: name ?? null });
                   localStorage.removeItem(VITAMIN_D_KEY);
                   notifyVitaminD();
                   setLocation("/");

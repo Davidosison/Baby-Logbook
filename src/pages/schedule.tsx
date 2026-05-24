@@ -31,6 +31,8 @@ const TYPE_COLORS_WEEKLY: Record<string, string> = {
   feeding: "bg-sky-400/75",
   sleep: "bg-indigo-400/85",
   diaper: "bg-amber-400/75",
+  bath: "bg-teal-400/75",
+  vitamin_d: "bg-purple-400/75",
 };
 
 // ─── Utils ───────────────────────────────────────────────────────────────────
@@ -71,26 +73,27 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
   });
 
   return (
-    <div className="relative flex flex-col h-full">
-      {/* Day header row */}
-      <div className="flex shrink-0 bg-background sticky top-0 z-20 border-b border-border/50" style={{ paddingLeft: LABEL_W }}>
-        {days.map((d) => {
-          const today = isToday(d);
-          return (
-            <div key={d.toISOString()} className="flex-1 text-center py-2 min-w-0">
-              <div className={cn("text-[10px] font-semibold uppercase tracking-wide", today ? "text-primary" : "text-muted-foreground")}>
-                {format(d, "EEE", { locale: dateLocale })}
-              </div>
-              <div className={cn("text-xs font-bold", today ? "text-primary" : "text-foreground")}>
-                {format(d, "d")}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Scrollable grid */}
+    <div className="relative flex flex-col h-full overflow-hidden">
+      {/* Single scrollable container: header sticky inside it, columns below */}
       <div ref={containerRef} className="flex-1 overflow-y-auto overscroll-contain">
+        {/* Day header row — sticky so it stays while scrolling */}
+        <div className="flex sticky top-0 z-20 bg-background border-b border-border/50" style={{ paddingLeft: LABEL_W }}>
+          {days.map((d) => {
+            const today = isToday(d);
+            return (
+              <div key={d.toISOString()} className="flex-1 text-center py-2 min-w-0">
+                <div className={cn("text-[10px] font-semibold uppercase tracking-wide", today ? "text-primary" : "text-muted-foreground")}>
+                  {format(d, "EEE", { locale: dateLocale })}
+                </div>
+                <div className={cn("text-xs font-bold", today ? "text-primary" : "text-foreground")}>
+                  {format(d, "d")}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Grid body */}
         <div className="relative flex" style={{ height: TOTAL_PX }}>
           {/* Hour labels */}
           <div className="shrink-0 relative" style={{ width: LABEL_W }}>
@@ -145,7 +148,7 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
                     const durMin = displayDuration(event);
                     const top = (startMin / (24 * 60)) * TOTAL_PX;
                     const height = Math.max(MIN_BLOCK_PX, (durMin / (24 * 60)) * TOTAL_PX);
-                    const color = TYPE_COLORS_WEEKLY[event.type] ?? "bg-zinc-500/60";
+                    const color = TYPE_COLORS_WEEKLY[event.type] ?? "bg-purple-400/75";
 
                     return (
                       <div
@@ -194,6 +197,18 @@ const EVENT_ACCENT: Record<string, EventAccent> = {
     endDotCls: "",
     cardCls: "bg-amber-400/10 border-amber-400/25",
   },
+  bath: {
+    dotCls: "bg-teal-400",
+    barCls: "",
+    endDotCls: "",
+    cardCls: "bg-teal-400/10 border-teal-400/25",
+  },
+  vitamin_d: {
+    dotCls: "bg-purple-400",
+    barCls: "",
+    endDotCls: "",
+    cardCls: "bg-purple-400/10 border-purple-400/25",
+  },
 };
 
 function TimelineEventRow({
@@ -218,13 +233,17 @@ function TimelineEventRow({
         ? event.isActive
           ? tr("sleepingNow", lang)
           : tr("sleep", lang)
-        : event.diaperType === "pee"
-          ? tr("pee", lang)
-          : event.diaperType === "poop"
-            ? tr("poop", lang)
-            : event.diaperType === "both"
-              ? tr("both", lang)
-              : tr("diaper", lang);
+        : event.type === "bath"
+          ? tr("bath", lang)
+          : event.type === "vitamin_d"
+            ? tr("vitamin_d", lang)
+            : event.diaperType === "pee"
+              ? tr("pee", lang)
+              : event.diaperType === "poop"
+                ? tr("poop", lang)
+                : event.diaperType === "both"
+                  ? tr("both", lang)
+                  : tr("diaper", lang);
 
   const subParts: string[] = [];
   if (event.type === "feeding") {
