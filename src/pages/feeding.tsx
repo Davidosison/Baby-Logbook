@@ -47,6 +47,7 @@ export default function FeedingPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [retroStart, setRetroStart] = useState(""); // optional past start time for timer
   // ID of the feeding record created by the timer (so we update it instead of inserting a new one)
   const [stoppedFeedingId, setStoppedFeedingId] = useState<number | null>(null);
 
@@ -70,7 +71,7 @@ export default function FeedingPage() {
   }, [activeFeeding]);
 
   const startFeeding = useStartFeeding({
-    mutation: { onSuccess: () => { setEndTime(""); setStoppedFeedingId(null); } },
+    mutation: { onSuccess: () => { setEndTime(""); setRetroStart(""); setStoppedFeedingId(null); } },
   });
 
   const stopFeeding = useStopFeeding({
@@ -155,11 +156,41 @@ export default function FeedingPage() {
               </span>
             )}
           </div>
+
+          {/* Retroactive start — only show before timer starts */}
+          {!isTimerRunning && (
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                {tr("feedingStartFrom", lang)}
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="time"
+                  value={retroStart}
+                  onChange={(e) => setRetroStart(e.target.value)}
+                  className="flex-1 h-10 text-sm border-border bg-background"
+                  placeholder="--:--"
+                />
+                {retroStart && (
+                  <button
+                    onClick={() => setRetroStart("")}
+                    className="h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-95 transition-transform shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => isTimerRunning
               ? stopFeeding.mutate()
-              : startFeeding.mutate({ loggedBy: name ?? null })
+              : startFeeding.mutate({
+                  loggedBy: name ?? null,
+                  startedAt: retroStart ? timeToTodayISO(retroStart) : undefined,
+                })
             }
             disabled={startFeeding.isPending || stopFeeding.isPending}
             data-testid="button-timer-toggle"

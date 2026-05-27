@@ -36,6 +36,8 @@ const t = {
   bath: { he: "מקלחת", ru: "Купание" },
   vitamin_d: { he: "ויטמין D 💊", ru: "Витамин D 💊" },
   sleepStartFrom: { he: "ישן מ-", ru: "Спит с" },
+  feedingStartFrom: { he: "האכלה מ-", ru: "Кормление с" },
+  guide: { he: "מדריך", ru: "Справка" },
 
   // Dashboard
   summary: { he: "סיכום", ru: "Сводка" },

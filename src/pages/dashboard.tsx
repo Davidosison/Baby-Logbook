@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
   return (
     <div className="h-[100dvh] bg-background flex flex-col overflow-hidden" dir={dir}>
-      <PageHeader hebrewTitle="יומן אדם" russianTitle="Журнал Адама" />
+      <PageHeader hebrewTitle="יומן אדם" russianTitle="Журнал Адама" showGuide />
 
       {/* Main content — scrollable so banners never push cards off-screen */}
       <div

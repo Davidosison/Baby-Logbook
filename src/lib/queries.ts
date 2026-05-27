@@ -271,15 +271,15 @@ export function useGetActiveFeeding(options?: { query?: Partial<UseQueryOptions<
   });
 }
 
-export function useStartFeeding(options?: { mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }> }) {
+export function useStartFeeding(options?: { mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null; startedAt?: string }> }) {
   const queryClient = useQueryClient();
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
-    mutationFn: async ({ loggedBy }: { loggedBy?: string | null } = {}) => {
+    mutationFn: async ({ loggedBy, startedAt }: { loggedBy?: string | null; startedAt?: string } = {}) => {
       await getSupabase().from("events").update({ is_active: false }).eq("type", "feeding").eq("is_active", true);
       const row = await safeInsert("events", {
         type: "feeding",
-        started_at: new Date().toISOString(),
+        started_at: startedAt ?? new Date().toISOString(),
         is_active: true,
         logged_by: loggedBy ?? null,
       });
