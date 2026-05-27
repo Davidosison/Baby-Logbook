@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,12 +44,6 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  const [location, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (location !== "/pin") setLocation("/");
-  }, []);
-
   return (
     <Switch>
       <Route path="/pin" component={PinPage} />
