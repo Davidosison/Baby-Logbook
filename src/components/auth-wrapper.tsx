@@ -14,7 +14,11 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     }
   }, [authenticated, location, setLocation]);
 
-  if (!authenticated) return null;
+  // Never return null — that causes a literal blank screen while the
+  // useEffect redirect fires. Instead keep the background visible.
+  if (!authenticated) {
+    return <div className="min-h-[100dvh] bg-background" />;
+  }
 
   return <>{children}</>;
 }
