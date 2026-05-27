@@ -13,7 +13,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bath, X } from "lucide-react";
 
 const VITAMIN_D_KEY = "vitamin-d-remind";
+const VITAMIN_D_GIVEN_KEY = "vitamin-d-given";
 const notifyVitaminD = () => window.dispatchEvent(new Event("vitamin-d-remind-change"));
+const vitaminDGivenToday = () => localStorage.getItem(VITAMIN_D_GIVEN_KEY) === format(new Date(), "yyyy-MM-dd");
+const markVitaminDGiven = () => localStorage.setItem(VITAMIN_D_GIVEN_KEY, format(new Date(), "yyyy-MM-dd"));
 
 function timeToTodayISO(timeStr: string): string {
   const [h, m] = timeStr.split(":").map(Number);
@@ -43,7 +46,7 @@ export default function BathPage() {
         queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey({ date: today }) });
-        if (new Date().getHours() >= 18) {
+        if (new Date().getHours() >= 18 && !vitaminDGivenToday()) {
           setShowVitaminD(true);
         } else {
           setLocation("/");
@@ -135,6 +138,7 @@ export default function BathPage() {
               <Button
                 onClick={() => {
                   logVitaminD.mutate({ loggedBy: name ?? null });
+                  markVitaminDGiven();
                   localStorage.removeItem(VITAMIN_D_KEY);
                   notifyVitaminD();
                   setLocation("/");

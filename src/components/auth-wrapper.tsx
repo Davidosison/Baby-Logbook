@@ -1,29 +1,20 @@
-import { useGetAuthStatus, getGetAuthStatusQueryKey } from "@/lib/queries";
+import { isAuthenticated } from "@/lib/queries";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
 
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { data: authStatus, isLoading } = useGetAuthStatus({
-    query: {
-      queryKey: getGetAuthStatusQueryKey()
-    }
-  });
+  // Synchronous check — reads the in-memory JWT, no async round-trip.
+  // This prevents the stale-cache flash that caused the PIN page to show twice.
+  const authenticated = isAuthenticated();
 
   useEffect(() => {
-    if (!isLoading && authStatus && !authStatus.authenticated && location !== "/pin") {
+    if (!authenticated && location !== "/pin") {
       setLocation("/pin");
     }
-  }, [authStatus, isLoading, location, setLocation]);
+  }, [authenticated, location, setLocation]);
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Loading...</div>;
-  }
-
-  // If not authenticated and we are not on /pin, we shouldn't render children yet.
-  if (!authStatus?.authenticated && location !== "/pin") {
-    return null; 
-  }
+  if (!authenticated) return null;
 
   return <>{children}</>;
 }

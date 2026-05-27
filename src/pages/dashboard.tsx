@@ -1,4 +1,4 @@
-import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey, useGetActiveSleep, getGetActiveSleepQueryKey, useStopSleep, useGetActiveFeeding, getGetActiveFeedingQueryKey } from "@/lib/queries";
+import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey, useGetActiveSleep, getGetActiveSleepQueryKey, useStopSleep, useGetActiveFeeding, getGetActiveFeedingQueryKey, useLogVitaminD } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
@@ -22,6 +22,9 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
 }
 
 const VITAMIN_D_KEY = "vitamin-d-remind";
+const VITAMIN_D_GIVEN_KEY = "vitamin-d-given";
+const vitaminDGivenToday = () => localStorage.getItem(VITAMIN_D_GIVEN_KEY) === format(new Date(), "yyyy-MM-dd");
+const markVitaminDGiven = () => localStorage.setItem(VITAMIN_D_GIVEN_KEY, format(new Date(), "yyyy-MM-dd"));
 
 export default function DashboardPage() {
   const { lang, dir } = useLanguage();
@@ -81,9 +84,12 @@ export default function DashboardPage() {
   }, [activeFeeding]);
 
   // ── Vitamin D reminder banner ─────────────────────────────────────────────────
-  const [vitaminDRemind, setVitaminDRemind] = useState(() => !!localStorage.getItem(VITAMIN_D_KEY));
+  const logVitaminD = useLogVitaminD();
+  const [vitaminDRemind, setVitaminDRemind] = useState(
+    () => !!localStorage.getItem(VITAMIN_D_KEY) && !vitaminDGivenToday(),
+  );
   useEffect(() => {
-    const sync = () => setVitaminDRemind(!!localStorage.getItem(VITAMIN_D_KEY));
+    const sync = () => setVitaminDRemind(!!localStorage.getItem(VITAMIN_D_KEY) && !vitaminDGivenToday());
     window.addEventListener("vitamin-d-remind-change", sync);
     return () => window.removeEventListener("vitamin-d-remind-change", sync);
   }, []);
@@ -213,6 +219,8 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => {
+                logVitaminD.mutate({ loggedBy: name ?? null });
+                markVitaminDGiven();
                 localStorage.removeItem(VITAMIN_D_KEY);
                 setVitaminDRemind(false);
               }}
