@@ -55,15 +55,18 @@ function displayDuration(event: EventItem) {
 }
 
 // ─── Weekly Pattern Grid ─────────────────────────────────────────────────────
-function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[]; lang: "he" | "ru" }) {
+function WeeklyGrid({ events, days: rawDays, lang, dir }: { events: EventItem[]; days: Date[]; lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dateLocale = lang === "he" ? he : ru;
+
+  // For RTL: show today on the right (reading order start) → reverse so today is first in RTL flex
+  const days = dir === "rtl" ? [...rawDays].reverse() : rawDays;
 
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const nowTop = (nowMinutes / (24 * 60)) * TOTAL_PX;
 
-  const byDay = days.reduce<Record<string, EventItem[]>>((acc, d) => {
+  const byDay = rawDays.reduce<Record<string, EventItem[]>>((acc, d) => {
     acc[format(d, "yyyy-MM-dd")] = [];
     return acc;
   }, {});
@@ -73,19 +76,28 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
   });
 
   return (
-    <div className="relative flex flex-col h-full overflow-hidden">
-      {/* Single scrollable container: header sticky inside it, columns below */}
+    // Always LTR for the outer structure so hour labels stay on the left
+    <div className="relative flex flex-col h-full overflow-hidden" dir="ltr">
       <div ref={containerRef} className="flex-1 overflow-y-auto overscroll-contain">
-        {/* Day header row — sticky so it stays while scrolling */}
-        <div className="flex sticky top-0 z-20 bg-background border-b border-border/50" style={{ paddingLeft: LABEL_W }}>
+        {/* Day header row — sticky */}
+        <div className="flex sticky top-0 z-20 bg-background border-b-2 border-border/40" style={{ paddingLeft: LABEL_W }}>
           {days.map((d) => {
             const today = isToday(d);
             return (
-              <div key={d.toISOString()} className="flex-1 text-center py-2 min-w-0">
-                <div className={cn("text-[10px] font-semibold uppercase tracking-wide", today ? "text-primary" : "text-muted-foreground")}>
+              <div
+                key={d.toISOString()}
+                className={cn(
+                  "flex-1 text-center py-2.5 min-w-0",
+                  today && "bg-primary/8 border-b-2 border-primary"
+                )}
+              >
+                <div className={cn("text-[10px] font-bold uppercase tracking-wider", today ? "text-primary" : "text-muted-foreground/60")}>
                   {format(d, "EEE", { locale: dateLocale })}
                 </div>
-                <div className={cn("text-xs font-bold", today ? "text-primary" : "text-foreground")}>
+                <div className={cn(
+                  "text-sm font-bold mt-0.5 w-6 h-6 rounded-full flex items-center justify-center mx-auto",
+                  today ? "bg-primary text-primary-foreground" : "text-foreground"
+                )}>
                   {format(d, "d")}
                 </div>
               </div>
@@ -100,10 +112,10 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
             {Array.from({ length: 24 }).map((_, h) => (
               <div
                 key={h}
-                className="absolute text-[9px] text-muted-foreground/50 font-mono pr-1 text-right"
+                className="absolute text-[9px] text-muted-foreground/40 font-mono pr-1 text-right"
                 style={{ top: h * HOUR_PX - 5, width: LABEL_W }}
               >
-                {h === 0 ? "00:00" : h % 6 === 0 ? `${String(h).padStart(2, "0")}:00` : ""}
+                {h % 3 === 0 ? `${String(h).padStart(2, "0")}:00` : ""}
               </div>
             ))}
           </div>
@@ -114,7 +126,10 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
             {Array.from({ length: 24 }).map((_, h) => (
               <div
                 key={h}
-                className="absolute left-0 right-0 border-t border-border/15"
+                className={cn(
+                  "absolute left-0 right-0",
+                  h % 6 === 0 ? "border-t border-border/30" : "border-t border-border/10"
+                )}
                 style={{ top: h * HOUR_PX }}
               />
             ))}
@@ -124,8 +139,8 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
               className="absolute left-0 right-0 z-10 pointer-events-none"
               style={{ top: nowTop }}
             >
-              <div className="h-0.5 bg-red-400/60 w-full relative">
-                <div className="absolute -left-1 -top-1 w-2 h-2 rounded-full bg-red-400/80" />
+              <div className="h-[2px] bg-red-400/70 w-full relative">
+                <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-red-400" />
               </div>
             </div>
 
@@ -139,8 +154,8 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
                 <div
                   key={key}
                   className={cn(
-                    "flex-1 relative border-l border-border/15 min-w-0",
-                    isCurrentDay && "bg-primary/3"
+                    "flex-1 relative border-l border-border/20 min-w-0",
+                    isCurrentDay && "bg-primary/5"
                   )}
                 >
                   {dayEvents.map((event) => {
@@ -153,7 +168,7 @@ function WeeklyGrid({ events, days, lang }: { events: EventItem[]; days: Date[];
                     return (
                       <div
                         key={event.id}
-                        className={cn("absolute inset-x-[1px] rounded-sm", color)}
+                        className={cn("absolute inset-x-[2px] rounded-sm", color)}
                         style={{ top, height }}
                         title={`${event.type} ${format(new Date(event.startedAt), "HH:mm")}`}
                       />
@@ -433,7 +448,7 @@ export default function SchedulePage() {
       {!isLoading && (
         <div className="flex-1 min-h-0 pb-24">
           {tab === "weekly" ? (
-            <WeeklyGrid events={events as EventItem[]} days={days} lang={lang} />
+            <WeeklyGrid events={events as EventItem[]} days={days} lang={lang} dir={dir} />
           ) : (
             <DailyTimeline events={events as EventItem[]} lang={lang} />
           )}

@@ -608,6 +608,32 @@ export function useDeleteEvent(options?: {
   });
 }
 
+// ─── Family members (unique logged_by names across all devices) ───────────────
+
+export function useGetFamilyMembers(options?: { query?: Partial<UseQueryOptions<string[]>> }) {
+  const { queryKey: _userKey, ...restOpts } = options?.query ?? {};
+  return useQuery({
+    queryKey: ["family-members"],
+    queryFn: async () => {
+      const { data, error } = await getSupabase()
+        .from("events")
+        .select("logged_by")
+        .not("logged_by", "is", null);
+      if (error) throw error;
+      const names = [
+        ...new Set(
+          (data as Array<{ logged_by: string | null }>)
+            .map((r) => r.logged_by)
+            .filter(Boolean) as string[],
+        ),
+      ].sort();
+      return names;
+    },
+    staleTime: 5 * 60 * 1000,
+    ...restOpts,
+  });
+}
+
 export function useLogVitaminD(options?: {
   mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }>;
 }) {

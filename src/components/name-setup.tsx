@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { usePerson } from "@/contexts/person-context";
 import { useLanguage } from "@/contexts/language-context";
+import { useGetFamilyMembers } from "@/lib/queries";
 import { tr } from "@/lib/translations";
 import { UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,11 @@ export function NameSetup() {
   const { lang, dir, setLang } = useLanguage();
   const [showInput, setShowInput] = useState(false);
   const [input, setInput] = useState("");
+
+  // Fetch names used by other family members across all devices
+  const { data: dbNames = [] } = useGetFamilyMembers();
+  // Merge local names + DB names, deduplicated
+  const allNames = [...new Set([...knownNames, ...dbNames])].sort();
 
   if (name !== null) return null;
 
@@ -45,7 +51,7 @@ export function NameSetup() {
   );
 
   // No saved names yet — show plain text input
-  if (knownNames.length === 0 || showInput) {
+  if (allNames.length === 0 || showInput) {
     return (
       <div
         className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center p-8"
@@ -80,7 +86,7 @@ export function NameSetup() {
             {tr("letsGo", lang)}
           </button>
 
-          {knownNames.length > 0 && (
+          {allNames.length > 0 && (
             <button
               onClick={() => { setShowInput(false); setInput(""); }}
               className="text-sm text-muted-foreground underline"
@@ -110,7 +116,7 @@ export function NameSetup() {
         <LangPicker />
 
         <div className="w-full flex flex-col gap-3">
-          {knownNames.map((n) => (
+          {allNames.map((n) => (
             <button
               key={n}
               onClick={() => setName(n)}

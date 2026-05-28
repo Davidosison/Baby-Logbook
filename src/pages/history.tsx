@@ -242,10 +242,11 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
     const dateStr = format(d, "yyyy-MM-dd");
     const dayEvents = events?.filter((e) => format(new Date(e.startedAt), "yyyy-MM-dd") === dateStr) ?? [];
     const sleepMin = dayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+    const feedingMl = dayEvents.filter((e) => e.type === "feeding").reduce((s, e) => s + (e.amountMl ?? 0), 0);
     return {
       label: format(d, "EEE", { locale: dateLocale }),
       isToday: i === 6,
-      feedings: dayEvents.filter((e) => e.type === "feeding").length,
+      feedingMl,
       sleepLabel: sleepMin === 0 ? "—" : `${Math.floor(sleepMin / 60)}:${String(sleepMin % 60).padStart(2, "0")}`,
       diapers: dayEvents.filter((e) => e.type === "diaper").length,
     };
@@ -255,7 +256,7 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
     {
       icon: <Utensils className="w-3 h-3" />,
       color: "text-sky-400",
-      values: days.map((d) => ({ val: d.feedings === 0 ? "—" : String(d.feedings), isToday: d.isToday })),
+      values: days.map((d) => ({ val: d.feedingMl === 0 ? "—" : `${d.feedingMl}`, isToday: d.isToday })),
     },
     {
       icon: <Moon className="w-3 h-3" />,
@@ -271,9 +272,12 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
 
   return (
     <div className="bg-card border border-border rounded-2xl p-4 mb-4 shadow-sm" dir={dir}>
-      <div className="flex items-center gap-2 mb-3">
-        <BarChart2 className="w-4 h-4 text-primary" />
-        <h3 className="font-semibold text-sm">{lang === "he" ? "7 ימים אחרונים" : "7 последних дней"}</h3>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-primary" />
+          <h3 className="font-semibold text-sm">{lang === "he" ? "7 ימים אחרונים" : "7 последних дней"}</h3>
+        </div>
+        <span className="text-[10px] text-muted-foreground/60">{lang === "he" ? "🍼 = מ״ל | 😴 = שעות | 🧷 = מספר" : "🍼 = мл | 😴 = часы | 🧷 = кол-во"}</span>
       </div>
 
       {/* Table */}

@@ -1,4 +1,4 @@
-import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey, useGetActiveSleep, getGetActiveSleepQueryKey, useStopSleep, useGetActiveFeeding, getGetActiveFeedingQueryKey, useLogVitaminD } from "@/lib/queries";
+import { useListEvents, getListEventsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetDailySummary, getGetDailySummaryQueryKey, useGetActiveSleep, getGetActiveSleepQueryKey, useStopSleep, useGetActiveFeeding, getGetActiveFeedingQueryKey, useLogVitaminD, useLogDiaper, useStartSleep } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
@@ -82,6 +82,17 @@ export default function DashboardPage() {
     }
     return undefined;
   }, [activeFeeding]);
+
+  // ── Quick Actions (one-tap logging) ──────────────────────────────────────────
+  const [quickDone, setQuickDone] = useState<string | null>(null);
+  const quickFlash = (key: string) => { setQuickDone(key); setTimeout(() => setQuickDone(null), 1200); };
+
+  const logDiaper = useLogDiaper({
+    mutation: { onSuccess: (_, vars) => quickFlash(vars.data.diaperType) },
+  });
+  const startSleepQuick = useStartSleep({
+    mutation: { onSuccess: () => quickFlash("sleep") },
+  });
 
   // ── Vitamin D reminder banner ─────────────────────────────────────────────────
   const logVitaminD = useLogVitaminD();
@@ -168,6 +179,79 @@ export default function DashboardPage() {
             {tr("helloName", lang, name)}
           </p>
         )}
+
+        {/* ── Quick Actions ────────────────────────────────────────────────── */}
+        <div className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar" dir="ltr">
+          {/* Pee */}
+          <button
+            onClick={() => logDiaper.mutate({ data: { diaperType: "pee", loggedBy: name ?? null } })}
+            disabled={logDiaper.isPending}
+            className={cn(
+              "flex-shrink-0 h-14 w-[72px] rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-xs transition-all active:scale-95 disabled:opacity-50",
+              quickDone === "pee"
+                ? "bg-green-400/20 border-green-400 text-green-600 dark:text-green-400"
+                : "bg-amber-400/10 border-amber-400/40 text-amber-700 dark:text-amber-400"
+            )}
+          >
+            <span className="text-xl leading-none">{quickDone === "pee" ? "✓" : "💧"}</span>
+            <span>{lang === "he" ? "פיפי" : "Пи-пи"}</span>
+          </button>
+
+          {/* Poop */}
+          <button
+            onClick={() => logDiaper.mutate({ data: { diaperType: "poop", loggedBy: name ?? null } })}
+            disabled={logDiaper.isPending}
+            className={cn(
+              "flex-shrink-0 h-14 w-[72px] rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-xs transition-all active:scale-95 disabled:opacity-50",
+              quickDone === "poop"
+                ? "bg-green-400/20 border-green-400 text-green-600 dark:text-green-400"
+                : "bg-amber-400/10 border-amber-400/40 text-amber-700 dark:text-amber-400"
+            )}
+          >
+            <span className="text-xl leading-none">{quickDone === "poop" ? "✓" : "💩"}</span>
+            <span>{lang === "he" ? "קקי" : "Ка-ка"}</span>
+          </button>
+
+          {/* Both */}
+          <button
+            onClick={() => logDiaper.mutate({ data: { diaperType: "both", loggedBy: name ?? null } })}
+            disabled={logDiaper.isPending}
+            className={cn(
+              "flex-shrink-0 h-14 w-[72px] rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-xs transition-all active:scale-95 disabled:opacity-50",
+              quickDone === "both"
+                ? "bg-green-400/20 border-green-400 text-green-600 dark:text-green-400"
+                : "bg-amber-400/10 border-amber-400/40 text-amber-700 dark:text-amber-400"
+            )}
+          >
+            <span className="text-xl leading-none">{quickDone === "both" ? "✓" : "🧷"}</span>
+            <span>{lang === "he" ? "שניהם" : "Оба"}</span>
+          </button>
+
+          {/* Feeding shortcut */}
+          <Link href="/feeding" className="flex-shrink-0">
+            <button className="h-14 w-[72px] rounded-2xl border-2 bg-sky-400/10 border-sky-400/40 flex flex-col items-center justify-center gap-0.5 font-bold text-xs text-sky-700 dark:text-sky-400 active:scale-95 transition-transform">
+              <span className="text-xl leading-none">🍼</span>
+              <span>{lang === "he" ? "האכלה" : "Кормление"}</span>
+            </button>
+          </Link>
+
+          {/* Sleep shortcut */}
+          <button
+            onClick={() => activeSleep ? undefined : startSleepQuick.mutate({ loggedBy: name ?? null })}
+            disabled={startSleepQuick.isPending}
+            className={cn(
+              "flex-shrink-0 h-14 w-[72px] rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-xs transition-all active:scale-95 disabled:opacity-50",
+              activeSleep
+                ? "bg-indigo-400/20 border-indigo-400 text-indigo-600 dark:text-indigo-400"
+                : quickDone === "sleep"
+                  ? "bg-green-400/20 border-green-400 text-green-600 dark:text-green-400"
+                  : "bg-indigo-400/10 border-indigo-400/40 text-indigo-700 dark:text-indigo-400"
+            )}
+          >
+            <span className="text-xl leading-none">{quickDone === "sleep" ? "✓" : activeSleep ? "🌙" : "😴"}</span>
+            <span>{activeSleep ? (lang === "he" ? "ישן" : "Спит") : (lang === "he" ? "שינה" : "Сон")}</span>
+          </button>
+        </div>
 
         {/* Live sleep banner */}
         {activeSleep && (
