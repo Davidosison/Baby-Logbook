@@ -41,7 +41,7 @@ export function BottomNav() {
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 h-24 bg-background/75 backdrop-blur-2xl border-t border-border/50 flex items-center justify-around px-2 pb-safe z-50"
+        className="fixed bottom-0 left-0 right-0 h-24 glass-card !rounded-none border-t border-white/15 dark:border-white/8 flex items-center justify-around px-2 pb-safe z-50"
         dir={dir}
       >
         {/* Home */}
@@ -61,7 +61,7 @@ export function BottomNav() {
                 <Plus className="w-8 h-8" />
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-[2rem] bg-card border-border flex flex-col p-6" dir={dir}>
+            <SheetContent side="bottom" className="rounded-t-[2rem] glass-card border-white/15 dark:border-white/8 flex flex-col p-6" dir={dir}>
               <VisuallyHidden>
                 <SheetTitle>{tr("logEvent", lang)}</SheetTitle>
               </VisuallyHidden>
@@ -114,7 +114,7 @@ export function BottomNav() {
               <span className="text-xs font-medium">{tr("settings", lang)}</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-[2rem] bg-card border-border p-6" dir={dir}>
+          <SheetContent side="bottom" className="rounded-t-[2rem] glass-card border-white/15 dark:border-white/8 p-6" dir={dir}>
             <SheetTitle className="text-xl font-bold text-center mb-6">{tr("settings", lang)}</SheetTitle>
 
             {/* Language */}

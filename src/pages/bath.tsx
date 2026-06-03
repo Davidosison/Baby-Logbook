@@ -61,7 +61,7 @@ export default function BathPage() {
   });
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+    <div className="min-h-[100dvh] bg-transparent pb-32" dir={dir}>
       <PageHeader hebrewTitle="מקלחת" russianTitle="Купание" showBack />
 
       <div className="p-4 max-w-md mx-auto space-y-5 mt-2">

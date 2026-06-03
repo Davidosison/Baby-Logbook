@@ -312,7 +312,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="h-[100dvh] bg-background/90 flex flex-col overflow-hidden" dir={dir}>
+    <div className="h-[100dvh] bg-transparent flex flex-col overflow-hidden" dir={dir}>
       <PageHeader hebrewTitle="יומן אדם" russianTitle="Журнал Адама" showGuide />
 
       <div

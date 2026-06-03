@@ -409,7 +409,7 @@ export default function HistoryPage() {
     : [];
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+    <div className="min-h-[100dvh] bg-transparent pb-32" dir={dir}>
       <PageHeader hebrewTitle="היסטוריה" russianTitle="История" />
 
       <div className="p-4 space-y-8">

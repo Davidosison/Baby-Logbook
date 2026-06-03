@@ -60,7 +60,7 @@ export default function DiaperPage() {
     setDiaperType((d) => d === "poop" ? null : d === "pee" ? "both" : d === "both" ? "pee" : "poop");
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+    <div className="min-h-[100dvh] bg-transparent pb-32" dir={dir}>
       <PageHeader hebrewTitle="טיטול" russianTitle="Подгузник" showBack />
 
       <div className="p-4 max-w-md mx-auto space-y-5 mt-2">

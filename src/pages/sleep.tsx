@@ -110,7 +110,7 @@ export default function SleepPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+    <div className="min-h-[100dvh] bg-transparent pb-32" dir={dir}>
       <PageHeader hebrewTitle="שינה" russianTitle="Сон" showBack />
 
       <div className="p-4 max-w-md mx-auto space-y-5">

@@ -412,7 +412,7 @@ export default function SchedulePage() {
   );
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background" dir={dir}>
+    <div className="flex flex-col h-[100dvh] bg-transparent" dir={dir}>
       <PageHeader hebrewTitle="לוח זמנים" russianTitle="Расписание" />
 
       {/* Tab switcher */}

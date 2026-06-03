@@ -99,7 +99,7 @@ export default function GuidePage() {
   const t = (obj: { he: string; ru: string }) => obj[lang];
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-32" dir={dir}>
+    <div className="min-h-[100dvh] bg-transparent pb-32" dir={dir}>
       <PageHeader
         hebrewTitle="מדריך למשתמש"
         russianTitle="Руководство"
