@@ -74,17 +74,30 @@ function EditSheet({
     return base.toISOString();
   }
 
+  function calcDuration(start: string, end: string): number | null {
+    if (!start || !end) return null;
+    const [sh, sm] = start.split(":").map(Number);
+    const [eh, em] = end.split(":").map(Number);
+    let diff = (eh! * 60 + em!) - (sh! * 60 + sm!);
+    if (diff < 0) diff += 24 * 60; // midnight crossing
+    return diff > 0 ? diff : null;
+  }
+
   const handleSave = () => {
     const data: Record<string, unknown> = { notes: notes || null };
 
     if (event.type === "feeding") {
       data.amountMl = amountMl ? parseInt(amountMl) : null;
       data.startedAt = applyTime(startTime, event.startedAt);
-      if (endTime) data.endedAt = applyTime(endTime, event.startedAt);
+      // Always set endedAt (null if cleared) so the DB stays in sync
+      data.endedAt = endTime ? applyTime(endTime, event.startedAt) : null;
+      // Recalculate duration whenever times change
+      data.durationMinutes = calcDuration(startTime, endTime);
     }
     if (event.type === "sleep") {
       data.startedAt = applyTime(startTime, event.startedAt);
-      if (endTime) data.endedAt = applyTime(endTime, event.startedAt);
+      data.endedAt = endTime ? applyTime(endTime, event.startedAt) : null;
+      data.durationMinutes = calcDuration(startTime, endTime);
     }
     if (event.type === "diaper") {
       data.diaperType = diaperType;
@@ -349,7 +362,9 @@ export default function HistoryPage() {
     mutation: {
       onSuccess: () => {
         setEditEvent(null);
-        queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
+        // Broad prefix invalidation — catches all variants (limit, date, range)
+        queryClient.invalidateQueries({ queryKey: ["events"] });
+        queryClient.invalidateQueries({ queryKey: ["events-range"] });
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey() });
       },
