@@ -8,6 +8,7 @@ import { PersonProvider } from "@/contexts/person-context";
 import { AuthWrapper } from "@/components/auth-wrapper";
 import { BottomNav } from "@/components/bottom-nav";
 import { restoreSession } from "@/lib/supabase";
+import { initGlassMode, useGlassMode } from "@/hooks/use-glass-mode";
 import { PushPrompt } from "@/components/push-prompt";
 import { NameSetup } from "@/components/name-setup";
 import { InstallGuide } from "@/components/install-guide";
@@ -22,8 +23,9 @@ import SchedulePage from "@/pages/schedule";
 import GuidePage from "@/pages/guide";
 import NotFound from "@/pages/not-found";
 
-// Restore JWT from localStorage on app load (synchronous, runs before first render)
+// Restore JWT and glass mode from localStorage before first render (synchronous)
 restoreSession();
+initGlassMode();
 
 /** Vivid animated colour blobs — the "wallpaper" that glass panels blur */
 function GradientBackground() {
@@ -95,9 +97,10 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
+  const { glassMode } = useGlassMode();
   return (
     <>
-      <GradientBackground />
+      {glassMode && <GradientBackground />}
     <Switch>
       <Route path="/pin" component={PinPage} />
       <Route path="/">

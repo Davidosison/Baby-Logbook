@@ -33,7 +33,7 @@ export function PageHeader({ hebrewTitle, russianTitle, showBack, showGuide }: P
   const showSideButton = showBack || showGuide;
 
   return (
-    <div className="sticky top-0 left-0 right-0 z-40 glass-card border-b border-white/15 dark:border-white/8 !rounded-none pt-safe" dir={dir}>
+    <div className="sticky top-0 left-0 right-0 z-40 glass-card border-b border-border !rounded-none pt-safe" dir={dir}>
       <div className="px-4 py-3">
         <div className="flex items-center gap-2">
           {showBack && (

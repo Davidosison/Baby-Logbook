@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Layers, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
 import { useGoals } from "@/hooks/use-goals";
+import { useGlassMode } from "@/hooks/use-glass-mode";
 import { tr } from "@/lib/translations";
 import {
   Sheet, SheetContent, SheetTrigger, SheetTitle,
@@ -18,6 +19,7 @@ export function BottomNav() {
   const { lang, setLang, dir } = useLanguage();
   const { name, setName } = usePerson();
   const { goals, setGoal } = useGoals();
+  const { glassMode, setGlassMode } = useGlassMode();
   const [addOpen, setAddOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -41,7 +43,7 @@ export function BottomNav() {
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 h-24 glass-card !rounded-none border-t border-white/15 dark:border-white/8 flex items-center justify-around px-2 pb-safe z-50"
+        className="fixed bottom-0 left-0 right-0 h-24 glass-card !rounded-none border-t border-border flex items-center justify-around px-2 pb-safe z-50"
         dir={dir}
       >
         {/* Home */}
@@ -222,6 +224,39 @@ export function BottomNav() {
                     <button onClick={() => setGoal("sleepGoalHours", Math.min(22, goals.sleepGoalHours + 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Plus className="w-4 h-4 text-primary" /></button>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Design style */}
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
+                {lang === "he" ? "עיצוב" : "Дизайн"}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setGlassMode(false)}
+                  className={cn(
+                    "h-16 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1.5",
+                    !glassMode
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-background border-border text-muted-foreground"
+                  )}
+                >
+                  <Layers className="w-5 h-5" />
+                  {lang === "he" ? "קלאסי" : "Классик"}
+                </button>
+                <button
+                  onClick={() => setGlassMode(true)}
+                  className={cn(
+                    "h-16 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1.5",
+                    glassMode
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-background border-border text-muted-foreground"
+                  )}
+                >
+                  <Sparkles className="w-5 h-5" />
+                  {lang === "he" ? "זכוכית נוזלית" : "Жидкое стекло"}
+                </button>
               </div>
             </div>
 
