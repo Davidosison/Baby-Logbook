@@ -41,7 +41,7 @@ export function BottomNav() {
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 h-24 bg-background/90 backdrop-blur-xl border-t border-border flex items-center justify-around px-2 pb-safe z-50"
+        className="fixed bottom-0 left-0 right-0 h-24 bg-background/75 backdrop-blur-2xl border-t border-border/50 flex items-center justify-around px-2 pb-safe z-50"
         dir={dir}
       >
         {/* Home */}

@@ -25,6 +25,46 @@ import NotFound from "@/pages/not-found";
 // Restore JWT from localStorage on app load (synchronous, runs before first render)
 restoreSession();
 
+/** Three softly-animated colour blobs that sit behind every page */
+function GradientBackground() {
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+      {/* Top-right: blue/primary */}
+      <div
+        className="absolute rounded-full opacity-[0.18] dark:opacity-[0.32] blur-[90px]"
+        style={{
+          width: 400, height: 400,
+          background: "radial-gradient(circle, hsl(224 38% 62%), transparent 70%)",
+          top: -130, right: -70,
+          animation: "orb-float 22s ease-in-out infinite",
+        }}
+      />
+      {/* Left-middle: purple */}
+      <div
+        className="absolute rounded-full opacity-[0.13] dark:opacity-[0.26] blur-[80px]"
+        style={{
+          width: 300, height: 300,
+          background: "radial-gradient(circle, hsl(278 45% 65%), transparent 70%)",
+          top: "42%", left: -90,
+          animation: "orb-float 28s ease-in-out infinite reverse",
+          animationDelay: "-9s",
+        }}
+      />
+      {/* Bottom-centre: sky */}
+      <div
+        className="absolute rounded-full opacity-[0.10] dark:opacity-[0.22] blur-[70px]"
+        style={{
+          width: 260, height: 260,
+          background: "radial-gradient(circle, hsl(192 60% 55%), transparent 70%)",
+          bottom: -60, right: "22%",
+          animation: "orb-float 24s ease-in-out infinite",
+          animationDelay: "-14s",
+        }}
+      />
+    </div>
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: false, refetchOnWindowFocus: false },
@@ -45,6 +85,8 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 
 function Router() {
   return (
+    <>
+      <GradientBackground />
     <Switch>
       <Route path="/pin" component={PinPage} />
       <Route path="/">
@@ -73,6 +115,7 @@ function Router() {
       </Route>
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 
