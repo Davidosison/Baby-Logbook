@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useListEvents, getListEventsQueryKey,
   useDeleteEvent, useUpdateEvent,
@@ -45,7 +45,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   return null;
 }
 
-// ── Doctor Report PDF Template ──────────────────────────────────────────────
+// ── Doctor Report PDF ──────────────────────────────────────────────────────
 type DayReportData = {
   date: string;
   label: string;
@@ -55,10 +55,8 @@ type DayReportData = {
   diaperCount: number;
 };
 
-const DoctorReportTemplate = forwardRef<
-  HTMLDivElement,
-  { days: DayReportData[]; lang: "he" | "ru"; dateRange: string }
->(({ days, lang, dateRange }, ref) => {
+/** Pure HTML string — no React, no refs — used for DOM injection before capture */
+function buildReportHtml(days: DayReportData[], lang: "he" | "ru", dateRange: string): string {
   const isHe = lang === "he";
   const n = days.length || 1;
   const avgFeed = (days.reduce((s, d) => s + d.feedingCount, 0) / n).toFixed(1);
@@ -68,129 +66,89 @@ const DoctorReportTemplate = forwardRef<
   const totalDiapers = days.reduce((s, d) => s + d.diaperCount, 0);
   const generated = new Date().toLocaleDateString(isHe ? "he-IL" : "ru-RU");
 
-  const tdStyle = (color: string): React.CSSProperties => ({
-    padding: "8px 12px", textAlign: "center",
-    borderBottom: "1px solid #f3f4f6", color, fontSize: "13px",
-  });
-  const thStyle = (alignRight = false): React.CSSProperties => ({
-    padding: "9px 12px", textAlign: alignRight ? "right" : "center",
-    fontWeight: "bold", fontSize: "12px", color: "#1e40af",
-    borderBottom: "2px solid #bfdbfe", background: "#eff6ff",
-  });
+  const th = (right = false) =>
+    `padding:9px 12px;text-align:${right ? "right" : "center"};font-weight:bold;font-size:12px;color:#1e40af;border-bottom:2px solid #bfdbfe;background:#eff6ff`;
+  const td = (color: string) =>
+    `padding:8px 12px;text-align:center;border-bottom:1px solid #f3f4f6;color:${color};font-size:13px`;
 
-  return (
-    <div
-      ref={ref}
-      style={{
-        direction: "rtl",
-        fontFamily: '"Arial Hebrew", Arial, Helvetica, sans-serif',
-        background: "#ffffff",
-        color: "#111827",
-        padding: "36px 40px",
-        width: "750px",
-        fontSize: "13px",
-        lineHeight: "1.6",
-      }}
-    >
-      {/* ── Header ── */}
-      <div style={{ borderBottom: "3px solid #3b82f6", paddingBottom: "20px", marginBottom: "28px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-            {isHe ? "נוצר:" : "Создан:"} {generated}
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <h1 style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#1d4ed8" }}>
-              {isHe ? "דוח מדדים — יומן אדם 👶" : "Отчёт показателей — Журнал Адама 👶"}
-            </h1>
-            <p style={{ margin: "5px 0 0", color: "#6b7280", fontSize: "12px" }}>
-              {isHe ? `תקופה: ${dateRange}` : `Период: ${dateRange}`}
-            </p>
-          </div>
-        </div>
-      </div>
+  const tableRows = days
+    .map((d, i) => {
+      const sleepStr =
+        d.sleepMinutes === 0
+          ? "—"
+          : `${Math.floor(d.sleepMinutes / 60)}:${String(d.sleepMinutes % 60).padStart(2, "0")}`;
+      return `
+        <tr style="background:${i % 2 === 0 ? "#fff" : "#f9fafb"}">
+          <td style="padding:8px 12px;text-align:right;font-weight:600;border-bottom:1px solid #f3f4f6;font-size:12px">${d.label}</td>
+          <td style="${td("#0369a1")}">${d.feedingCount || "—"}</td>
+          <td style="${td("#0369a1")}">${d.totalMl || "—"}</td>
+          <td style="${td("#4338ca")}">${sleepStr}</td>
+          <td style="${td("#b45309")}">${d.diaperCount || "—"}</td>
+        </tr>`;
+    })
+    .join("");
 
-      {/* ── Table ── */}
-      <h2 style={{ margin: "0 0 14px", fontSize: "15px", fontWeight: "bold", color: "#374151", textAlign: "right" }}>
-        {isHe ? "📅 סיכום 7 ימים אחרונים" : "📅 Сводка за 7 последних дней"}
-      </h2>
-      <table style={{ width: "100%", borderCollapse: "collapse", direction: "rtl", marginBottom: "28px" }}>
-        <thead>
-          <tr>
-            <th style={thStyle(true)}>{isHe ? "תאריך" : "Дата"}</th>
-            <th style={thStyle()}>{isHe ? "האכלות" : "Кормл."}</th>
-            <th style={thStyle()}>{isHe ? 'מ"ל' : "мл"}</th>
-            <th style={thStyle()}>{isHe ? "שינה (ש:ד)" : "Сон (ч:м)"}</th>
-            <th style={thStyle()}>{isHe ? "טיטולים" : "Подгузн."}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {days.map((d, i) => (
-            <tr key={d.date} style={{ background: i % 2 === 0 ? "#fff" : "#f9fafb" }}>
-              <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, borderBottom: "1px solid #f3f4f6", fontSize: "12px" }}>
-                {d.label}
-              </td>
-              <td style={tdStyle("#0369a1")}>{d.feedingCount || "—"}</td>
-              <td style={tdStyle("#0369a1")}>{d.totalMl || "—"}</td>
-              <td style={tdStyle("#4338ca")}>
-                {d.sleepMinutes === 0 ? "—" : `${Math.floor(d.sleepMinutes / 60)}:${String(d.sleepMinutes % 60).padStart(2, "0")}`}
-              </td>
-              <td style={tdStyle("#b45309")}>{d.diaperCount || "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr style={{ background: "#eff6ff", borderTop: "2px solid #bfdbfe" }}>
-            <td style={{ padding: "9px 12px", textAlign: "right", fontWeight: "bold", fontSize: "12px", color: "#1e40af" }}>
-              {isHe ? "ממוצע יומי" : "Среднее/день"}
-            </td>
-            <td style={{ ...tdStyle("#0369a1"), fontWeight: "bold" }}>{avgFeed}</td>
-            <td style={{ ...tdStyle("#0369a1"), fontWeight: "bold" }}>{avgMl || "—"}</td>
-            <td style={{ ...tdStyle("#4338ca"), fontWeight: "bold" }}>{avgSleepStr}</td>
-            <td style={{ ...tdStyle("#b45309"), fontWeight: "bold" }}>
-              {(totalDiapers / n).toFixed(1)}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+  const tiles = [
+    { e: "🍼", l: isHe ? "האכלות/יום" : "Корм./день", v: avgFeed },
+    { e: "💧", l: isHe ? 'מ"ל/יום' : "мл/день", v: String(avgMl || "—") },
+    { e: "😴", l: isHe ? "שינה/יום" : "Сон/день", v: avgSleepStr },
+    { e: "🧷", l: isHe ? 'סה"כ טיטולים' : "Всего", v: String(totalDiapers) },
+  ]
+    .map(
+      (t) =>
+        `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px 10px;text-align:center">
+          <div style="font-size:22px;margin-bottom:4px">${t.e}</div>
+          <div style="font-size:20px;font-weight:bold;color:#1d4ed8">${t.v}</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:3px">${t.l}</div>
+        </div>`,
+    )
+    .join("");
 
-      {/* ── Summary tiles ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px", marginBottom: "28px" }}>
-        {[
-          { e: "🍼", l: isHe ? "האכלות/יום" : "Корм./день", v: avgFeed },
-          { e: "💧", l: isHe ? 'מ"ל/יום' : "мл/день", v: avgMl || "—" },
-          { e: "😴", l: isHe ? "שינה/יום" : "Сон/день", v: avgSleepStr },
-          { e: "🧷", l: isHe ? 'סה"כ טיטולים' : "Всего подгузников", v: totalDiapers },
-        ].map((item) => (
-          <div key={item.l} style={{
-            background: "#f0f9ff", border: "1px solid #bae6fd",
-            borderRadius: "10px", padding: "14px 10px", textAlign: "center",
-          }}>
-            <div style={{ fontSize: "22px", marginBottom: "4px" }}>{item.e}</div>
-            <div style={{ fontSize: "20px", fontWeight: "bold", color: "#1d4ed8" }}>{item.v}</div>
-            <div style={{ fontSize: "10px", color: "#6b7280", marginTop: "3px" }}>{item.l}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Medical note ── */}
-      <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "12px 16px", marginBottom: "20px" }}>
-        <p style={{ margin: 0, fontSize: "11px", color: "#92400e", textAlign: "right" }}>
-          ⚕️{" "}
-          {isHe
-            ? "הערה: דוח זה נוצר מיומן אדם ומייצג נתונים שנרשמו על ידי ההורים. הנתונים עשויים לא לכלול כל אירוע. יש להשתמש כנספח בלבד."
-            : "Примечание: Этот отчёт создан из Журнала Адама на основе данных, записанных родителями. Используйте как приложение к медицинской документации."}
-        </p>
-      </div>
-
-      {/* ── Footer ── */}
-      <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#9ca3af" }}>
-        <span>baby-logbook.app</span>
-        <span>{isHe ? "יומן אדם" : "Журнал Адама"} · {generated}</span>
+  return `
+<div style="direction:rtl;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111827;padding:36px 40px;width:750px;font-size:13px;line-height:1.6">
+  <div style="border-bottom:3px solid #3b82f6;padding-bottom:20px;margin-bottom:28px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="font-size:11px;color:#9ca3af">${isHe ? "נוצר:" : "Создан:"} ${generated}</div>
+      <div style="text-align:right">
+        <h1 style="margin:0;font-size:22px;font-weight:bold;color:#1d4ed8">${isHe ? "דוח מדדים — יומן אדם 👶" : "Отчёт показателей — Журнал Адама 👶"}</h1>
+        <p style="margin:5px 0 0;color:#6b7280;font-size:12px">${isHe ? `תקופה: ${dateRange}` : `Период: ${dateRange}`}</p>
       </div>
     </div>
-  );
-});
-DoctorReportTemplate.displayName = "DoctorReportTemplate";
+  </div>
+  <h2 style="margin:0 0 14px;font-size:15px;font-weight:bold;color:#374151;text-align:right">${isHe ? "📅 סיכום 7 ימים אחרונים" : "📅 Сводка за 7 последних дней"}</h2>
+  <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:28px">
+    <thead>
+      <tr>
+        <th style="${th(true)}">${isHe ? "תאריך" : "Дата"}</th>
+        <th style="${th()}">${isHe ? "האכלות" : "Кормл."}</th>
+        <th style="${th()}">${isHe ? 'מ"ל' : "мл"}</th>
+        <th style="${th()}">${isHe ? "שינה (ש:ד)" : "Сон (ч:м)"}</th>
+        <th style="${th()}">${isHe ? "טיטולים" : "Подгузн."}</th>
+      </tr>
+    </thead>
+    <tbody>${tableRows}</tbody>
+    <tfoot>
+      <tr style="background:#eff6ff;border-top:2px solid #bfdbfe">
+        <td style="padding:9px 12px;text-align:right;font-weight:bold;font-size:12px;color:#1e40af">${isHe ? "ממוצע יומי" : "Среднее/день"}</td>
+        <td style="${td("#0369a1")};font-weight:bold">${avgFeed}</td>
+        <td style="${td("#0369a1")};font-weight:bold">${avgMl || "—"}</td>
+        <td style="${td("#4338ca")};font-weight:bold">${avgSleepStr}</td>
+        <td style="${td("#b45309")};font-weight:bold">${(totalDiapers / n).toFixed(1)}</td>
+      </tr>
+    </tfoot>
+  </table>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px">${tiles}</div>
+  <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:20px">
+    <p style="margin:0;font-size:11px;color:#92400e;text-align:right">
+      ⚕️ ${isHe ? "הערה: דוח זה נוצר מיומן אדם ומייצג נתונים שנרשמו על ידי ההורים. יש להשתמש כנספח בלבד." : "Примечание: Этот отчёт создан из Журнала Адама. Используйте как приложение к медицинской документации."}
+    </p>
+  </div>
+  <div style="border-top:1px solid #e5e7eb;padding-top:12px;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af">
+    <span>baby-logbook.app</span>
+    <span>${isHe ? "יומן אדם" : "Журнал Адама"} · ${generated}</span>
+  </div>
+</div>`;
+}
 
 // ── Isolated edit sheet — always remounted via key prop, so state is always fresh
 function EditSheet({
@@ -488,7 +446,6 @@ export default function HistoryPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editEvent, setEditEvent] = useState<EventItem | null>(null);
   const [exporting, setExporting] = useState(false);
-  const reportRef = useRef<HTMLDivElement>(null);
   const dateLocale = lang === "he" ? he : ru;
 
   const { data: events, isLoading } = useListEvents(
@@ -530,8 +487,24 @@ export default function HistoryPage() {
   );
 
   const exportToPDF = async () => {
-    if (!reportRef.current || exporting) return;
+    if (exporting) return;
     setExporting(true);
+
+    // Build a temporary on-screen container at top-left (z-index behind everything).
+    // html2canvas REQUIRES the element to be in the visible page coordinate space —
+    // off-screen at left:-10000px causes it to hang indefinitely.
+    const container = document.createElement("div");
+    container.style.cssText =
+      "position:fixed;top:0;left:0;width:794px;background:#fff;z-index:-9999;pointer-events:none;";
+    const dateRange = `${format(subDays(new Date(), 6), "d/M")}–${format(new Date(), "d/M/yyyy")}`;
+    container.innerHTML = buildReportHtml(reportDays, lang, dateRange);
+    document.body.appendChild(container);
+
+    // Two rAF ticks ensure the browser has painted the injected DOM before capture
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       await html2pdf()
@@ -539,14 +512,15 @@ export default function HistoryPage() {
           margin: [8, 8, 8, 8],
           filename: `adam-report-${format(new Date(), "yyyy-MM-dd")}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollX: 0, scrollY: 0 },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         })
-        .from(reportRef.current)
+        .from(container)
         .save();
     } catch (err) {
       console.error("PDF export failed:", err);
     } finally {
+      document.body.removeChild(container);
       setExporting(false);
     }
   };
@@ -729,16 +703,6 @@ export default function HistoryPage() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Hidden doctor report — off-screen, rendered for html2pdf capture */}
-      <div style={{ position: "fixed", left: "-10000px", top: 0, width: "794px", pointerEvents: "none" }}>
-        <DoctorReportTemplate
-          ref={reportRef}
-          days={reportDays}
-          lang={lang}
-          dateRange={`${format(subDays(new Date(), 6), "d/M")}–${format(new Date(), "d/M/yyyy")}`}
-        />
       </div>
 
       {/* Edit Sheet — key forces remount with fresh state for each event */}
