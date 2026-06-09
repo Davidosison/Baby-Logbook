@@ -481,7 +481,7 @@ export default function DashboardPage() {
               : type === "sleep" ? <Moon className="w-5 h-5 text-indigo-400 mb-1" />
               : <Droplet className="w-5 h-5 text-amber-400 mb-1" />;
             return (
-              <div key={type} className="glass-card border border-border/50 rounded-2xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
+              <div key={type} className="glass-card border border-border/50 rounded-3xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
                 {icon}
                 <div className="text-xs font-semibold mb-0.5">{typeLabel(type)}</div>
                 <div className="text-[10px] text-muted-foreground font-medium leading-tight">{getRecentText(minsAgo)}</div>
@@ -492,7 +492,7 @@ export default function DashboardPage() {
 
         {/* ── Daily Progress ────────────────────────────────────────────────── */}
         {summary && (
-          <div className="glass-card border border-border/50 rounded-2xl px-4 py-3 shadow-sm">
+          <div className="glass-card border border-border/50 rounded-3xl px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between mb-2.5">
               {/* Share button — opens the sheet */}
               <button
@@ -540,7 +540,7 @@ export default function DashboardPage() {
               </div>
             )}
             {events?.map((event) => (
-              <div key={event.id} className="glass-card border border-border/50 rounded-2xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
+              <div key={event.id} className="glass-card border border-border/50 rounded-3xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
                 <div className={cn(
                   "w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-background/60 border border-border/50",
                   event.type === "feeding" && "text-sky-400",
