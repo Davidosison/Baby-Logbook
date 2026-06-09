@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   useListEvents, getListEventsQueryKey,
   useDeleteEvent, useUpdateEvent,
@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
 import { format, isToday, isYesterday, subDays, startOfDay, endOfDay } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2, FileDown, Loader2 } from "lucide-react";
+import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -43,111 +43,6 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "bath") return <span className={cn("text-sm leading-none", className)}>🛁</span>;
   if (type === "vitamin_d") return <span className={cn("text-sm leading-none", className)}>💊</span>;
   return null;
-}
-
-// ── Doctor Report PDF ──────────────────────────────────────────────────────
-type DayReportData = {
-  date: string;
-  label: string;
-  feedingCount: number;
-  totalMl: number;
-  sleepMinutes: number;
-  diaperCount: number;
-};
-
-/** Pure HTML string — no React, no refs — used for DOM injection before capture */
-function buildReportHtml(days: DayReportData[], lang: "he" | "ru", dateRange: string): string {
-  const isHe = lang === "he";
-  const n = days.length || 1;
-  const avgFeed = (days.reduce((s, d) => s + d.feedingCount, 0) / n).toFixed(1);
-  const avgMl = Math.round(days.reduce((s, d) => s + d.totalMl, 0) / n);
-  const avgSleepM = Math.round(days.reduce((s, d) => s + d.sleepMinutes, 0) / n);
-  const avgSleepStr = `${Math.floor(avgSleepM / 60)}:${String(avgSleepM % 60).padStart(2, "0")}`;
-  const totalDiapers = days.reduce((s, d) => s + d.diaperCount, 0);
-  const generated = new Date().toLocaleDateString(isHe ? "he-IL" : "ru-RU");
-
-  const th = (right = false) =>
-    `padding:9px 12px;text-align:${right ? "right" : "center"};font-weight:bold;font-size:12px;color:#1e40af;border-bottom:2px solid #bfdbfe;background:#eff6ff`;
-  const td = (color: string) =>
-    `padding:8px 12px;text-align:center;border-bottom:1px solid #f3f4f6;color:${color};font-size:13px`;
-
-  const tableRows = days
-    .map((d, i) => {
-      const sleepStr =
-        d.sleepMinutes === 0
-          ? "—"
-          : `${Math.floor(d.sleepMinutes / 60)}:${String(d.sleepMinutes % 60).padStart(2, "0")}`;
-      return `
-        <tr style="background:${i % 2 === 0 ? "#fff" : "#f9fafb"}">
-          <td style="padding:8px 12px;text-align:right;font-weight:600;border-bottom:1px solid #f3f4f6;font-size:12px">${d.label}</td>
-          <td style="${td("#0369a1")}">${d.feedingCount || "—"}</td>
-          <td style="${td("#0369a1")}">${d.totalMl || "—"}</td>
-          <td style="${td("#4338ca")}">${sleepStr}</td>
-          <td style="${td("#b45309")}">${d.diaperCount || "—"}</td>
-        </tr>`;
-    })
-    .join("");
-
-  const tiles = [
-    { e: "🍼", l: isHe ? "האכלות/יום" : "Корм./день", v: avgFeed },
-    { e: "💧", l: isHe ? 'מ"ל/יום' : "мл/день", v: String(avgMl || "—") },
-    { e: "😴", l: isHe ? "שינה/יום" : "Сон/день", v: avgSleepStr },
-    { e: "🧷", l: isHe ? 'סה"כ טיטולים' : "Всего", v: String(totalDiapers) },
-  ]
-    .map(
-      (t) =>
-        `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px 10px;text-align:center">
-          <div style="font-size:22px;margin-bottom:4px">${t.e}</div>
-          <div style="font-size:20px;font-weight:bold;color:#1d4ed8">${t.v}</div>
-          <div style="font-size:10px;color:#6b7280;margin-top:3px">${t.l}</div>
-        </div>`,
-    )
-    .join("");
-
-  return `
-<div style="direction:rtl;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111827;padding:36px 40px;width:750px;font-size:13px;line-height:1.6">
-  <div style="border-bottom:3px solid #3b82f6;padding-bottom:20px;margin-bottom:28px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div style="font-size:11px;color:#9ca3af">${isHe ? "נוצר:" : "Создан:"} ${generated}</div>
-      <div style="text-align:right">
-        <h1 style="margin:0;font-size:22px;font-weight:bold;color:#1d4ed8">${isHe ? "דוח מדדים — יומן אדם 👶" : "Отчёт показателей — Журнал Адама 👶"}</h1>
-        <p style="margin:5px 0 0;color:#6b7280;font-size:12px">${isHe ? `תקופה: ${dateRange}` : `Период: ${dateRange}`}</p>
-      </div>
-    </div>
-  </div>
-  <h2 style="margin:0 0 14px;font-size:15px;font-weight:bold;color:#374151;text-align:right">${isHe ? "📅 סיכום 7 ימים אחרונים" : "📅 Сводка за 7 последних дней"}</h2>
-  <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:28px">
-    <thead>
-      <tr>
-        <th style="${th(true)}">${isHe ? "תאריך" : "Дата"}</th>
-        <th style="${th()}">${isHe ? "האכלות" : "Кормл."}</th>
-        <th style="${th()}">${isHe ? 'מ"ל' : "мл"}</th>
-        <th style="${th()}">${isHe ? "שינה (ש:ד)" : "Сон (ч:м)"}</th>
-        <th style="${th()}">${isHe ? "טיטולים" : "Подгузн."}</th>
-      </tr>
-    </thead>
-    <tbody>${tableRows}</tbody>
-    <tfoot>
-      <tr style="background:#eff6ff;border-top:2px solid #bfdbfe">
-        <td style="padding:9px 12px;text-align:right;font-weight:bold;font-size:12px;color:#1e40af">${isHe ? "ממוצע יומי" : "Среднее/день"}</td>
-        <td style="${td("#0369a1")};font-weight:bold">${avgFeed}</td>
-        <td style="${td("#0369a1")};font-weight:bold">${avgMl || "—"}</td>
-        <td style="${td("#4338ca")};font-weight:bold">${avgSleepStr}</td>
-        <td style="${td("#b45309")};font-weight:bold">${(totalDiapers / n).toFixed(1)}</td>
-      </tr>
-    </tfoot>
-  </table>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px">${tiles}</div>
-  <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:20px">
-    <p style="margin:0;font-size:11px;color:#92400e;text-align:right">
-      ⚕️ ${isHe ? "הערה: דוח זה נוצר מיומן אדם ומייצג נתונים שנרשמו על ידי ההורים. יש להשתמש כנספח בלבד." : "Примечание: Этот отчёт создан из Журнала Адама. Используйте как приложение к медицинской документации."}
-    </p>
-  </div>
-  <div style="border-top:1px solid #e5e7eb;padding-top:12px;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af">
-    <span>baby-logbook.app</span>
-    <span>${isHe ? "יומן אדם" : "Журнал Адама"} · ${generated}</span>
-  </div>
-</div>`;
 }
 
 // ── Isolated edit sheet — always remounted via key prop, so state is always fresh
@@ -348,66 +243,93 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
   const today = new Date();
   const startDate = format(subDays(today, 6), "yyyy-MM-dd");
   const endDate = format(today, "yyyy-MM-dd");
+  const dateLocale = lang === "he" ? he : ru;
 
   const { data: events } = useListEventsRange(
     { startDate, endDate },
     { query: { queryKey: getListEventsRangeQueryKey({ startDate, endDate }) } },
   );
 
-  const n = 7;
-  const feedings = events?.filter((e) => e.type === "feeding") ?? [];
-  const sleeps = events?.filter((e) => e.type === "sleep" && !e.isActive) ?? [];
-  const diapers = events?.filter((e) => e.type === "diaper") ?? [];
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = subDays(today, 6 - i);
+    const dateStr = format(d, "yyyy-MM-dd");
+    const dayEvents = events?.filter((e) => format(new Date(e.startedAt), "yyyy-MM-dd") === dateStr) ?? [];
+    const sleepMin = dayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+    const feedingMl = dayEvents.filter((e) => e.type === "feeding").reduce((s, e) => s + (e.amountMl ?? 0), 0);
+    return {
+      label: format(d, "EEE", { locale: dateLocale }),
+      isToday: i === 6,
+      feedingMl,
+      sleepLabel: sleepMin === 0 ? "—" : `${Math.floor(sleepMin / 60)}:${String(sleepMin % 60).padStart(2, "0")}`,
+      diapers: dayEvents.filter((e) => e.type === "diaper").length,
+    };
+  });
 
-  const totalMl = feedings.reduce((s, e) => s + (e.amountMl ?? 0), 0);
-  const sleepMins = sleeps.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
-  const avgSleepMins = Math.round(sleepMins / n);
-  const avgSleepH = Math.floor(avgSleepMins / 60);
-  const avgSleepM = avgSleepMins % 60;
-  const avgFeed = (feedings.length / n).toFixed(1);
-  const avgMl = Math.round(totalMl / n);
-
-  const periodLabel = lang === "he"
-    ? `${format(subDays(today, 6), "d/M")}–${format(today, "d/M")}`
-    : `${format(subDays(today, 6), "d.M")}–${format(today, "d.M")}`;
+  const rows = [
+    {
+      icon: <Utensils className="w-3 h-3" />,
+      color: "text-sky-400",
+      values: days.map((d) => ({ val: d.feedingMl === 0 ? "—" : `${d.feedingMl}`, isToday: d.isToday })),
+    },
+    {
+      icon: <Moon className="w-3 h-3" />,
+      color: "text-indigo-400",
+      values: days.map((d) => ({ val: d.sleepLabel, isToday: d.isToday })),
+    },
+    {
+      icon: <Droplet className="w-3 h-3" />,
+      color: "text-amber-400",
+      values: days.map((d) => ({ val: d.diapers === 0 ? "—" : String(d.diapers), isToday: d.isToday })),
+    },
+  ];
 
   return (
     <div className="glass-card border border-border/50 rounded-3xl p-4 mb-4 shadow-sm" dir={dir}>
-      {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{periodLabel}</p>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-primary" />
           <h3 className="font-semibold text-sm">{lang === "he" ? "7 ימים אחרונים" : "7 последних дней"}</h3>
         </div>
+        <span className="text-[10px] text-muted-foreground/60">{lang === "he" ? "🍼 = מ״ל | 😴 = שעות | 🧷 = מספר" : "🍼 = мл | 😴 = часы | 🧷 = кол-во"}</span>
       </div>
 
-      {/* Stats rows */}
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-2.5 text-sm" dir={dir}>
-          <span className="text-xl leading-none">🍼</span>
-          <span className="font-medium">
-            {lang === "he"
-              ? `${feedings.length} האכלות · ${avgFeed}/יום · ${avgMl} מ"ל ממוצע`
-              : `${feedings.length} корм. · ${avgFeed}/день · ${avgMl} мл ср.`}
-          </span>
-        </div>
-        <div className="flex items-center gap-2.5 text-sm" dir={dir}>
-          <span className="text-xl leading-none">😴</span>
-          <span className="font-medium">
-            {lang === "he"
-              ? `${avgSleepH}ש' ${avgSleepM}ד' שינה ממוצע ליום`
-              : `${avgSleepH} ч. ${avgSleepM} мин. сна ср./день`}
-          </span>
-        </div>
-        <div className="flex items-center gap-2.5 text-sm" dir={dir}>
-          <span className="text-xl leading-none">🧷</span>
-          <span className="font-medium">
-            {lang === "he"
-              ? `${diapers.length} טיטולים · ${(diapers.length / n).toFixed(1)}/יום`
-              : `${diapers.length} подгузников · ${(diapers.length / n).toFixed(1)}/день`}
-          </span>
-        </div>
+      {/* Table */}
+      <div className="grid grid-cols-[20px_repeat(7,1fr)] gap-y-1">
+        {/* Header: day labels */}
+        <div />
+        {days.map((d, i) => (
+          <div
+            key={i}
+            className={cn(
+              "text-center text-[10px] font-semibold pb-1.5",
+              d.isToday ? "text-primary" : "text-muted-foreground/60",
+            )}
+          >
+            {d.label}
+          </div>
+        ))}
+
+        {/* Data rows */}
+        {rows.map((row, ri) => (
+          <>
+            <div key={`icon-${ri}`} className={cn("flex items-center justify-center", row.color)}>
+              {row.icon}
+            </div>
+            {row.values.map((cell, ci) => (
+              <div
+                key={ci}
+                className={cn(
+                  "text-center text-[11px] font-semibold py-1 rounded-lg",
+                  cell.isToday
+                    ? "bg-primary/10 text-foreground"
+                    : "text-muted-foreground",
+                )}
+              >
+                {cell.val}
+              </div>
+            ))}
+          </>
+        ))}
       </div>
     </div>
   );
@@ -418,85 +340,12 @@ export default function HistoryPage() {
   const { lang, dir } = useLanguage();
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editEvent, setEditEvent] = useState<EventItem | null>(null);
-  const [exporting, setExporting] = useState(false);
   const dateLocale = lang === "he" ? he : ru;
 
   const { data: events, isLoading } = useListEvents(
     { limit: 200 },
     { query: { queryKey: getListEventsQueryKey({ limit: 200 }) } },
   );
-
-  // ── 7-day data for PDF report (React Query deduplicates with WeeklyStats) ──
-  const pdfToday = new Date();
-  const pdfStartDate = format(subDays(pdfToday, 6), "yyyy-MM-dd");
-  const pdfEndDate = format(pdfToday, "yyyy-MM-dd");
-  const { data: weekEventsForPdf } = useListEventsRange(
-    { startDate: pdfStartDate, endDate: pdfEndDate },
-    { query: { queryKey: getListEventsRangeQueryKey({ startDate: pdfStartDate, endDate: pdfEndDate }) } },
-  );
-
-  const reportDays = useMemo((): DayReportData[] =>
-    Array.from({ length: 7 }, (_, i) => {
-      const d = subDays(pdfToday, 6 - i);
-      const dateStr = format(d, "yyyy-MM-dd");
-      const dayEvts = weekEventsForPdf?.filter(
-        (e) => format(new Date(e.startedAt), "yyyy-MM-dd") === dateStr,
-      ) ?? [];
-      return {
-        date: dateStr,
-        label: format(d, "d/M (EEE)", { locale: dateLocale }),
-        feedingCount: dayEvts.filter((e) => e.type === "feeding").length,
-        totalMl: dayEvts
-          .filter((e) => e.type === "feeding")
-          .reduce((s, e) => s + (e.amountMl ?? 0), 0),
-        sleepMinutes: dayEvts
-          .filter((e) => e.type === "sleep" && !e.isActive)
-          .reduce((s, e) => s + (e.durationMinutes ?? 0), 0),
-        diaperCount: dayEvts.filter((e) => e.type === "diaper").length,
-      };
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [weekEventsForPdf, lang],
-  );
-
-  const exportToPDF = async () => {
-    if (exporting) return;
-    setExporting(true);
-
-    // Build a temporary on-screen container at top-left (z-index behind everything).
-    // html2canvas REQUIRES the element to be in the visible page coordinate space —
-    // off-screen at left:-10000px causes it to hang indefinitely.
-    const container = document.createElement("div");
-    container.style.cssText =
-      "position:fixed;top:0;left:0;width:794px;background:#fff;z-index:-9999;pointer-events:none;";
-    const dateRange = `${format(subDays(new Date(), 6), "d/M")}–${format(new Date(), "d/M/yyyy")}`;
-    container.innerHTML = buildReportHtml(reportDays, lang, dateRange);
-    document.body.appendChild(container);
-
-    // Two rAF ticks ensure the browser has painted the injected DOM before capture
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve)),
-    );
-
-    try {
-      const html2pdf = (await import("html2pdf.js")).default;
-      await html2pdf()
-        .set({
-          margin: [8, 8, 8, 8],
-          filename: `adam-report-${format(new Date(), "yyyy-MM-dd")}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollX: 0, scrollY: 0 },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        })
-        .from(container)
-        .save();
-    } catch (err) {
-      console.error("PDF export failed:", err);
-    } finally {
-      document.body.removeChild(container);
-      setExporting(false);
-    }
-  };
 
   const deleteEventMutation = useDeleteEvent({
     mutation: {
@@ -564,18 +413,6 @@ export default function HistoryPage() {
       <PageHeader hebrewTitle="היסטוריה" russianTitle="История" />
 
       <div className="p-4 space-y-8">
-        {/* ── PDF Export Button ── */}
-        <button
-          onClick={exportToPDF}
-          disabled={exporting}
-          className="w-full h-14 rounded-3xl bg-primary/10 border-2 border-primary/30 text-primary font-bold text-sm flex items-center justify-center gap-2.5 active:scale-95 transition-transform disabled:opacity-50"
-        >
-          {exporting
-            ? <Loader2 className="w-5 h-5 animate-spin" />
-            : <FileDown className="w-5 h-5" />}
-          {lang === "he" ? "📋 ייצוא דוח לרופא (PDF)" : "📋 Экспорт отчёта для врача (PDF)"}
-        </button>
-
         <WeeklyStats lang={lang} dir={dir} />
 
         {isLoading && (
