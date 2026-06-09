@@ -348,93 +348,66 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
   const today = new Date();
   const startDate = format(subDays(today, 6), "yyyy-MM-dd");
   const endDate = format(today, "yyyy-MM-dd");
-  const dateLocale = lang === "he" ? he : ru;
 
   const { data: events } = useListEventsRange(
     { startDate, endDate },
     { query: { queryKey: getListEventsRangeQueryKey({ startDate, endDate }) } },
   );
 
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = subDays(today, 6 - i);
-    const dateStr = format(d, "yyyy-MM-dd");
-    const dayEvents = events?.filter((e) => format(new Date(e.startedAt), "yyyy-MM-dd") === dateStr) ?? [];
-    const sleepMin = dayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
-    const feedingMl = dayEvents.filter((e) => e.type === "feeding").reduce((s, e) => s + (e.amountMl ?? 0), 0);
-    return {
-      label: format(d, "EEE", { locale: dateLocale }),
-      isToday: i === 6,
-      feedingMl,
-      sleepLabel: sleepMin === 0 ? "—" : `${Math.floor(sleepMin / 60)}:${String(sleepMin % 60).padStart(2, "0")}`,
-      diapers: dayEvents.filter((e) => e.type === "diaper").length,
-    };
-  });
+  const n = 7;
+  const feedings = events?.filter((e) => e.type === "feeding") ?? [];
+  const sleeps = events?.filter((e) => e.type === "sleep" && !e.isActive) ?? [];
+  const diapers = events?.filter((e) => e.type === "diaper") ?? [];
 
-  const rows = [
-    {
-      icon: <Utensils className="w-3 h-3" />,
-      color: "text-sky-400",
-      values: days.map((d) => ({ val: d.feedingMl === 0 ? "—" : `${d.feedingMl}`, isToday: d.isToday })),
-    },
-    {
-      icon: <Moon className="w-3 h-3" />,
-      color: "text-indigo-400",
-      values: days.map((d) => ({ val: d.sleepLabel, isToday: d.isToday })),
-    },
-    {
-      icon: <Droplet className="w-3 h-3" />,
-      color: "text-amber-400",
-      values: days.map((d) => ({ val: d.diapers === 0 ? "—" : String(d.diapers), isToday: d.isToday })),
-    },
-  ];
+  const totalMl = feedings.reduce((s, e) => s + (e.amountMl ?? 0), 0);
+  const sleepMins = sleeps.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+  const avgSleepMins = Math.round(sleepMins / n);
+  const avgSleepH = Math.floor(avgSleepMins / 60);
+  const avgSleepM = avgSleepMins % 60;
+  const avgFeed = (feedings.length / n).toFixed(1);
+  const avgMl = Math.round(totalMl / n);
+
+  const periodLabel = lang === "he"
+    ? `${format(subDays(today, 6), "d/M")}–${format(today, "d/M")}`
+    : `${format(subDays(today, 6), "d.M")}–${format(today, "d.M")}`;
 
   return (
     <div className="glass-card border border-border/50 rounded-3xl p-4 mb-4 shadow-sm" dir={dir}>
+      {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{periodLabel}</p>
+        <div className="flex items-center gap-1.5">
           <BarChart2 className="w-4 h-4 text-primary" />
           <h3 className="font-semibold text-sm">{lang === "he" ? "7 ימים אחרונים" : "7 последних дней"}</h3>
         </div>
-        <span className="text-[10px] text-muted-foreground/60">{lang === "he" ? "🍼 = מ״ל | 😴 = שעות | 🧷 = מספר" : "🍼 = мл | 😴 = часы | 🧷 = кол-во"}</span>
       </div>
 
-      {/* Table */}
-      <div className="grid grid-cols-[20px_repeat(7,1fr)] gap-y-1">
-        {/* Header: day labels */}
-        <div />
-        {days.map((d, i) => (
-          <div
-            key={i}
-            className={cn(
-              "text-center text-[10px] font-semibold pb-1.5",
-              d.isToday ? "text-primary" : "text-muted-foreground/60",
-            )}
-          >
-            {d.label}
-          </div>
-        ))}
-
-        {/* Data rows */}
-        {rows.map((row, ri) => (
-          <>
-            <div key={`icon-${ri}`} className={cn("flex items-center justify-center", row.color)}>
-              {row.icon}
-            </div>
-            {row.values.map((cell, ci) => (
-              <div
-                key={ci}
-                className={cn(
-                  "text-center text-[11px] font-semibold py-1 rounded-lg",
-                  cell.isToday
-                    ? "bg-primary/10 text-foreground"
-                    : "text-muted-foreground",
-                )}
-              >
-                {cell.val}
-              </div>
-            ))}
-          </>
-        ))}
+      {/* Stats rows */}
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-2.5 text-sm" dir={dir}>
+          <span className="text-xl leading-none">🍼</span>
+          <span className="font-medium">
+            {lang === "he"
+              ? `${feedings.length} האכלות · ${avgFeed}/יום · ${avgMl} מ"ל ממוצע`
+              : `${feedings.length} корм. · ${avgFeed}/день · ${avgMl} мл ср.`}
+          </span>
+        </div>
+        <div className="flex items-center gap-2.5 text-sm" dir={dir}>
+          <span className="text-xl leading-none">😴</span>
+          <span className="font-medium">
+            {lang === "he"
+              ? `${avgSleepH}ש' ${avgSleepM}ד' שינה ממוצע ליום`
+              : `${avgSleepH} ч. ${avgSleepM} мин. сна ср./день`}
+          </span>
+        </div>
+        <div className="flex items-center gap-2.5 text-sm" dir={dir}>
+          <span className="text-xl leading-none">🧷</span>
+          <span className="font-medium">
+            {lang === "he"
+              ? `${diapers.length} טיטולים · ${(diapers.length / n).toFixed(1)}/יום`
+              : `${diapers.length} подгузников · ${(diapers.length / n).toFixed(1)}/день`}
+          </span>
+        </div>
       </div>
     </div>
   );
