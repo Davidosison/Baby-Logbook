@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Layers, Sparkles } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Layers, Sparkles, Utensils, Droplet, Pill } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
 import { useGoals } from "@/hooks/use-goals";
 import { useGlassMode } from "@/hooks/use-glass-mode";
+import { useLogVitaminD } from "@/lib/queries";
 import { tr } from "@/lib/translations";
 import {
   Sheet, SheetContent, SheetTrigger, SheetTitle,
@@ -23,6 +24,7 @@ export function BottomNav() {
   const [addOpen, setAddOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const logVitaminD = useLogVitaminD();
 
   const isActive = (path: string) => location === path;
 
@@ -74,6 +76,7 @@ export function BottomNav() {
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-xl font-bold">{tr("feeding", lang)}</div>
                   </div>
+                  <Utensils className="w-5 h-5 opacity-60" />
                 </Link>
                 <Link href="/sleep" data-testid="nav-sleep"
                   onClick={() => setAddOpen(false)}
@@ -81,6 +84,7 @@ export function BottomNav() {
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-xl font-bold">{tr("sleep", lang)}</div>
                   </div>
+                  <Moon className="w-5 h-5 opacity-60" />
                 </Link>
                 <Link href="/diaper" data-testid="nav-diaper"
                   onClick={() => setAddOpen(false)}
@@ -88,6 +92,7 @@ export function BottomNav() {
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-xl font-bold">{tr("diaper", lang)}</div>
                   </div>
+                  <Droplet className="w-5 h-5 opacity-60" />
                 </Link>
                 <Link href="/bath" data-testid="nav-bath"
                   onClick={() => setAddOpen(false)}
@@ -97,6 +102,17 @@ export function BottomNav() {
                   </div>
                   <Bath className="w-5 h-5 opacity-60" />
                 </Link>
+                <button data-testid="nav-vitamin-d"
+                  onClick={() => {
+                    logVitaminD.mutate({ loggedBy: name ?? null });
+                    setAddOpen(false);
+                  }}
+                  className="w-full flex items-center bg-violet-400/10 hover:bg-violet-400/20 text-violet-600 dark:text-violet-400 p-4 rounded-2xl transition-colors">
+                  <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
+                    <div className="text-xl font-bold">{tr("vitamin_d", lang)}</div>
+                  </div>
+                  <Pill className="w-5 h-5 opacity-60" />
+                </button>
               </div>
             </SheetContent>
           </Sheet>

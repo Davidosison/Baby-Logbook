@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useLogDiaper, useLogVitaminD, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@/lib/queries";
+import { useLogDiaper, getListEventsQueryKey, getGetRecentActivityQueryKey, getGetDailySummaryQueryKey } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,6 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-
-const VITAMIN_D_KEY = "vitamin-d-remind";
-const VITAMIN_D_GIVEN_KEY = "vitamin-d-given";
-const notifyVitaminD = () => window.dispatchEvent(new Event("vitamin-d-remind-change"));
-const vitaminDGivenToday = () => localStorage.getItem(VITAMIN_D_GIVEN_KEY) === format(new Date(), "yyyy-MM-dd");
-const markVitaminDGiven = () => localStorage.setItem(VITAMIN_D_GIVEN_KEY, format(new Date(), "yyyy-MM-dd"));
 
 function timeToTodayISO(timeStr: string): string {
   const [h, m] = timeStr.split(":").map(Number);
@@ -34,9 +28,6 @@ export default function DiaperPage() {
   const [diaperType, setDiaperType] = useState<"pee" | "poop" | "both" | null>(null);
   const [time, setTime] = useState(format(new Date(), "HH:mm"));
   const [notes, setNotes] = useState("");
-  const [showVitaminD, setShowVitaminD] = useState(false);
-
-  const logVitaminD = useLogVitaminD();
 
   const logDiaper = useLogDiaper({
     mutation: {
@@ -45,11 +36,7 @@ export default function DiaperPage() {
         queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey({ date: today }) });
-        if (new Date().getHours() >= 18 && !vitaminDGivenToday()) {
-          setShowVitaminD(true);
-        } else {
-          setLocation("/");
-        }
+        setLocation("/");
       },
     },
   });
@@ -139,44 +126,6 @@ export default function DiaperPage() {
           {tr("saveDiaper", lang)}
         </Button>
       </div>
-
-      {/* Vitamin D Reminder Overlay */}
-      {showVitaminD && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
-          <div className="bg-card border border-border rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl" dir={dir}>
-            <div className="text-5xl mb-3">💊</div>
-            <h2 className="text-lg font-bold mb-2">{tr("vitaminDTitle", lang)}</h2>
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              {tr("vitaminDBody", lang)}
-            </p>
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={() => {
-                  logVitaminD.mutate({ loggedBy: name ?? null });
-                  markVitaminDGiven();
-                  localStorage.removeItem(VITAMIN_D_KEY);
-                  notifyVitaminD();
-                  setLocation("/");
-                }}
-                className="w-full h-12 rounded-2xl font-bold"
-              >
-                {tr("vitaminDGave", lang)}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  localStorage.setItem(VITAMIN_D_KEY, "true");
-                  notifyVitaminD();
-                  setLocation("/");
-                }}
-                className="w-full h-12 rounded-2xl font-bold"
-              >
-                {tr("vitaminDRemindLater", lang)}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

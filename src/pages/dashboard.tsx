@@ -5,7 +5,7 @@ import {
   useGetActiveSleep, getGetActiveSleepQueryKey,
   useStopSleep,
   useGetActiveFeeding, getGetActiveFeedingQueryKey,
-  useLogVitaminD, useLogDiaper, useStartSleep,
+  useLogDiaper, useStartSleep, useStartFeeding, useStopFeeding,
 } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { getSupabase, toEvent, type EventRow } from "@/lib/supabase";
 import type { Language } from "@/contexts/language-context";
@@ -78,11 +78,6 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   return null;
 }
 
-const VITAMIN_D_KEY = "vitamin-d-remind";
-const VITAMIN_D_GIVEN_KEY = "vitamin-d-given";
-const vitaminDGivenToday = () => localStorage.getItem(VITAMIN_D_GIVEN_KEY) === format(new Date(), "yyyy-MM-dd");
-const markVitaminDGiven = () => localStorage.setItem(VITAMIN_D_GIVEN_KEY, format(new Date(), "yyyy-MM-dd"));
-
 type SharePeriod = "today" | "2days" | "week";
 type ShareData = {
   feedingCount: number;
@@ -100,6 +95,7 @@ export default function DashboardPage() {
   const today = format(new Date(), "yyyy-MM-dd");
   const dateLocale = lang === "he" ? he : ru;
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // ── Sleep timer ──────────────────────────────────────────────────────────────
   const { data: activeSleep } = useGetActiveSleep({
@@ -167,17 +163,10 @@ export default function DashboardPage() {
   const startSleepQuick = useStartSleep({
     mutation: { onSuccess: () => quickFlash("sleep") },
   });
-
-  // ── Vitamin D ────────────────────────────────────────────────────────────────
-  const logVitaminD = useLogVitaminD();
-  const [vitaminDRemind, setVitaminDRemind] = useState(
-    () => !!localStorage.getItem(VITAMIN_D_KEY) && !vitaminDGivenToday(),
-  );
-  useEffect(() => {
-    const sync = () => setVitaminDRemind(!!localStorage.getItem(VITAMIN_D_KEY) && !vitaminDGivenToday());
-    window.addEventListener("vitamin-d-remind-change", sync);
-    return () => window.removeEventListener("vitamin-d-remind-change", sync);
-  }, []);
+  const startFeedingQuick = useStartFeeding();
+  const stopFeedingQuick = useStopFeeding({
+    mutation: { onSuccess: () => setLocation("/feeding") },
+  });
 
   // ── Data ─────────────────────────────────────────────────────────────────────
   const { data: events, isLoading: isLoadingEvents, refetch: refetchEvents } = useListEvents(
@@ -379,18 +368,31 @@ export default function DashboardPage() {
             <span>{lang === "he" ? "שניהם" : "Оба"}</span>
           </button>
 
-          {/* Feeding — navigates to /feeding */}
-          <Link href="/feeding">
-            <button className="h-12 w-full rounded-2xl border-2 bg-sky-400/10 border-sky-400/40 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] text-sky-700 dark:text-sky-400 active:scale-95 transition-transform">
-              <span className="text-lg leading-none">🍼</span>
-              <span>{lang === "he" ? "האכלה" : "Корм."}</span>
-            </button>
-          </Link>
-
-          {/* Sleep */}
+          {/* Feeding — toggles timer; stop navigates to /feeding */}
           <button
-            onClick={() => { if (!activeSleep) startSleepQuick.mutate({ loggedBy: name ?? null }); }}
-            disabled={startSleepQuick.isPending}
+            onClick={() => {
+              if (activeFeeding) stopFeedingQuick.mutate();
+              else startFeedingQuick.mutate({ loggedBy: name ?? null });
+            }}
+            disabled={startFeedingQuick.isPending || stopFeedingQuick.isPending}
+            className={cn(
+              "h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95 disabled:opacity-50",
+              activeFeeding
+                ? "bg-sky-400/20 border-sky-400 text-sky-600 dark:text-sky-400"
+                : "bg-sky-400/10 border-sky-400/40 text-sky-700 dark:text-sky-400"
+            )}
+          >
+            <span className="text-lg leading-none">{activeFeeding ? "⏱️" : "🍼"}</span>
+            <span>{activeFeeding ? (lang === "he" ? "מאכיל" : "Кормит") : (lang === "he" ? "האכלה" : "Корм.")}</span>
+          </button>
+
+          {/* Sleep — toggles timer */}
+          <button
+            onClick={() => {
+              if (activeSleep) stopSleepMutation.mutate();
+              else startSleepQuick.mutate({ loggedBy: name ?? null });
+            }}
+            disabled={startSleepQuick.isPending || stopSleepMutation.isPending}
             onAnimationEnd={() => splashing === "sleep" && setSplashing(null)}
             className={cn(
               "h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95 disabled:opacity-50",
@@ -443,29 +445,6 @@ export default function DashboardPage() {
                 {tr("goToFeeding", lang)}
               </button>
             </Link>
-          </div>
-        )}
-
-        {/* Vitamin D reminder banner */}
-        {vitaminDRemind && (
-          <div className="glass-card border-2 border-amber-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
-            <span className="text-2xl shrink-0">💊</span>
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-amber-600 dark:text-amber-400 text-sm leading-snug">
-                {tr("vitaminDReminderBanner", lang)}
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                logVitaminD.mutate({ loggedBy: name ?? null });
-                markVitaminDGiven();
-                localStorage.removeItem(VITAMIN_D_KEY);
-                setVitaminDRemind(false);
-              }}
-              className="shrink-0 h-10 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs active:scale-95 transition-transform"
-            >
-              {tr("vitaminDGave", lang)}
-            </button>
           </div>
         )}
 
@@ -553,7 +532,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1 min-w-0" dir={dir}>
                   <div className="flex justify-between items-center" dir={dir}>
-                    <span className="text-[11px] text-muted-foreground">{format(new Date(event.startedAt), "HH:mm")}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {format(new Date(event.startedAt), "HH:mm")}
+                      {event.endedAt ? `–${format(new Date(event.endedAt), "HH:mm")}` : ""}
+                    </span>
                     <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
                   </div>
                   <div className={cn("text-xs text-muted-foreground truncate", dir === "rtl" ? "text-right" : "text-left")}>

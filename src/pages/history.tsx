@@ -488,6 +488,7 @@ export default function HistoryPage() {
                           ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60)
                           : "")}
                       {event.type === "diaper" && diaperLabel(event.diaperType)}
+                      {event.notes ? ` · ${event.notes}` : ""}
                     </div>
                   </div>
 
