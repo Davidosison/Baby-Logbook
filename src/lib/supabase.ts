@@ -78,7 +78,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
 
 export type EventRow = {
   id: number;
-  type: "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d";
+  type: "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d" | "medication";
   started_at: string;
   ended_at: string | null;
   duration_minutes: number | null;
@@ -92,7 +92,7 @@ export type EventRow = {
 
 export type Event = {
   id: number;
-  type: "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d";
+  type: "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d" | "medication";
   startedAt: string;
   endedAt: string | null;
   durationMinutes: number | null;

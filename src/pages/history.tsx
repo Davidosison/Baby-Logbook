@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
 import { format, isToday, isYesterday, subDays, startOfDay, endOfDay } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2 } from "lucide-react";
+import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2, Syringe } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "diaper") return <Droplet className={cn("w-4 h-4", className)} />;
   if (type === "bath") return <span className={cn("text-sm leading-none", className)}>🛁</span>;
   if (type === "vitamin_d") return <span className={cn("text-sm leading-none", className)}>💊</span>;
+  if (type === "medication") return <Syringe className={cn("w-4 h-4", className)} />;
   return null;
 }
 
@@ -377,6 +378,7 @@ export default function HistoryPage() {
     if (type === "diaper") return tr("diaper", lang);
     if (type === "bath") return tr("bath", lang);
     if (type === "vitamin_d") return tr("vitamin_d", lang);
+    if (type === "medication") return tr("medication", lang);
     return type;
   };
 
@@ -442,7 +444,8 @@ export default function HistoryPage() {
                     event.type === "diaper" && "bg-amber-50 border-amber-100/80 dark:bg-amber-950/25 dark:border-amber-900/30",
                     event.type === "bath" && "bg-teal-50 border-teal-100/80 dark:bg-teal-950/25 dark:border-teal-900/30",
                     event.type === "vitamin_d" && "bg-violet-50 border-violet-100/80 dark:bg-violet-950/25 dark:border-violet-900/30",
-                    !["feeding","sleep","diaper","bath","vitamin_d"].includes(event.type) && "bg-card border-border",
+                    event.type === "medication" && "bg-rose-50 border-rose-100/80 dark:bg-rose-950/25 dark:border-rose-900/30",
+                    !["feeding","sleep","diaper","bath","vitamin_d","medication"].includes(event.type) && "bg-card border-border",
                   )}
                   dir={dir}
                 >
@@ -454,6 +457,7 @@ export default function HistoryPage() {
                     event.type === "diaper" && "bg-amber-100 border-amber-200 text-amber-600 dark:bg-amber-900/40 dark:border-amber-800 dark:text-amber-400",
                     event.type === "bath" && "bg-teal-100 border-teal-200 text-teal-600 dark:bg-teal-900/40 dark:border-teal-800 dark:text-teal-400",
                     event.type === "vitamin_d" && "bg-violet-100 border-violet-200 text-violet-600 dark:bg-violet-900/40 dark:border-violet-800 dark:text-violet-400",
+                    event.type === "medication" && "bg-rose-100 border-rose-200 text-rose-600 dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400",
                   )}>
                     <EventIcon type={event.type} />
                   </div>

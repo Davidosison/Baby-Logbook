@@ -18,6 +18,7 @@ import FeedingPage from "@/pages/feeding";
 import SleepPage from "@/pages/sleep";
 import DiaperPage from "@/pages/diaper";
 import BathPage from "@/pages/bath";
+import MedicationsPage from "@/pages/medications";
 import HistoryPage from "@/pages/history";
 import SchedulePage from "@/pages/schedule";
 import GuidePage from "@/pages/guide";
@@ -120,6 +121,9 @@ function Router() {
       </Route>
       <Route path="/bath">
         <AuthWrapper><MainLayout><BathPage /></MainLayout></AuthWrapper>
+      </Route>
+      <Route path="/medications">
+        <AuthWrapper><MainLayout><MedicationsPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/schedule">
         <AuthWrapper><MainLayout><SchedulePage /></MainLayout></AuthWrapper>

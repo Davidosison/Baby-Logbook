@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Layers, Sparkles, Utensils, Droplet, Pill } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Layers, Sparkles, Utensils, Droplet, Pill, Syringe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
@@ -113,6 +113,14 @@ export function BottomNav() {
                   </div>
                   <Pill className="w-5 h-5 opacity-60" />
                 </button>
+                <Link href="/medications" data-testid="nav-medications"
+                  onClick={() => setAddOpen(false)}
+                  className="w-full flex items-center bg-rose-400/10 hover:bg-rose-400/20 text-rose-600 dark:text-rose-400 p-4 rounded-2xl transition-colors">
+                  <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
+                    <div className="text-xl font-bold">{tr("medication", lang)}</div>
+                  </div>
+                  <Syringe className="w-5 h-5 opacity-60" />
+                </Link>
               </div>
             </SheetContent>
           </Sheet>

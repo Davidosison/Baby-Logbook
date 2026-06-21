@@ -634,6 +634,32 @@ export function useGetFamilyMembers(options?: { query?: Partial<UseQueryOptions<
   });
 }
 
+type MedicationInput = { notes?: string | null; startedAt?: string; loggedBy?: string | null };
+
+export function useLogMedication(options?: {
+  mutation?: UseMutationOptions<Event, Error, { data: MedicationInput }>;
+}) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
+  return useMutation({
+    mutationFn: async ({ data }: { data: MedicationInput }) => {
+      const row = await safeInsert("events", {
+        type: "medication",
+        started_at: data.startedAt ?? new Date().toISOString(),
+        notes: data.notes ?? null,
+        is_active: false,
+        logged_by: data.loggedBy ?? null,
+      });
+      return toEvent(row as EventRow);
+    },
+    onSuccess: (data, vars, ctx) => {
+      invalidateEventCaches(queryClient);
+      userOnSuccess?.(data, vars, ctx);
+    },
+    ...restOpts,
+  });
+}
+
 export function useLogVitaminD(options?: {
   mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }>;
 }) {

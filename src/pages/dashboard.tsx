@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
 import {
   Droplet, Moon, Utensils, Share2, StopCircle, RefreshCw,
-  Timer, Bath, Sparkles, Loader2,
+  Timer, Bath, Sparkles, Loader2, Syringe,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -75,6 +75,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "diaper") return <Droplet className={cn("w-4 h-4", className)} />;
   if (type === "bath") return <Bath className={cn("w-4 h-4", className)} />;
   if (type === "vitamin_d") return <span className="text-sm leading-none">💊</span>;
+  if (type === "medication") return <Syringe className={cn("w-4 h-4", className)} />;
   return null;
 }
 
@@ -290,6 +291,7 @@ export default function DashboardPage() {
     if (type === "diaper") return tr("diaper", lang);
     if (type === "bath") return tr("bath", lang);
     if (type === "vitamin_d") return tr("vitamin_d", lang);
+    if (type === "medication") return tr("medication", lang);
     return type;
   };
 
@@ -527,6 +529,7 @@ export default function DashboardPage() {
                   event.type === "diaper" && "text-amber-400",
                   event.type === "bath" && "text-teal-400",
                   event.type === "vitamin_d" && "text-purple-400",
+                  event.type === "medication" && "text-rose-400",
                 )}>
                   <EventIcon type={event.type} />
                 </div>

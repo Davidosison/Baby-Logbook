@@ -91,6 +91,12 @@ const t = {
   saveBath: { he: "שמור מקלחת", ru: "Сохранить купание" },
   bathNotes: { he: "לדוגמה: שמפו חדש...", ru: "Например: новый шампунь..." },
 
+  // Medications page
+  medication: { he: "תרופות", ru: "Лекарства" },
+  saveMedication: { he: "שמור תרופה", ru: "Сохранить" },
+  medicationNotes: { he: "תרופה, מינון וסיבה", ru: "Лекарство, доза и причина" },
+  medicationNotesPlaceholder: { he: 'לדוגמה: אקמול 2.5 מ"ל - הורדת חום', ru: "Например: парацетамол 2.5 мл — от температуры" },
+
   // Feeding timer (dashboard banner)
   feedingActive: { he: "האכלה פעילה", ru: "Идёт кормление" },
   goToFeeding: { he: "לדף האכלה ←", ru: "К кормлению ←" },
