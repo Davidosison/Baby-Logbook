@@ -107,7 +107,8 @@ export function BottomNav() {
                     logVitaminD.mutate({ loggedBy: name ?? null });
                     setAddOpen(false);
                   }}
-                  className="w-full flex items-center bg-violet-400/10 hover:bg-violet-400/20 text-violet-600 dark:text-violet-400 p-4 rounded-2xl transition-colors">
+                  disabled={logVitaminD.isPending}
+                  className="w-full flex items-center bg-violet-400/10 hover:bg-violet-400/20 text-violet-600 dark:text-violet-400 p-4 rounded-2xl transition-colors disabled:opacity-50">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-xl font-bold">{tr("vitamin_d", lang)}</div>
                   </div>

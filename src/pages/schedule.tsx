@@ -33,6 +33,7 @@ const TYPE_COLORS_WEEKLY: Record<string, string> = {
   diaper: "bg-amber-400/75",
   bath: "bg-teal-400/75",
   vitamin_d: "bg-purple-400/75",
+  medication: "bg-rose-400/75",
 };
 
 // ─── Utils ───────────────────────────────────────────────────────────────────
@@ -224,6 +225,12 @@ const EVENT_ACCENT: Record<string, EventAccent> = {
     endDotCls: "",
     cardCls: "bg-purple-400/10 border-purple-400/25",
   },
+  medication: {
+    dotCls: "bg-rose-400",
+    barCls: "",
+    endDotCls: "",
+    cardCls: "bg-rose-400/10 border-rose-400/25",
+  },
 };
 
 function TimelineEventRow({
@@ -252,13 +259,15 @@ function TimelineEventRow({
           ? tr("bath", lang)
           : event.type === "vitamin_d"
             ? tr("vitamin_d", lang)
-            : event.diaperType === "pee"
-              ? tr("pee", lang)
-              : event.diaperType === "poop"
-                ? tr("poop", lang)
-                : event.diaperType === "both"
-                  ? tr("both", lang)
-                  : tr("diaper", lang);
+            : event.type === "medication"
+              ? tr("medication", lang)
+              : event.diaperType === "pee"
+                ? tr("pee", lang)
+                : event.diaperType === "poop"
+                  ? tr("poop", lang)
+                  : event.diaperType === "both"
+                    ? tr("both", lang)
+                    : tr("diaper", lang);
 
   const subParts: string[] = [];
   if (event.type === "feeding") {

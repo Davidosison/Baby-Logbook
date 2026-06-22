@@ -10,6 +10,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
+import { useToast } from "@/hooks/use-toast";
 import { tr } from "@/lib/translations";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -97,6 +98,9 @@ export default function DashboardPage() {
   const dateLocale = lang === "he" ? he : ru;
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const onStopError = () =>
+    toast({ title: tr("error", lang), description: tr("actionFailedRefresh", lang), variant: "destructive" });
 
   // ── Sleep timer ──────────────────────────────────────────────────────────────
   const { data: activeSleep } = useGetActiveSleep({
@@ -122,6 +126,7 @@ export default function DashboardPage() {
         queryClient.invalidateQueries({ queryKey: getGetRecentActivityQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDailySummaryQueryKey({ date: today }) });
       },
+      onError: onStopError,
     },
   });
 
@@ -166,7 +171,14 @@ export default function DashboardPage() {
   });
   const startFeedingQuick = useStartFeeding();
   const stopFeedingQuick = useStopFeeding({
-    mutation: { onSuccess: () => setLocation("/feeding") },
+    mutation: {
+      onSuccess: (event) => {
+        const start = format(new Date(event.startedAt), "HH:mm");
+        const end = event.endedAt ? format(new Date(event.endedAt), "HH:mm") : format(new Date(), "HH:mm");
+        setLocation(`/feeding?stoppedId=${event.id}&start=${start}&end=${end}`);
+      },
+      onError: onStopError,
+    },
   });
 
   // ── Data ─────────────────────────────────────────────────────────────────────

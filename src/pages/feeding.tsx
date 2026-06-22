@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearchParams } from "wouter";
 import {
   useLogFeeding, useUpdateEvent,
   useGetActiveFeeding, getGetActiveFeedingQueryKey,
@@ -40,16 +40,22 @@ function computeAutoMinutes(start: string, end: string): number | null {
 
 export default function FeedingPage() {
   const [, setLocation] = useLocation();
+  const [search] = useSearchParams();
   const queryClient = useQueryClient();
   const { lang, dir } = useLanguage();
   const { name } = usePerson();
   const [amountMl, setAmountMl] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [startTime, setStartTime] = useState(() => search.get("start") ?? "");
+  const [endTime, setEndTime] = useState(() => search.get("end") ?? "");
   const [notes, setNotes] = useState("");
   const [retroStart, setRetroStart] = useState(""); // optional past start time for timer
-  // ID of the feeding record created by the timer (so we update it instead of inserting a new one)
-  const [stoppedFeedingId, setStoppedFeedingId] = useState<number | null>(null);
+  // ID of the feeding record created by the timer (so we update it instead of inserting a new one).
+  // Populated either by stopFeeding's onSuccess (stopped from this page) or from the
+  // ?stoppedId= URL param (stopped via the dashboard's quick-toggle, which navigates here).
+  const [stoppedFeedingId, setStoppedFeedingId] = useState<number | null>(() => {
+    const id = search.get("stoppedId");
+    return id ? Number(id) : null;
+  });
 
   // ── DB-based timer (syncs across all devices) ────────────────────────────────
   const { data: activeFeeding } = useGetActiveFeeding({
