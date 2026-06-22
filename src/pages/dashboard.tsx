@@ -425,7 +425,7 @@ export default function DashboardPage() {
 
         {/* Live sleep banner */}
         {activeSleep && (
-          <div className="glass-card border-2 border-indigo-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
+          <div className="card-surface border-2 border-indigo-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
             <Moon className="w-6 h-6 text-indigo-400 shrink-0 animate-pulse" />
             <div className="flex-1 min-w-0">
               <div className="font-bold text-indigo-600 dark:text-indigo-400 text-xs leading-none mb-0.5">{tr("sleepingNow", lang)}</div>
@@ -446,7 +446,7 @@ export default function DashboardPage() {
 
         {/* Live feeding timer banner */}
         {activeFeeding && (
-          <div className="glass-card border-2 border-sky-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
+          <div className="card-surface border-2 border-sky-400/60 rounded-2xl px-3 py-2.5 flex items-center gap-3" dir={dir}>
             <Timer className="w-6 h-6 text-sky-400 shrink-0 animate-pulse" />
             <div className="flex-1 min-w-0">
               <div className="font-bold text-sky-600 dark:text-sky-400 text-xs leading-none mb-0.5">{tr("feedingActive", lang)}</div>
@@ -474,7 +474,7 @@ export default function DashboardPage() {
               : type === "sleep" ? <Moon className="w-5 h-5 text-indigo-400 mb-1" />
               : <Droplet className="w-5 h-5 text-amber-400 mb-1" />;
             return (
-              <div key={type} className="glass-card border border-border/50 rounded-3xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
+              <div key={type} className="card-surface border border-border/50 rounded-3xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
                 {icon}
                 <div className="text-xs font-semibold mb-0.5">{typeLabel(type)}</div>
                 <div className="text-[10px] text-muted-foreground font-medium leading-tight">{getRecentText(minsAgo)}</div>
@@ -485,7 +485,7 @@ export default function DashboardPage() {
 
         {/* ── Daily Progress ────────────────────────────────────────────────── */}
         {summary && (
-          <div className="glass-card border border-border/50 rounded-3xl px-4 py-3 shadow-sm">
+          <div className="card-surface border border-border/50 rounded-3xl px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between mb-2.5">
               {/* Share button — opens the sheet */}
               <button
@@ -528,12 +528,12 @@ export default function DashboardPage() {
               <div className="text-center text-muted-foreground py-6 animate-pulse text-sm">{tr("loading", lang)}</div>
             )}
             {!isLoadingEvents && events?.length === 0 && (
-              <div className="text-center text-muted-foreground py-6 glass-card border border-border/50 rounded-2xl text-sm">
+              <div className="text-center text-muted-foreground py-6 card-surface border border-border/50 rounded-2xl text-sm">
                 {tr("noEventsToday", lang)}
               </div>
             )}
             {events?.map((event) => (
-              <div key={event.id} className="glass-card border border-border/50 rounded-3xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
+              <div key={event.id} className="card-surface border border-border/50 rounded-3xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
                 <div className={cn(
                   "w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-background/60 border border-border/50",
                   event.type === "feeding" && "text-sky-400",
@@ -582,7 +582,7 @@ export default function DashboardPage() {
           if (!open) { setSharePeriod(null); setShareData(null); }
         }}
       >
-        <SheetContent side="bottom" className="rounded-t-[2rem] glass-card border-border/60 p-6" dir={dir}>
+        <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-border/60 p-6" dir={dir}>
           <SheetTitle className="text-center font-bold text-xl mb-5">
             {lang === "he" ? "📤 שיתוף עדכון" : "📤 Поделиться"}
           </SheetTitle>

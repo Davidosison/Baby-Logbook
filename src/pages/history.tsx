@@ -116,7 +116,7 @@ function EditSheet({
   return (
     <SheetContent
       side="bottom"
-      className="rounded-t-[2rem] glass-card border-border/50 p-6 max-h-[85vh] overflow-y-auto"
+      className="rounded-t-[2rem] card-surface border-border/50 p-6 max-h-[85vh] overflow-y-auto"
       dir={dir}
     >
       <SheetHeader className="mb-5">
@@ -285,7 +285,7 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
   ];
 
   return (
-    <div className="glass-card border border-border/50 rounded-3xl p-4 mb-4 shadow-sm" dir={dir}>
+    <div className="card-surface border border-border/50 rounded-3xl p-4 mb-4 shadow-sm" dir={dir}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-primary" />
@@ -428,7 +428,7 @@ export default function HistoryPage() {
 
         {sortedDates.map((date) => (
           <div key={date} className="space-y-2">
-            <h3 className="font-semibold text-base sticky top-20 glass-card !rounded-none border-b border-border/30 backdrop-blur py-2 z-10 px-1">
+            <h3 className="font-semibold text-base sticky top-20 card-surface !rounded-none border-b border-border/30 backdrop-blur py-2 z-10 px-1">
               {dateHeading(date)}
             </h3>
 
