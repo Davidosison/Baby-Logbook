@@ -16,6 +16,17 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Moon, StopCircle, PlayCircle, X } from "lucide-react";
 
+// If the entered clock-time is later in the day than right now, it hasn't happened yet
+// today — it must refer to yesterday (e.g. logging a 21:00 start at 3am the next morning).
+function resolveBaseDate(timeStr: string, now: Date): Date {
+  const [h, m] = timeStr.split(":").map(Number);
+  const entryMinutes = h! * 60 + m!;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const base = new Date(now);
+  if (entryMinutes > nowMinutes) base.setDate(base.getDate() - 1);
+  return base;
+}
+
 function timeToISO(timeStr: string, baseDate: Date, refTimeStr?: string): string {
   const [h, m] = timeStr.split(":").map(Number);
   const d = new Date(baseDate);
@@ -90,7 +101,7 @@ export default function SleepPage() {
 
   const handleSave = () => {
     if (!startTime || !endTime) return;
-    const base = new Date();
+    const base = resolveBaseDate(startTime, new Date());
     logSleep.mutate({
       data: {
         startedAt: timeToISO(startTime, base),
@@ -150,7 +161,7 @@ export default function SleepPage() {
 
             <button
               onClick={() => {
-                const startedAt = retroStart ? timeToISO(retroStart, new Date()) : undefined;
+                const startedAt = retroStart ? timeToISO(retroStart, resolveBaseDate(retroStart, new Date())) : undefined;
                 startSleep.mutate({ loggedBy: name ?? null, startedAt });
                 setRetroStart("");
               }}

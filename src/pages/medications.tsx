@@ -11,9 +11,15 @@ import { tr } from "@/lib/translations";
 import { format } from "date-fns";
 import { Thermometer, X } from "lucide-react";
 
+// If the entered clock-time is later in the day than right now, it hasn't happened yet
+// today — it must refer to yesterday (e.g. logging a 23:30 dose at 3am the next morning).
 function timeToTodayISO(timeStr: string): string {
   const [h, m] = timeStr.split(":").map(Number);
-  const d = new Date();
+  const entryMinutes = h! * 60 + m!;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const d = new Date(now);
+  if (entryMinutes > nowMinutes) d.setDate(d.getDate() - 1);
   d.setHours(h!, m!, 0, 0);
   return d.toISOString();
 }

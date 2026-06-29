@@ -17,9 +17,20 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Timer, StopCircle, X } from "lucide-react";
 
-function timeToTodayISO(timeStr: string, refTimeStr?: string): string {
+// If the entered clock-time is later in the day than right now, it hasn't happened yet
+// today — it must refer to yesterday (e.g. logging a 21:00 start at 3am the next morning).
+function resolveBaseDate(timeStr: string, now: Date): Date {
   const [h, m] = timeStr.split(":").map(Number);
-  const d = new Date();
+  const entryMinutes = h! * 60 + m!;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const base = new Date(now);
+  if (entryMinutes > nowMinutes) base.setDate(base.getDate() - 1);
+  return base;
+}
+
+function timeToTodayISO(timeStr: string, baseDate: Date, refTimeStr?: string): string {
+  const [h, m] = timeStr.split(":").map(Number);
+  const d = new Date(baseDate);
   d.setHours(h!, m!, 0, 0);
   // Handle midnight crossing: if this time is before the reference, it's the next day
   if (refTimeStr) {
@@ -127,13 +138,14 @@ export default function FeedingPage() {
         },
       });
     } else {
+      const base = startTime ? resolveBaseDate(startTime, new Date()) : new Date();
       logFeeding.mutate({
         data: {
           amountMl: amountMl ? parseInt(amountMl) : undefined,
           durationMinutes: autoDuration ?? undefined,
           notes: notes || undefined,
-          startedAt: startTime ? timeToTodayISO(startTime) : new Date().toISOString(),
-          endedAt: endTime ? timeToTodayISO(endTime, startTime) : undefined,
+          startedAt: startTime ? timeToTodayISO(startTime, base) : new Date().toISOString(),
+          endedAt: endTime ? timeToTodayISO(endTime, base, startTime) : undefined,
           loggedBy: name ?? null,
         },
       });
@@ -195,7 +207,7 @@ export default function FeedingPage() {
               ? stopFeeding.mutate()
               : startFeeding.mutate({
                   loggedBy: name ?? null,
-                  startedAt: retroStart ? timeToTodayISO(retroStart) : undefined,
+                  startedAt: retroStart ? timeToTodayISO(retroStart, resolveBaseDate(retroStart, new Date())) : undefined,
                 })
             }
             disabled={startFeeding.isPending || stopFeeding.isPending}
