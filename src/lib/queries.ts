@@ -227,14 +227,33 @@ export function useGetDailySummary(
       if (error) throw error;
       const events = (data as EventRow[]).map(toEvent);
       const feedings = events.filter((e) => e.type === "feeding");
-      const sleeps = events.filter((e) => e.type === "sleep");
+      const sleepsStartedToday = events.filter((e) => e.type === "sleep");
       const diapers = events.filter((e) => e.type === "diaper");
+
+      // Sleep that started the day before but stretches past midnight (still active, or
+      // ended after this day started) — fetch separately since it falls outside the
+      // started_at window above, then count only the slice that overlaps this day.
+      const { data: overnightData, error: overnightErr } = await supabase
+        .from("events")
+        .select("*")
+        .eq("type", "sleep")
+        .lt("started_at", start.toISOString())
+        .or(`ended_at.gte.${start.toISOString()},ended_at.is.null`);
+      if (overnightErr) throw overnightErr;
+      const overnightSleeps = (overnightData as EventRow[]).map(toEvent);
+
+      const totalSleepMinutes = [...sleepsStartedToday, ...overnightSleeps].reduce((sum, e) => {
+        const sStart = Math.max(new Date(e.startedAt).getTime(), start.getTime());
+        const sEnd = Math.min(e.endedAt ? new Date(e.endedAt).getTime() : Date.now(), end.getTime());
+        return sum + Math.max(0, Math.round((sEnd - sStart) / 60000));
+      }, 0);
+
       return {
         feedingCount: feedings.length,
         totalFeedingMl: feedings.reduce((s, e) => s + (e.amountMl ?? 0), 0),
         totalFeedingMinutes: feedings.reduce((s, e) => s + (e.durationMinutes ?? 0), 0),
-        sleepCount: sleeps.length,
-        totalSleepMinutes: sleeps.reduce((s, e) => s + (e.durationMinutes ?? 0), 0),
+        sleepCount: sleepsStartedToday.length + overnightSleeps.length,
+        totalSleepMinutes,
         diaperCount: diapers.length,
         peeDiapers: diapers.filter((e) => e.diaperType === "pee").length,
         poopDiapers: diapers.filter((e) => e.diaperType === "poop" || e.diaperType === "both").length,

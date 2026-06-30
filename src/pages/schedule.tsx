@@ -37,11 +37,6 @@ const TYPE_COLORS_WEEKLY: Record<string, string> = {
 };
 
 // ─── Utils ───────────────────────────────────────────────────────────────────
-function minutesFromMidnight(iso: string) {
-  const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
-}
-
 function displayDuration(event: EventItem) {
   if (event.durationMinutes) return event.durationMinutes;
   if (event.type === "diaper") return DIAPER_DISPLAY_MIN;
@@ -53,6 +48,22 @@ function displayDuration(event: EventItem) {
     return FEEDING_DISPLAY_MIN;
   }
   return FEEDING_DISPLAY_MIN;
+}
+
+// The portion of an event that falls within a given day, clipped to [00:00, 24:00) —
+// so a sleep that starts at 21:00 and runs past midnight contributes a segment to both
+// the day it started and the day it ended, instead of being attributed to one day only.
+function getDaySegment(event: EventItem, day: Date): { startMin: number; durMin: number } | null {
+  const dayStart = startOfDay(day).getTime();
+  const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+  const evStart = new Date(event.startedAt).getTime();
+  const evEnd = evStart + displayDuration(event) * 60000;
+
+  const segStart = Math.max(evStart, dayStart);
+  const segEnd = Math.min(evEnd, dayEnd);
+  if (segEnd <= segStart) return null;
+
+  return { startMin: (segStart - dayStart) / 60000, durMin: (segEnd - segStart) / 60000 };
 }
 
 // ─── Weekly Pattern Grid ─────────────────────────────────────────────────────
@@ -67,14 +78,22 @@ function WeeklyGrid({ events, days: rawDays, lang, dir }: { events: EventItem[];
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const nowTop = (nowMinutes / (24 * 60)) * TOTAL_PX;
 
-  const byDay = rawDays.reduce<Record<string, EventItem[]>>((acc, d) => {
-    acc[format(d, "yyyy-MM-dd")] = [];
-    return acc;
-  }, {});
-  events.forEach((e) => {
-    const key = format(new Date(e.startedAt), "yyyy-MM-dd");
-    if (byDay[key]) byDay[key]!.push(e);
-  });
+  // Pre-compute each day's segments once (an event spanning midnight yields a segment
+  // in both the day it started and the day it ended).
+  const segmentsByDay = rawDays.reduce<Record<string, { event: EventItem; startMin: number; durMin: number }[]>>(
+    (acc, d) => {
+      acc[format(d, "yyyy-MM-dd")] = events.reduce<{ event: EventItem; startMin: number; durMin: number }[]>(
+        (segs, e) => {
+          const seg = getDaySegment(e, d);
+          if (seg) segs.push({ event: e, ...seg });
+          return segs;
+        },
+        [],
+      );
+      return acc;
+    },
+    {},
+  );
 
   return (
     // Always LTR for the outer structure so hour labels stay on the left
@@ -148,7 +167,7 @@ function WeeklyGrid({ events, days: rawDays, lang, dir }: { events: EventItem[];
             {/* Day columns */}
             {days.map((d) => {
               const key = format(d, "yyyy-MM-dd");
-              const dayEvents = byDay[key] ?? [];
+              const daySegments = segmentsByDay[key] ?? [];
               const isCurrentDay = isToday(d);
 
               return (
@@ -159,9 +178,7 @@ function WeeklyGrid({ events, days: rawDays, lang, dir }: { events: EventItem[];
                     isCurrentDay && "bg-primary/5"
                   )}
                 >
-                  {dayEvents.map((event) => {
-                    const startMin = minutesFromMidnight(event.startedAt);
-                    const durMin = displayDuration(event);
+                  {daySegments.map(({ event, startMin, durMin }) => {
                     const top = (startMin / (24 * 60)) * TOTAL_PX;
                     const height = Math.max(MIN_BLOCK_PX, (durMin / (24 * 60)) * TOTAL_PX);
                     const color = TYPE_COLORS_WEEKLY[event.type] ?? "bg-purple-400/75";
@@ -336,12 +353,18 @@ function DailyTimeline({ events, lang }: { events: EventItem[]; lang: "he" | "ru
   const todayStr = format(now, "yyyy-MM-dd");
 
   const todayEvents = events
-    .filter((e) => format(new Date(e.startedAt), "yyyy-MM-dd") === todayStr)
+    .filter((e) => {
+      if (format(new Date(e.startedAt), "yyyy-MM-dd") === todayStr) return true;
+      // Sleep that started yesterday but stretches past midnight into today
+      return e.type === "sleep" && !!getDaySegment(e, now);
+    })
     .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
 
   const feedCount = todayEvents.filter((e) => e.type === "feeding").length;
   const feedMl = todayEvents.filter((e) => e.type === "feeding").reduce((s, e) => s + (e.amountMl ?? 0), 0);
-  const sleepMin = todayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+  const sleepMin = todayEvents
+    .filter((e) => e.type === "sleep")
+    .reduce((s, e) => s + (getDaySegment(e, now)?.durMin ?? 0), 0);
   const diaperCount = todayEvents.filter((e) => e.type === "diaper").length;
 
   return (
