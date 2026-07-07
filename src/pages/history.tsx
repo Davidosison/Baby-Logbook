@@ -254,9 +254,24 @@ function WeeklyStats({ lang, dir }: { lang: "he" | "ru"; dir: "rtl" | "ltr" }) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = subDays(today, 6 - i);
     const dateStr = format(d, "yyyy-MM-dd");
+    const dayStart = startOfDay(d).getTime();
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+
     const dayEvents = events?.filter((e) => format(new Date(e.startedAt), "yyyy-MM-dd") === dateStr) ?? [];
-    const sleepMin = dayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
     const feedingMl = dayEvents.filter((e) => e.type === "feeding").reduce((s, e) => s + (e.amountMl ?? 0), 0);
+
+    // Clip each sleep event to this day's window so overnight sleeps are counted correctly
+    const sleepMin = (events ?? []).filter((e) => e.type === "sleep").reduce((s, e) => {
+      const evStart = new Date(e.startedAt).getTime();
+      const evEnd = e.endedAt
+        ? new Date(e.endedAt).getTime()
+        : e.isActive ? Date.now() : evStart + (e.durationMinutes ?? 0) * 60000;
+      const segStart = Math.max(evStart, dayStart);
+      const segEnd = Math.min(evEnd, dayEnd);
+      if (segEnd <= segStart) return s;
+      return s + Math.round((segEnd - segStart) / 60000);
+    }, 0);
+
     return {
       label: format(d, "EEE", { locale: dateLocale }),
       isToday: i === 6,
@@ -401,6 +416,25 @@ export default function HistoryPage() {
       const date = format(new Date(event.startedAt), "yyyy-MM-dd");
       if (!acc[date]) acc[date] = [];
       acc[date]!.push(event);
+
+      // For overnight sleep (started day X, ended day Y), also add a clipped entry
+      // to day Y showing "00:00 → wake-time" so it appears in the wakeup day's list.
+      if (event.type === "sleep" && event.endedAt) {
+        const endDate = format(new Date(event.endedAt), "yyyy-MM-dd");
+        if (endDate !== date) {
+          const wakeupDayStart = startOfDay(new Date(event.endedAt));
+          const clippedMin = Math.round(
+            (new Date(event.endedAt).getTime() - wakeupDayStart.getTime()) / 60000,
+          );
+          if (!acc[endDate]) acc[endDate] = [];
+          acc[endDate]!.push({
+            ...event,
+            startedAt: wakeupDayStart.toISOString(),
+            durationMinutes: clippedMin,
+          });
+        }
+      }
+
       return acc;
     },
     {} as Record<string, typeof events>,

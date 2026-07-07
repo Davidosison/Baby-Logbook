@@ -151,6 +151,35 @@ export function useListEvents(
         const end = new Date(params.date);
         end.setHours(23, 59, 59, 999);
         q = q.gte("started_at", start.toISOString()).lte("started_at", end.toISOString());
+
+        const { data, error } = await q;
+        if (error) throw error;
+        const dayEvents = (data as EventRow[]).map(toEvent);
+
+        // Overnight sleeps: started before midnight but active/ended today — two separate
+        // queries instead of .or() to avoid PostgREST null-filter parsing issues.
+        const { data: ovEnded, error: ovEndedErr } = await getSupabase()
+          .from("events").select("*").eq("type", "sleep")
+          .lt("started_at", start.toISOString())
+          .gte("ended_at", start.toISOString());
+        if (ovEndedErr) throw ovEndedErr;
+        const { data: ovActive, error: ovActiveErr } = await getSupabase()
+          .from("events").select("*").eq("type", "sleep")
+          .lt("started_at", start.toISOString())
+          .is("ended_at", null);
+        if (ovActiveErr) throw ovActiveErr;
+
+        const overnightSleeps = [
+          ...((ovEnded ?? []) as EventRow[]),
+          ...((ovActive ?? []) as EventRow[]),
+        ].map(toEvent).map((e) => {
+          const sEnd = Math.min(e.endedAt ? new Date(e.endedAt).getTime() : Date.now(), end.getTime());
+          const clippedMin = Math.round(Math.max(0, sEnd - start.getTime()) / 60000);
+          return { ...e, startedAt: start.toISOString(), durationMinutes: clippedMin };
+        });
+
+        return [...overnightSleeps, ...dayEvents]
+          .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
       }
 
       if (params.limit) q = q.limit(params.limit);
