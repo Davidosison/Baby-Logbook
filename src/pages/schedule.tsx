@@ -351,6 +351,7 @@ function TimelineEventRow({
 function DailyTimeline({ events, lang }: { events: EventItem[]; lang: "he" | "ru" }) {
   const now = new Date();
   const todayStr = format(now, "yyyy-MM-dd");
+  const dayStart = startOfDay(now).getTime();
 
   const todayEvents = events
     .filter((e) => {
@@ -360,12 +361,22 @@ function DailyTimeline({ events, lang }: { events: EventItem[]; lang: "he" | "ru
     })
     .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
 
-  const feedCount = todayEvents.filter((e) => e.type === "feeding").length;
-  const feedMl = todayEvents.filter((e) => e.type === "feeding").reduce((s, e) => s + (e.amountMl ?? 0), 0);
-  const sleepMin = todayEvents
-    .filter((e) => e.type === "sleep")
-    .reduce((s, e) => s + (getDaySegment(e, now)?.durMin ?? 0), 0);
-  const diaperCount = todayEvents.filter((e) => e.type === "diaper").length;
+  // For overnight sleeps: clip the displayed start time to 00:00 and duration to
+  // today's portion only (so the card shows "00:00→05:12" instead of "21:59→05:12").
+  const displayEvents = todayEvents.map((e) => {
+    if (e.type !== "sleep") return e;
+    const isOvernight = new Date(e.startedAt).getTime() < dayStart;
+    if (!isOvernight) return e;
+    const seg = getDaySegment(e, now);
+    if (!seg) return e;
+    return { ...e, startedAt: new Date(dayStart).toISOString(), durationMinutes: Math.round(seg.durMin) };
+  });
+
+  const feedCount = displayEvents.filter((e) => e.type === "feeding").length;
+  const feedMl = displayEvents.filter((e) => e.type === "feeding").reduce((s, e) => s + (e.amountMl ?? 0), 0);
+  // Use integer durationMinutes from displayEvents to avoid float minutes in the stats bar
+  const sleepMin = displayEvents.filter((e) => e.type === "sleep").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+  const diaperCount = displayEvents.filter((e) => e.type === "diaper").length;
 
   return (
     <div className="flex flex-col h-full">
@@ -390,17 +401,17 @@ function DailyTimeline({ events, lang }: { events: EventItem[]; lang: "he" | "ru
 
       {/* Vertical timeline feed */}
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
-        {todayEvents.length === 0 ? (
+        {displayEvents.length === 0 ? (
           <div className="text-center text-muted-foreground py-12 text-sm">
             {tr("noEventsToday", lang)}
           </div>
         ) : (
-          todayEvents.map((event, index) => (
+          displayEvents.map((event, index) => (
             <TimelineEventRow
               key={event.id}
               event={event}
               lang={lang}
-              isLast={index === todayEvents.length - 1}
+              isLast={index === displayEvents.length - 1}
             />
           ))
         )}
