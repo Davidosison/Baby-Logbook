@@ -247,8 +247,16 @@ export function useGetDailySummary(
         ...((ovActiveData ?? []) as EventRow[]),
       ].map(toEvent);
 
+      // Overnight sleeps: use the full session duration (9pm→6am = 9h, not just the
+      // after-midnight slice) so today's sleep total matches what parents expect.
+      // Today-started sleeps: clip to the day window as normal.
       const totalSleepMinutes = [...sleepsStartedToday, ...overnightSleeps].reduce((sum, e) => {
-        const sStart = Math.max(new Date(e.startedAt).getTime(), start.getTime());
+        const isOvernight = new Date(e.startedAt).getTime() < start.getTime();
+        if (isOvernight) {
+          if (e.isActive) return sum + Math.round((Date.now() - new Date(e.startedAt).getTime()) / 60000);
+          return sum + (e.durationMinutes ?? 0);
+        }
+        const sStart = new Date(e.startedAt).getTime();
         const sEnd = Math.min(e.endedAt ? new Date(e.endedAt).getTime() : Date.now(), end.getTime());
         return sum + Math.max(0, Math.round((sEnd - sStart) / 60000));
       }, 0);

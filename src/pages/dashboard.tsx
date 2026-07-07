@@ -241,7 +241,12 @@ export default function DashboardPage() {
       const totalMl = feedings.reduce((s, e) => s + (e.amountMl ?? 0), 0);
       const nowMs = Date.now();
       const sleepMins = [...sleepsInPeriod, ...overnightSleeps].reduce((sum, e) => {
-        const sStart = Math.max(new Date(e.startedAt).getTime(), startDate.getTime());
+        const isOvernight = new Date(e.startedAt).getTime() < startDate.getTime();
+        if (isOvernight) {
+          if (e.isActive) return sum + Math.round((nowMs - new Date(e.startedAt).getTime()) / 60000);
+          return sum + (e.durationMinutes ?? 0);
+        }
+        const sStart = new Date(e.startedAt).getTime();
         const sEnd = Math.min(e.endedAt ? new Date(e.endedAt).getTime() : nowMs, nowMs);
         return sum + Math.max(0, Math.round((sEnd - sStart) / 60000));
       }, 0);
