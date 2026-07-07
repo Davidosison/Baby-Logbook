@@ -230,17 +230,22 @@ export function useGetDailySummary(
       const sleepsStartedToday = events.filter((e) => e.type === "sleep");
       const diapers = events.filter((e) => e.type === "diaper");
 
-      // Sleep that started the day before but stretches past midnight (still active, or
-      // ended after this day started) — fetch separately since it falls outside the
-      // started_at window above, then count only the slice that overlaps this day.
-      const { data: overnightData, error: overnightErr } = await supabase
-        .from("events")
-        .select("*")
-        .eq("type", "sleep")
+      // Sleep that started the day before but stretches past midnight — two separate
+      // queries instead of .or() to avoid PostgREST null-filter parsing issues.
+      const { data: ovEndedData, error: ovEndedErr } = await supabase
+        .from("events").select("*").eq("type", "sleep")
         .lt("started_at", start.toISOString())
-        .or(`ended_at.gte.${start.toISOString()},ended_at.is.null`);
-      if (overnightErr) throw overnightErr;
-      const overnightSleeps = (overnightData as EventRow[]).map(toEvent);
+        .gte("ended_at", start.toISOString());
+      if (ovEndedErr) throw ovEndedErr;
+      const { data: ovActiveData, error: ovActiveErr } = await supabase
+        .from("events").select("*").eq("type", "sleep")
+        .lt("started_at", start.toISOString())
+        .is("ended_at", null);
+      if (ovActiveErr) throw ovActiveErr;
+      const overnightSleeps = [
+        ...((ovEndedData ?? []) as EventRow[]),
+        ...((ovActiveData ?? []) as EventRow[]),
+      ].map(toEvent);
 
       const totalSleepMinutes = [...sleepsStartedToday, ...overnightSleeps].reduce((sum, e) => {
         const sStart = Math.max(new Date(e.startedAt).getTime(), start.getTime());

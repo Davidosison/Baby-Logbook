@@ -221,11 +221,30 @@ export default function DashboardPage() {
 
       const evts = (data as EventRow[]).map(toEvent);
       const feedings = evts.filter(e => e.type === "feeding");
-      const sleeps = evts.filter(e => e.type === "sleep" && !e.isActive);
       const diapers = evts.filter(e => e.type === "diaper");
+      const sleepsInPeriod = evts.filter(e => e.type === "sleep" && !e.isActive);
+
+      // Overnight sleeps: started before the period but overlap into it
+      const { data: ovEnded } = await getSupabase()
+        .from("events").select("*").eq("type", "sleep")
+        .lt("started_at", startDate.toISOString())
+        .gte("ended_at", startDate.toISOString());
+      const { data: ovActive } = await getSupabase()
+        .from("events").select("*").eq("type", "sleep")
+        .lt("started_at", startDate.toISOString())
+        .is("ended_at", null);
+      const overnightSleeps = [
+        ...((ovEnded ?? []) as EventRow[]),
+        ...((ovActive ?? []) as EventRow[]),
+      ].map(toEvent);
 
       const totalMl = feedings.reduce((s, e) => s + (e.amountMl ?? 0), 0);
-      const sleepMins = sleeps.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+      const nowMs = Date.now();
+      const sleepMins = [...sleepsInPeriod, ...overnightSleeps].reduce((sum, e) => {
+        const sStart = Math.max(new Date(e.startedAt).getTime(), startDate.getTime());
+        const sEnd = Math.min(e.endedAt ? new Date(e.endedAt).getTime() : nowMs, nowMs);
+        return sum + Math.max(0, Math.round((sEnd - sStart) / 60000));
+      }, 0);
 
       const avgFeedingsPerDay = feedings.length / daysBack;
       const avgSleepH = (sleepMins / daysBack) / 60;
