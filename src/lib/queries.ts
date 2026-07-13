@@ -430,7 +430,27 @@ export function useListEventsRange(
         .lte("started_at", end.toISOString())
         .order("started_at", { ascending: true });
       if (error) throw error;
-      return (data as EventRow[]).map(toEvent);
+      const rangeEvents = (data as EventRow[]).map(toEvent);
+
+      // Also include overnight sleep that started before the range but is still active
+      // or ended during the range — so the first day's sleep total is never blank.
+      const { data: ovEnded, error: ovEndedErr } = await getSupabase()
+        .from("events").select("*").eq("type", "sleep")
+        .lt("started_at", start.toISOString())
+        .gte("ended_at", start.toISOString());
+      if (ovEndedErr) throw ovEndedErr;
+      const { data: ovActive, error: ovActiveErr } = await getSupabase()
+        .from("events").select("*").eq("type", "sleep")
+        .lt("started_at", start.toISOString())
+        .is("ended_at", null);
+      if (ovActiveErr) throw ovActiveErr;
+      const preSleeps = [
+        ...((ovEnded ?? []) as EventRow[]),
+        ...((ovActive ?? []) as EventRow[]),
+      ].map(toEvent);
+
+      return [...preSleeps, ...rangeEvents]
+        .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
     },
     ...restOpts,
   });

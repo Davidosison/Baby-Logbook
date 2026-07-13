@@ -357,7 +357,23 @@ export default function HistoryPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editEvent, setEditEvent] = useState<EventItem | null>(null);
   const [search, setSearch] = useState("");
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+  const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
   const dateLocale = lang === "he" ? he : ru;
+
+  const toggleMonth = (key: string) =>
+    setCollapsedMonths((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+
+  const toggleWeek = (key: string) =>
+    setCollapsedWeeks((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
 
   const { data: events, isLoading } = useListEvents(
     { limit: 1000 },
@@ -530,28 +546,43 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {monthGroups.map((month) => (
+        {monthGroups.map((month) => {
+          const monthCollapsed = collapsedMonths.has(month.key);
+          return (
           <div key={month.key}>
-            {/* Month header */}
-            <div className="flex items-center gap-3 mt-5 mb-3">
+            {/* Month header — tap to collapse/expand */}
+            <button
+              onClick={() => toggleMonth(month.key)}
+              className="w-full flex items-center gap-3 mt-5 mb-3"
+            >
               <div className="flex-1 h-px bg-border/40" />
-              <span className="text-xs font-bold text-primary px-3 py-1 rounded-full bg-primary/10 border border-primary/20 capitalize">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-primary px-3 py-1 rounded-full bg-primary/10 border border-primary/20 capitalize">
                 {month.label}
+                <span className="text-[10px] opacity-60">{monthCollapsed ? "▸" : "▾"}</span>
               </span>
               <div className="flex-1 h-px bg-border/40" />
-            </div>
+            </button>
 
-            {month.weeks.map((week) => (
+            {!monthCollapsed && month.weeks.map((week) => {
+              const weekCollapsed = collapsedWeeks.has(week.key);
+              return (
               <div key={week.key} className="mb-5">
-                {/* Week range label */}
-                <div className="flex items-center gap-2 mb-2 px-1">
-                  <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                {/* Week range label — tap to collapse/expand */}
+                <button
+                  onClick={() => toggleWeek(week.key)}
+                  className="flex items-center gap-2 mb-2 px-1 w-full"
+                >
+                  <div className={cn(
+                    "w-1 h-1 rounded-full transition-colors",
+                    weekCollapsed ? "bg-primary/40" : "bg-muted-foreground/40"
+                  )} />
                   <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wider">
                     {week.rangeLabel}
                   </span>
-                </div>
+                  <span className="text-[9px] text-muted-foreground/40 ms-0.5">{weekCollapsed ? "▸" : "▾"}</span>
+                </button>
 
-                {week.days.map((dateStr) => (
+                {!weekCollapsed && week.days.map((dateStr) => (
                   <div key={dateStr} className="mb-4">
                     {/* Day heading */}
                     <div className="flex items-center gap-2 mb-2">
@@ -647,9 +678,11 @@ export default function HistoryPage() {
                   </div>
                 ))}
               </div>
-            ))}
+              );
+            })}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Edit Sheet — key forces remount with fresh state for each event */}
