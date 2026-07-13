@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useListEvents, getListEventsQueryKey,
   useDeleteEvent, useUpdateEvent,
@@ -8,9 +8,9 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
-import { format, isToday, isYesterday, subDays, startOfDay, endOfDay } from "date-fns";
+import { format, isToday, isYesterday, subDays, startOfDay } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2, Syringe } from "lucide-react";
+import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2, Syringe, Search, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -356,11 +356,12 @@ export default function HistoryPage() {
   const { lang, dir } = useLanguage();
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editEvent, setEditEvent] = useState<EventItem | null>(null);
+  const [search, setSearch] = useState("");
   const dateLocale = lang === "he" ? he : ru;
 
   const { data: events, isLoading } = useListEvents(
-    { limit: 200 },
-    { query: { queryKey: getListEventsQueryKey({ limit: 200 }) } },
+    { limit: 1000 },
+    { query: { queryKey: getListEventsQueryKey({ limit: 1000 }) } },
   );
 
   const deleteEventMutation = useDeleteEvent({
@@ -404,152 +405,249 @@ export default function HistoryPage() {
     return t ?? "";
   };
 
-  const dateHeading = (dateStr: string) => {
+  // Search-filtered events
+  const filteredEvents = useMemo(() => {
+    const all = events ?? [];
+    if (!search.trim()) return all;
+    const q = search.toLowerCase();
+    return all.filter(
+      (e) =>
+        e.notes?.toLowerCase().includes(q) ||
+        typeLabel(e.type).toLowerCase().includes(q) ||
+        e.loggedBy?.toLowerCase().includes(q),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, search, lang]);
+
+  // Group by date — each event once, under the day it started (no overnight duplicates)
+  const eventsByDate = useMemo(
+    () =>
+      filteredEvents.reduce(
+        (acc, event) => {
+          const date = format(new Date(event.startedAt), "yyyy-MM-dd");
+          if (!acc[date]) acc[date] = [];
+          acc[date]!.push(event as EventItem);
+          return acc;
+        },
+        {} as Record<string, EventItem[]>,
+      ),
+    [filteredEvents],
+  );
+
+  // Return the ISO date string for the Sunday that starts the week containing d
+  const weekStartKey = (d: Date): string => {
+    const copy = new Date(d);
+    copy.setDate(copy.getDate() - copy.getDay()); // getDay() === 0 for Sunday
+    copy.setHours(0, 0, 0, 0);
+    return format(copy, "yyyy-MM-dd");
+  };
+
+  // Build month → week (Sun–Sat) → day hierarchy, newest first
+  const monthGroups = useMemo(() => {
+    const dates = Object.keys(eventsByDate).sort((a, b) => b.localeCompare(a));
+    const months: Array<{
+      key: string;
+      label: string;
+      weeks: Array<{ key: string; rangeLabel: string; days: string[] }>;
+    }> = [];
+
+    for (const dateStr of dates) {
+      const d = new Date(dateStr + "T12:00:00");
+      const monthKey = format(d, "yyyy-MM");
+      const monthLabel = format(d, "MMMM yyyy", { locale: dateLocale });
+
+      let month = months.find((m) => m.key === monthKey);
+      if (!month) {
+        month = { key: monthKey, label: monthLabel, weeks: [] };
+        months.push(month);
+      }
+
+      const wk = weekStartKey(d);
+      let week = month.weeks.find((w) => w.key === wk);
+      if (!week) {
+        const ws = new Date(wk + "T12:00:00");
+        const we = new Date(ws);
+        we.setDate(we.getDate() + 6);
+        const sameMonth = format(ws, "MM-yyyy") === format(we, "MM-yyyy");
+        const rangeLabel = sameMonth
+          ? `${format(ws, "d")}–${format(we, "d")} ${format(ws, "MMMM", { locale: dateLocale })}`
+          : `${format(ws, "d MMM", { locale: dateLocale })} – ${format(we, "d MMM", { locale: dateLocale })}`;
+        week = { key: wk, rangeLabel, days: [] };
+        month.weeks.push(week);
+      }
+
+      if (!week.days.includes(dateStr)) week.days.push(dateStr);
+    }
+
+    return months;
+  }, [eventsByDate, lang, dateLocale]);
+
+  const dayHeading = (dateStr: string) => {
     const d = new Date(dateStr + "T12:00:00");
     if (isToday(d)) return tr("today", lang);
     if (isYesterday(d)) return tr("yesterday", lang);
     return format(d, lang === "he" ? "EEEE, d בMMMM" : "EEEE, d MMMM", { locale: dateLocale });
   };
 
-  const groupedEvents = events?.reduce(
-    (acc, event) => {
-      const date = format(new Date(event.startedAt), "yyyy-MM-dd");
-      if (!acc[date]) acc[date] = [];
-      acc[date]!.push(event);
-
-      // For overnight sleep (started day X, ended day Y), also add a clipped entry
-      // to day Y showing "00:00 → wake-time" so it appears in the wakeup day's list.
-      if (event.type === "sleep" && event.endedAt) {
-        const endDate = format(new Date(event.endedAt), "yyyy-MM-dd");
-        if (endDate !== date) {
-          const wakeupDayStart = startOfDay(new Date(event.endedAt));
-          const clippedMin = Math.round(
-            (new Date(event.endedAt).getTime() - wakeupDayStart.getTime()) / 60000,
-          );
-          if (!acc[endDate]) acc[endDate] = [];
-          acc[endDate]!.push({
-            ...event,
-            startedAt: wakeupDayStart.toISOString(),
-            durationMinutes: clippedMin,
-          });
-        }
-      }
-
-      return acc;
-    },
-    {} as Record<string, typeof events>,
-  );
-
-  const sortedDates = groupedEvents
-    ? Object.keys(groupedEvents).sort((a, b) => b.localeCompare(a))
-    : [];
-
   return (
     <div className="min-h-[100dvh] bg-transparent pb-32" dir={dir}>
       <PageHeader hebrewTitle="היסטוריה" russianTitle="История" />
 
-      <div className="p-4 space-y-8">
-        <WeeklyStats lang={lang} dir={dir} />
+      {/* Sticky search bar */}
+      <div className="sticky top-14 z-20 px-4 pt-2 pb-2 bg-background/95 backdrop-blur border-b border-border/20">
+        <div className="relative">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={lang === "he" ? "חיפוש לפי הערות, סוג, שם..." : "Поиск по заметкам, типу..."}
+            className="w-full h-10 rounded-2xl bg-card border border-border text-sm ps-9 pe-9 outline-none focus:ring-2 focus:ring-primary/30 transition-all px-9"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="p-4 space-y-1">
+        {!search && <WeeklyStats lang={lang} dir={dir} />}
 
         {isLoading && (
           <div className="text-center text-muted-foreground py-8 animate-pulse">
             {tr("loadingHistory", lang)}
           </div>
         )}
-        {!isLoading && events?.length === 0 && (
-          <div className="text-center text-muted-foreground py-12">{tr("noEvents", lang)}</div>
+        {!isLoading && filteredEvents.length === 0 && (
+          <div className="text-center text-muted-foreground py-12 text-sm">
+            {search
+              ? (lang === "he" ? "לא נמצאו תוצאות" : "Результатов не найдено")
+              : tr("noEvents", lang)}
+          </div>
         )}
 
-        {sortedDates.map((date) => (
-          <div key={date} className="space-y-2">
-            <h3 className="font-semibold text-base sticky top-20 card-surface !rounded-none border-b border-border/30 backdrop-blur py-2 z-10 px-1">
-              {dateHeading(date)}
-            </h3>
-
-            <div className="space-y-2">
-              {groupedEvents![date]!.map((event) => (
-                <div
-                  key={event.id}
-                  data-testid={`history-event-${event.id}`}
-                  className={cn(
-                    "flex gap-2 rounded-3xl px-3 py-3 items-center border",
-                    event.type === "feeding" && "bg-sky-50 border-sky-100/80 dark:bg-sky-950/25 dark:border-sky-900/30",
-                    event.type === "sleep" && "bg-purple-50 border-purple-100/80 dark:bg-purple-950/25 dark:border-purple-900/30",
-                    event.type === "diaper" && "bg-amber-50 border-amber-100/80 dark:bg-amber-950/25 dark:border-amber-900/30",
-                    event.type === "bath" && "bg-teal-50 border-teal-100/80 dark:bg-teal-950/25 dark:border-teal-900/30",
-                    event.type === "vitamin_d" && "bg-violet-50 border-violet-100/80 dark:bg-violet-950/25 dark:border-violet-900/30",
-                    event.type === "medication" && "bg-rose-50 border-rose-100/80 dark:bg-rose-950/25 dark:border-rose-900/30",
-                    !["feeding","sleep","diaper","bath","vitamin_d","medication"].includes(event.type) && "bg-card border-border",
-                  )}
-                  dir={dir}
-                >
-                  {/* Icon */}
-                  <div className={cn(
-                    "w-9 h-9 shrink-0 rounded-full flex items-center justify-center border",
-                    event.type === "feeding" && "bg-sky-100 border-sky-200 text-sky-600 dark:bg-sky-900/40 dark:border-sky-800 dark:text-sky-400",
-                    event.type === "sleep" && "bg-purple-100 border-purple-200 text-purple-600 dark:bg-purple-900/40 dark:border-purple-800 dark:text-purple-400",
-                    event.type === "diaper" && "bg-amber-100 border-amber-200 text-amber-600 dark:bg-amber-900/40 dark:border-amber-800 dark:text-amber-400",
-                    event.type === "bath" && "bg-teal-100 border-teal-200 text-teal-600 dark:bg-teal-900/40 dark:border-teal-800 dark:text-teal-400",
-                    event.type === "vitamin_d" && "bg-violet-100 border-violet-200 text-violet-600 dark:bg-violet-900/40 dark:border-violet-800 dark:text-violet-400",
-                    event.type === "medication" && "bg-rose-100 border-rose-200 text-rose-600 dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400",
-                  )}>
-                    <EventIcon type={event.type} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1" dir={dir}>
-                      <span className="text-[11px] text-muted-foreground shrink-0">
-                        {format(new Date(event.startedAt), "HH:mm")}
-                        {event.endedAt ? `–${format(new Date(event.endedAt), "HH:mm")}` : ""}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        {event.loggedBy && (
-                          <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
-                            👤 {event.loggedBy}
-                          </span>
-                        )}
-                        <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
-                      </div>
-                    </div>
-                    <div className={cn("text-xs text-muted-foreground truncate mt-0.5", dir === "rtl" ? "text-right" : "text-left")}>
-                      {event.type === "feeding" && (
-                        <>
-                          {event.amountMl ? tr("feedingAmount", lang, event.amountMl) : ""}
-                          {event.amountMl && event.durationMinutes ? " · " : ""}
-                          {event.durationMinutes ? tr("feedingDuration", lang, event.durationMinutes) : ""}
-                        </>
-                      )}
-                      {event.type === "sleep" && (event.isActive
-                        ? tr("sleepingShort", lang)
-                        : event.durationMinutes
-                          ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60)
-                          : "")}
-                      {event.type === "diaper" && diaperLabel(event.diaperType)}
-                      {event.notes ? ` · ${event.notes}` : ""}
-                    </div>
-                  </div>
-
-                  {/* Edit */}
-                  <button
-                    onClick={() => setEditEvent(event as EventItem)}
-                    data-testid={`button-edit-${event.id}`}
-                    className="w-8 h-8 shrink-0 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-primary/10"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-
-                  {/* Delete */}
-                  <button
-                    onClick={() => setDeleteId(event.id)}
-                    data-testid={`button-delete-${event.id}`}
-                    className="w-8 h-8 shrink-0 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-destructive/10"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
+        {monthGroups.map((month) => (
+          <div key={month.key}>
+            {/* Month header */}
+            <div className="flex items-center gap-3 mt-5 mb-3">
+              <div className="flex-1 h-px bg-border/40" />
+              <span className="text-xs font-bold text-primary px-3 py-1 rounded-full bg-primary/10 border border-primary/20 capitalize">
+                {month.label}
+              </span>
+              <div className="flex-1 h-px bg-border/40" />
             </div>
+
+            {month.weeks.map((week) => (
+              <div key={week.key} className="mb-5">
+                {/* Week range label */}
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                  <span className="text-[10px] font-semibold text-muted-foreground/60 tracking-wider">
+                    {week.rangeLabel}
+                  </span>
+                </div>
+
+                {week.days.map((dateStr) => (
+                  <div key={dateStr} className="mb-4">
+                    {/* Day heading */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-sm font-bold text-foreground/75">{dayHeading(dateStr)}</h3>
+                      <div className="flex-1 h-px bg-border/30" />
+                    </div>
+
+                    <div className="space-y-2">
+                      {eventsByDate[dateStr]!.map((event) => (
+                        <div
+                          key={event.id}
+                          data-testid={`history-event-${event.id}`}
+                          className={cn(
+                            "flex gap-2 rounded-3xl px-3 py-3 items-center border",
+                            event.type === "feeding" && "bg-sky-50 border-sky-100/80 dark:bg-sky-950/25 dark:border-sky-900/30",
+                            event.type === "sleep" && "bg-purple-50 border-purple-100/80 dark:bg-purple-950/25 dark:border-purple-900/30",
+                            event.type === "diaper" && "bg-amber-50 border-amber-100/80 dark:bg-amber-950/25 dark:border-amber-900/30",
+                            event.type === "bath" && "bg-teal-50 border-teal-100/80 dark:bg-teal-950/25 dark:border-teal-900/30",
+                            event.type === "vitamin_d" && "bg-violet-50 border-violet-100/80 dark:bg-violet-950/25 dark:border-violet-900/30",
+                            event.type === "medication" && "bg-rose-50 border-rose-100/80 dark:bg-rose-950/25 dark:border-rose-900/30",
+                            !["feeding","sleep","diaper","bath","vitamin_d","medication"].includes(event.type) && "bg-card border-border",
+                          )}
+                          dir={dir}
+                        >
+                          {/* Icon */}
+                          <div className={cn(
+                            "w-9 h-9 shrink-0 rounded-full flex items-center justify-center border",
+                            event.type === "feeding" && "bg-sky-100 border-sky-200 text-sky-600 dark:bg-sky-900/40 dark:border-sky-800 dark:text-sky-400",
+                            event.type === "sleep" && "bg-purple-100 border-purple-200 text-purple-600 dark:bg-purple-900/40 dark:border-purple-800 dark:text-purple-400",
+                            event.type === "diaper" && "bg-amber-100 border-amber-200 text-amber-600 dark:bg-amber-900/40 dark:border-sky-800 dark:text-amber-400",
+                            event.type === "bath" && "bg-teal-100 border-teal-200 text-teal-600 dark:bg-teal-900/40 dark:border-teal-800 dark:text-teal-400",
+                            event.type === "vitamin_d" && "bg-violet-100 border-violet-200 text-violet-600 dark:bg-violet-900/40 dark:border-violet-800 dark:text-violet-400",
+                            event.type === "medication" && "bg-rose-100 border-rose-200 text-rose-600 dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400",
+                          )}>
+                            <EventIcon type={event.type} />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1" dir={dir}>
+                              {/* dir="ltr" keeps "HH:mm–HH:mm" from reversing in RTL context */}
+                              <span className="text-[11px] text-muted-foreground shrink-0" dir="ltr">
+                                {format(new Date(event.startedAt), "HH:mm")}
+                                {event.endedAt ? `–${format(new Date(event.endedAt), "HH:mm")}` : ""}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                {event.loggedBy && (
+                                  <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+                                    👤 {event.loggedBy}
+                                  </span>
+                                )}
+                                <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
+                              </div>
+                            </div>
+                            <div className={cn("text-xs text-muted-foreground truncate mt-0.5", dir === "rtl" ? "text-right" : "text-left")}>
+                              {event.type === "feeding" && (
+                                <>
+                                  {event.amountMl ? tr("feedingAmount", lang, event.amountMl) : ""}
+                                  {event.amountMl && event.durationMinutes ? " · " : ""}
+                                  {event.durationMinutes ? tr("feedingDuration", lang, event.durationMinutes) : ""}
+                                </>
+                              )}
+                              {event.type === "sleep" && (event.isActive
+                                ? tr("sleepingShort", lang)
+                                : event.durationMinutes
+                                  ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60)
+                                  : "")}
+                              {event.type === "diaper" && diaperLabel(event.diaperType)}
+                              {event.notes ? ` · ${event.notes}` : ""}
+                            </div>
+                          </div>
+
+                          {/* Edit */}
+                          <button
+                            onClick={() => setEditEvent(event)}
+                            data-testid={`button-edit-${event.id}`}
+                            className="w-8 h-8 shrink-0 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-primary/10"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => setDeleteId(event.id)}
+                            data-testid={`button-delete-${event.id}`}
+                            className="w-8 h-8 shrink-0 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-destructive/10"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         ))}
       </div>
