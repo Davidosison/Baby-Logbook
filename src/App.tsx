@@ -11,6 +11,7 @@ import { restoreSession } from "@/lib/supabase";
 import { PushPrompt } from "@/components/push-prompt";
 import { NameSetup } from "@/components/name-setup";
 import { InstallGuide } from "@/components/install-guide";
+import { WhatsNew } from "@/components/whats-new";
 import PinPage from "@/pages/pin";
 import DashboardPage from "@/pages/dashboard";
 import FeedingPage from "@/pages/feeding";
@@ -37,6 +38,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
     <>
       <NameSetup />
       <InstallGuide />
+      <WhatsNew />
       {children}
       <PushPrompt />
       <BottomNav />
