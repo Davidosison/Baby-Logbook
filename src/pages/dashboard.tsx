@@ -391,7 +391,7 @@ export default function DashboardPage() {
             )}
           >
             <span className="text-lg leading-none">{quickDone === "medication" ? "✓" : "💊"}</span>
-            <span>;</span>
+            <span>{lang === "he" ? "סימיקול" : "Симикол"}</span>
           </button>
 
           {/* Gum gel — opens brand+gums picker */}
