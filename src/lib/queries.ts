@@ -196,6 +196,7 @@ export function useGetRecentActivity(options?: { query?: Partial<UseQueryOptions
   lastFeedingMinutesAgo: number | null;
   lastSleepMinutesAgo: number | null;
   lastDiaperMinutesAgo: number | null;
+  lastWokeUpMinutesAgo: number | null;
 }>> }) {
   const { queryKey: _userKey, ...restOpts } = options?.query ?? {};
   return useQuery({
@@ -204,20 +205,25 @@ export function useGetRecentActivity(options?: { query?: Partial<UseQueryOptions
       const now = new Date();
       const { data, error } = await supabase
         .from("events")
-        .select("type, started_at")
+        .select("type, started_at, ended_at, is_active")
         .in("type", ["feeding", "sleep", "diaper"])
         .order("started_at", { ascending: false })
         .limit(30);
       if (error) throw error;
-      const rows = data as Array<{ type: string; started_at: string }>;
+      const rows = data as Array<{ type: string; started_at: string; ended_at: string | null; is_active: boolean }>;
       const minutesAgo = (type: string) => {
         const last = rows.find((e) => e.type === type);
         return last ? Math.round((now.getTime() - new Date(last.started_at).getTime()) / 60000) : null;
       };
+      const lastEndedSleep = rows.find((e) => e.type === "sleep" && !e.is_active && e.ended_at);
+      const lastWokeUpMinutesAgo = lastEndedSleep?.ended_at
+        ? Math.round((now.getTime() - new Date(lastEndedSleep.ended_at).getTime()) / 60000)
+        : null;
       return {
         lastFeedingMinutesAgo: minutesAgo("feeding"),
         lastSleepMinutesAgo: minutesAgo("sleep"),
         lastDiaperMinutesAgo: minutesAgo("diaper"),
+        lastWokeUpMinutesAgo,
       };
     },
     ...restOpts,

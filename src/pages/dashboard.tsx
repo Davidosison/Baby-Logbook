@@ -5,7 +5,7 @@ import {
   useGetActiveSleep, getGetActiveSleepQueryKey,
   useStopSleep,
   useGetActiveFeeding, getGetActiveFeedingQueryKey,
-  useLogDiaper, useStartSleep, useStartFeeding, useStopFeeding,
+  useLogDiaper, useLogMedication, useStartSleep, useStartFeeding, useStopFeeding,
 } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
@@ -20,7 +20,6 @@ import {
   Droplet, Moon, Utensils, Share2, StopCircle, RefreshCw,
   Timer, Bath, Sparkles, Loader2, Syringe,
 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -156,6 +155,10 @@ export default function DashboardPage() {
   // ── Quick Actions ────────────────────────────────────────────────────────────
   const [quickDone, setQuickDone] = useState<string | null>(null);
   const [splashing, setSplashing] = useState<string | null>(null);
+  const [dropsOpen, setDropsOpen] = useState(false);
+  const [gelOpen, setGelOpen] = useState(false);
+  const [gelBrand, setGelBrand] = useState<"tigel" | "chamomile" | null>(null);
+  const [gelGums, setGelGums] = useState<"upper" | "lower" | null>(null);
 
   const quickFlash = (key: string) => {
     setSplashing(key);
@@ -165,6 +168,9 @@ export default function DashboardPage() {
 
   const logDiaper = useLogDiaper({
     mutation: { onSuccess: (_, vars) => quickFlash(vars.data.diaperType) },
+  });
+  const logMedication = useLogMedication({
+    mutation: { onSuccess: () => quickFlash("medication") },
   });
   const startSleepQuick = useStartSleep({
     mutation: { onSuccess: () => quickFlash("sleep") },
@@ -372,38 +378,36 @@ export default function DashboardPage() {
             <span>{lang === "he" ? "פיפי" : "Пи-пи"}</span>
           </button>
 
-          {/* Poop */}
+          {/* Drops — opens mL picker */}
           <button
-            onClick={() => logDiaper.mutate({ data: { diaperType: "poop", loggedBy: name ?? null } })}
-            disabled={logDiaper.isPending}
-            onAnimationEnd={() => splashing === "poop" && setSplashing(null)}
+            onClick={() => setDropsOpen(true)}
+            onAnimationEnd={() => splashing === "medication" && setSplashing(null)}
             className={cn(
-              "h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95 disabled:opacity-50",
-              splashing === "poop" && "btn-pop",
-              quickDone === "poop"
+              "h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95",
+              splashing === "medication" && "btn-pop",
+              quickDone === "medication"
                 ? "bg-green-400/20 border-green-400 text-green-600 dark:text-green-400"
-                : "bg-amber-400/10 border-amber-400/40 text-amber-700 dark:text-amber-400"
+                : "bg-violet-400/10 border-violet-400/40 text-violet-700 dark:text-violet-400"
             )}
           >
-            <span className="text-lg leading-none">{quickDone === "poop" ? "✓" : "💩"}</span>
-            <span>{lang === "he" ? "קקי" : "Ка-ка"}</span>
+            <span className="text-lg leading-none">{quickDone === "medication" ? "✓" : "💊"}</span>
+            <span>;</span>
           </button>
 
-          {/* Both */}
+          {/* Gum gel — opens brand+gums picker */}
           <button
-            onClick={() => logDiaper.mutate({ data: { diaperType: "both", loggedBy: name ?? null } })}
-            disabled={logDiaper.isPending}
-            onAnimationEnd={() => splashing === "both" && setSplashing(null)}
+            onClick={() => { setGelBrand(null); setGelGums(null); setGelOpen(true); }}
+            onAnimationEnd={() => splashing === "gel" && setSplashing(null)}
             className={cn(
-              "h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95 disabled:opacity-50",
-              splashing === "both" && "btn-pop",
-              quickDone === "both"
+              "h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95",
+              splashing === "gel" && "btn-pop",
+              quickDone === "gel"
                 ? "bg-green-400/20 border-green-400 text-green-600 dark:text-green-400"
-                : "bg-amber-400/10 border-amber-400/40 text-amber-700 dark:text-amber-400"
+                : "bg-teal-400/10 border-teal-400/40 text-teal-700 dark:text-teal-400"
             )}
           >
-            <span className="text-lg leading-none">{quickDone === "both" ? "✓" : "🧷"}</span>
-            <span>{lang === "he" ? "שניהם" : "Оба"}</span>
+            <span className="text-lg leading-none">{quickDone === "gel" ? "✓" : "🌿"}</span>
+            <span>{lang === "he" ? "ג'ל" : "Гель"}</span>
           </button>
 
           {/* Feeding — toggles timer; stop navigates to /feeding */}
@@ -488,54 +492,54 @@ export default function DashboardPage() {
 
         {/* ── Recent Activity Cards ─────────────────────────────────────────── */}
         <div className="grid grid-cols-3 gap-2">
-          {(["feeding", "sleep", "diaper"] as const).map((type) => {
-            const minsAgo =
-              type === "feeding" ? recent?.lastFeedingMinutesAgo
-              : type === "sleep" ? recent?.lastSleepMinutesAgo
-              : recent?.lastDiaperMinutesAgo;
-            const icon =
-              type === "feeding" ? <Utensils className="w-5 h-5 text-sky-400 mb-1" />
-              : type === "sleep" ? <Moon className="w-5 h-5 text-indigo-400 mb-1" />
-              : <Droplet className="w-5 h-5 text-amber-400 mb-1" />;
-            return (
-              <div key={type} className="card-surface border border-border/50 rounded-3xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid={`card-${type}`}>
-                {icon}
-                <div className="text-xs font-semibold mb-0.5">{typeLabel(type)}</div>
-                <div className="text-[10px] text-muted-foreground font-medium leading-tight">{getRecentText(minsAgo)}</div>
+          {/* Feeding card */}
+          <div className="card-surface border border-border/50 rounded-3xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid="card-feeding">
+            <Utensils className="w-5 h-5 text-sky-400 mb-1" />
+            <div className="text-xs font-semibold mb-0.5">{typeLabel("feeding")}</div>
+            <div className="text-[10px] text-muted-foreground font-medium leading-tight">{getRecentText(recent?.lastFeedingMinutesAgo)}</div>
+            {summary && summary.totalFeedingMl > 0 && (
+              <div className="text-[9px] text-sky-500/80 font-bold mt-0.5">{summary.totalFeedingMl} {lang === "he" ? 'מ"ל' : "мл"}</div>
+            )}
+          </div>
+
+          {/* Sleep card — shows time since woke up */}
+          <div className="card-surface border border-border/50 rounded-3xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid="card-sleep">
+            <Moon className="w-5 h-5 text-indigo-400 mb-1" />
+            <div className="text-xs font-semibold mb-0.5">{typeLabel("sleep")}</div>
+            {activeSleep ? (
+              <div className="text-[10px] text-indigo-400 font-bold leading-tight animate-pulse">{lang === "he" ? "ישן עכשיו" : "Спит"}</div>
+            ) : (
+              <div className="text-[10px] text-muted-foreground font-medium leading-tight">{getRecentText(recent?.lastWokeUpMinutesAgo)}</div>
+            )}
+            {summary && summary.totalSleepMinutes > 0 && (
+              <div className="text-[9px] text-indigo-400/80 font-bold mt-0.5">
+                {Math.floor(summary.totalSleepMinutes / 60)}{lang === "he" ? "ש'" : "ч"} {summary.totalSleepMinutes % 60}{lang === "he" ? "ד'" : "м"}
               </div>
-            );
-          })}
+            )}
+          </div>
+
+          {/* Diaper card */}
+          <div className="card-surface border border-border/50 rounded-3xl py-3 px-2 flex flex-col items-center justify-center text-center shadow-sm" data-testid="card-diaper">
+            <Droplet className="w-5 h-5 text-amber-400 mb-1" />
+            <div className="text-xs font-semibold mb-0.5">{typeLabel("diaper")}</div>
+            <div className="text-[10px] text-muted-foreground font-medium leading-tight">{getRecentText(recent?.lastDiaperMinutesAgo)}</div>
+            {summary && summary.diaperCount > 0 && (
+              <div className="text-[9px] text-amber-500/80 font-bold mt-0.5">×{summary.diaperCount} {lang === "he" ? "היום" : "сег."}</div>
+            )}
+          </div>
         </div>
 
-        {/* ── Daily Progress ────────────────────────────────────────────────── */}
-        {summary && (
-          <div className="card-surface border border-border/50 rounded-3xl px-4 py-3 shadow-sm">
-            <div className="flex items-center justify-between mb-2.5">
-              {/* Share button — opens the sheet */}
-              <button
-                onClick={() => { setShareOpen(true); setSharePeriod(null); setShareData(null); }}
-                data-testid="button-share"
-                className="flex items-center gap-1 text-xs font-medium text-primary px-2.5 py-1 rounded-xl bg-primary/10 active:bg-primary/20 transition-colors"
-              >
-                <Share2 className="w-3 h-3" />
-                {tr("share", lang)}
-              </button>
-              <h3 className="font-semibold text-sm">{tr("dailyGoals", lang)}</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{summary.feedingCount} / {summary.feedingGoalMin}–{summary.feedingGoalMax}</span>
-                <span className="font-medium">{tr("feedings", lang)}</span>
-              </div>
-              <Progress value={Math.min(100, (summary.feedingCount / summary.feedingGoalMin) * 100)} className="h-1.5 bg-secondary" />
-              <div className="flex justify-between text-xs mt-1.5">
-                <span className="text-muted-foreground">{tr("sleepGoalDuration", lang, Math.floor(summary.totalSleepMinutes / 60), summary.totalSleepMinutes % 60)}</span>
-                <span className="font-medium">{tr("sleep", lang)}</span>
-              </div>
-              <Progress value={Math.min(100, (summary.totalSleepMinutes / summary.sleepGoalMinutes) * 100)} className="h-1.5 bg-secondary [&>div]:bg-indigo-400" />
-            </div>
-          </div>
-        )}
+        {/* Share button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => { setShareOpen(true); setSharePeriod(null); setShareData(null); }}
+            data-testid="button-share"
+            className="flex items-center gap-1 text-xs font-medium text-primary px-2.5 py-1 rounded-xl bg-primary/10 active:bg-primary/20 transition-colors"
+          >
+            <Share2 className="w-3 h-3" />
+            {tr("share", lang)}
+          </button>
+        </div>
 
         {/* ── Today's Timeline ──────────────────────────────────────────────── */}
         <div>
@@ -547,56 +551,151 @@ export default function DashboardPage() {
             <h3 className="font-semibold text-sm">{tr("todayTimeline", lang)}</h3>
           </div>
 
-          <div className="space-y-2">
-            {isLoadingEvents && (
-              <div className="text-center text-muted-foreground py-6 animate-pulse text-sm">{tr("loading", lang)}</div>
-            )}
-            {!isLoadingEvents && events?.length === 0 && (
-              <div className="text-center text-muted-foreground py-6 card-surface border border-border/50 rounded-2xl text-sm">
-                {tr("noEventsToday", lang)}
-              </div>
-            )}
-            {events?.map((event) => (
-              <div key={event.id} className="card-surface border border-border/50 rounded-3xl px-3 py-2.5 flex items-center gap-3 shadow-sm" data-testid={`event-item-${event.id}`} dir={dir}>
-                <div className={cn(
-                  "w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-background/60 border border-border/50",
-                  event.type === "feeding" && "text-sky-400",
-                  event.type === "sleep" && "text-indigo-400",
-                  event.type === "diaper" && "text-amber-400",
-                  event.type === "bath" && "text-teal-400",
-                  event.type === "vitamin_d" && "text-purple-400",
-                  event.type === "medication" && "text-rose-400",
-                )}>
-                  <EventIcon type={event.type} />
-                </div>
-                <div className="flex-1 min-w-0" dir={dir}>
-                  <div className="flex justify-between items-center" dir={dir}>
-                    <span className="text-[11px] text-muted-foreground">
-                      {format(new Date(event.startedAt), "HH:mm")}
-                      {event.endedAt ? `–${format(new Date(event.endedAt), "HH:mm")}` : ""}
-                    </span>
-                    <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
+          {isLoadingEvents && (
+            <div className="text-center text-muted-foreground py-6 animate-pulse text-sm">{tr("loading", lang)}</div>
+          )}
+          {!isLoadingEvents && events?.length === 0 && (
+            <div className="text-center text-muted-foreground py-6 card-surface border border-border/50 rounded-2xl text-sm">
+              {tr("noEventsToday", lang)}
+            </div>
+          )}
+          <div className="relative">
+            {events?.map((event, idx) => {
+              const timeStr = format(new Date(event.startedAt), "HH:mm");
+              const endStr = event.endedAt ? format(new Date(event.endedAt), "HH:mm") : null;
+              const detail = (() => {
+                if (event.type === "feeding") {
+                  const parts = [];
+                  if (event.amountMl) parts.push(tr("feedingAmount", lang, event.amountMl));
+                  if (event.durationMinutes) parts.push(tr("feedingDuration", lang, event.durationMinutes));
+                  return parts.join(" · ");
+                }
+                if (event.type === "sleep") return event.isActive ? tr("sleepingNow", lang) : event.durationMinutes ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60) : "";
+                if (event.type === "diaper") return diaperLabel(event.diaperType);
+                return "";
+              })();
+              const colorDot = event.type === "feeding" ? "bg-sky-400" : event.type === "sleep" ? "bg-indigo-400" : event.type === "diaper" ? "bg-amber-400" : event.type === "bath" ? "bg-teal-400" : event.type === "vitamin_d" ? "bg-purple-400" : "bg-rose-400";
+              const colorBorder = event.type === "feeding" ? "border-sky-200/60 dark:border-sky-800/40" : event.type === "sleep" ? "border-indigo-200/60 dark:border-indigo-800/40" : event.type === "diaper" ? "border-amber-200/60 dark:border-amber-800/40" : event.type === "bath" ? "border-teal-200/60 dark:border-teal-800/40" : event.type === "vitamin_d" ? "border-purple-200/60 dark:border-purple-800/40" : "border-rose-200/60 dark:border-rose-800/40";
+              const colorIcon = event.type === "feeding" ? "bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400" : event.type === "sleep" ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400" : event.type === "diaper" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" : event.type === "bath" ? "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400" : event.type === "vitamin_d" ? "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400";
+              return (
+                <div key={event.id} className="relative flex gap-2.5 mb-2" data-testid={`event-item-${event.id}`}>
+                  {/* Timeline line */}
+                  {idx < (events?.length ?? 0) - 1 && (
+                    <div className={cn("absolute w-px top-8 bottom-0 opacity-30", colorDot, dir === "rtl" ? "end-[15px]" : "start-[15px]")} />
+                  )}
+                  {/* Dot + icon */}
+                  <div className="flex flex-col items-center shrink-0 z-10">
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border shadow-sm", colorIcon)}>
+                      <EventIcon type={event.type} />
+                    </div>
                   </div>
-                  <div className={cn("text-xs text-muted-foreground truncate", dir === "rtl" ? "text-right" : "text-left")}>
-                    {event.type === "feeding" && (
-                      <>
-                        {event.amountMl ? tr("feedingAmount", lang, event.amountMl) : ""}
-                        {event.amountMl && event.durationMinutes ? " · " : ""}
-                        {event.durationMinutes ? tr("feedingDuration", lang, event.durationMinutes) : ""}
-                      </>
+                  {/* Card */}
+                  <div className={cn("flex-1 min-w-0 card-surface border rounded-2xl px-3 py-2 shadow-sm mb-0.5", colorBorder)} dir={dir}>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-semibold text-sm">{typeLabel(event.type)}</span>
+                      <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums" dir="ltr">
+                        {timeStr}{endStr ? `–${endStr}` : ""}
+                      </span>
+                    </div>
+                    {(detail || event.notes) && (
+                      <div className={cn("text-xs text-muted-foreground truncate mt-0.5", dir === "rtl" ? "text-right" : "text-left")}>
+                        {detail}{detail && event.notes ? " · " : ""}{event.notes ?? ""}
+                      </div>
                     )}
-                    {event.type === "sleep" && (
-                      event.isActive ? tr("sleepingNow", lang) : event.durationMinutes ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60) : ""
-                    )}
-                    {event.type === "diaper" && diaperLabel(event.diaperType)}
-                    {event.notes ? ` · ${event.notes}` : ""}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
+
+      {/* ── Drops popup ─────────────────────────────────────────────────────── */}
+      <Sheet open={dropsOpen} onOpenChange={setDropsOpen}>
+        <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-border/60 p-6" dir={dir}>
+          <SheetTitle className="text-center font-bold text-xl mb-6">
+            {lang === "he" ? "💊 בחר כמות" : "💊 Выберите дозу"}
+          </SheetTitle>
+          <div className="grid grid-cols-2 gap-4">
+            {(["0.3", "0.6"] as const).map((ml) => (
+              <button
+                key={ml}
+                onClick={() => {
+                  logMedication.mutate({ data: { notes: `${ml} מ"ל`, loggedBy: name ?? null } });
+                  setDropsOpen(false);
+                }}
+                disabled={logMedication.isPending}
+                className="h-20 rounded-2xl bg-violet-100 dark:bg-violet-900/30 border-2 border-violet-300 dark:border-violet-700 hover:bg-violet-200 active:scale-95 transition-all font-bold text-2xl text-violet-700 dark:text-violet-300"
+              >
+                {ml} <span className="text-sm">{lang === "he" ? 'מ"ל' : "мл"}</span>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Gel popup ────────────────────────────────────────────────────────── */}
+      <Sheet open={gelOpen} onOpenChange={(o) => { setGelOpen(o); if (!o) { setGelBrand(null); setGelGums(null); } }}>
+        <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-border/60 p-6" dir={dir}>
+          <SheetTitle className="text-center font-bold text-xl mb-5">
+            {lang === "he" ? "🌿 ג'ל לחניכיים" : "🌿 Гель для дёсен"}
+          </SheetTitle>
+          {/* Brand */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-muted-foreground mb-2 text-center tracking-wider uppercase">{lang === "he" ? "מותג" : "Бренд"}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {(["tigel", "chamomile"] as const).map((b) => (
+                <button
+                  key={b}
+                  onClick={() => setGelBrand(b)}
+                  className={cn(
+                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+                    gelBrand === b
+                      ? "bg-teal-500 border-teal-500 text-white"
+                      : "bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300"
+                  )}
+                >
+                  {b === "tigel" ? "טיגל" : "קמומילו"}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Gums */}
+          <div className="mb-5">
+            <p className="text-xs font-semibold text-muted-foreground mb-2 text-center tracking-wider uppercase">{lang === "he" ? "חניכיים" : "Дёсны"}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {(["upper", "lower"] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGelGums(g)}
+                  className={cn(
+                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+                    gelGums === g
+                      ? "bg-teal-500 border-teal-500 text-white"
+                      : "bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300"
+                  )}
+                >
+                  {g === "upper" ? (lang === "he" ? "עליונות" : "Верхние") : (lang === "he" ? "תחתונות" : "Нижние")}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            disabled={!gelBrand || !gelGums || logMedication.isPending}
+            onClick={() => {
+              if (!gelBrand || !gelGums) return;
+              const brand = gelBrand === "tigel" ? "טיגל" : "קמומילו";
+              const gums = gelGums === "upper" ? (lang === "he" ? "עליונות" : "Верхние") : (lang === "he" ? "תחתונות" : "Нижние");
+              logMedication.mutate({ data: { notes: `ג'ל לחניכיים · ${brand} · ${gums}`, loggedBy: name ?? null } });
+              setGelOpen(false);
+              quickFlash("gel");
+            }}
+            className="w-full h-14 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-bold text-base disabled:opacity-40 transition-all active:scale-95"
+          >
+            {lang === "he" ? "תיעוד" : "Записать"}
+          </button>
+        </SheetContent>
+      </Sheet>
 
       {/* ── Share Sheet ───────────────────────────────────────────────────────── */}
       <Sheet
