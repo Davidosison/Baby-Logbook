@@ -621,7 +621,8 @@ export default function DashboardPage() {
               <button
                 key={ml}
                 onClick={() => {
-                  logMedication.mutate({ data: { notes: `${ml} מ"ל`, loggedBy: name ?? null } });
+                  const dropsNote = lang === "he" ? `סימיקול · ${ml} מ"ל` : `Симикол · ${ml} мл`;
+                  logMedication.mutate({ data: { notes: dropsNote, loggedBy: name ?? null } });
                   setDropsOpen(false);
                 }}
                 disabled={logMedication.isPending}
@@ -684,9 +685,10 @@ export default function DashboardPage() {
             disabled={!gelBrand || !gelGums || logMedication.isPending}
             onClick={() => {
               if (!gelBrand || !gelGums) return;
-              const brand = gelBrand === "tigel" ? "טיגל" : "קמומילו";
+              const brand = gelBrand === "tigel" ? (lang === "he" ? "טיגל" : "Тигель") : (lang === "he" ? "קמומילו" : "Ромашка");
               const gums = gelGums === "upper" ? (lang === "he" ? "עליונות" : "Верхние") : (lang === "he" ? "תחתונות" : "Нижние");
-              logMedication.mutate({ data: { notes: `ג'ל לחניכיים · ${brand} · ${gums}`, loggedBy: name ?? null } });
+              const gelLabel = lang === "he" ? "ג'ל לחניכיים" : "Гель для дёсен";
+              logMedication.mutate({ data: { notes: `${gelLabel} · ${brand} · ${gums}`, loggedBy: name ?? null } });
               setGelOpen(false);
               quickFlash("gel");
             }}
