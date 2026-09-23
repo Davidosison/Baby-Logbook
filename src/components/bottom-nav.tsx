@@ -14,16 +14,28 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export function BottomNav() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { theme, setTheme } = useTheme();
   const { lang, setLang, dir } = useLanguage();
   const { name, setName } = usePerson();
   const { goals, setGoal } = useGoals();
   const [addOpen, setAddOpen] = useState(false);
   const [vitaminsOpen, setVitaminsOpen] = useState(false);
+  const [medsOpen, setMedsOpen] = useState(false);
+  const [medsSimikolOpen, setMedsSimikolOpen] = useState(false);
+  const [medsGelOpen, setMedsGelOpen] = useState(false);
+  const [medsGelBrand, setMedsGelBrand] = useState<"tigel" | "chamomile" | null>(null);
+  const [medsGelGums, setMedsGelGums] = useState<"upper" | "lower" | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const logVitaminD = useLogVitaminD();
+
+  const goToMedications = (notes?: string) => {
+    setMedsOpen(false);
+    setMedsSimikolOpen(false);
+    setMedsGelOpen(false);
+    setLocation(notes ? `/medications?notes=${encodeURIComponent(notes)}` : "/medications");
+  };
 
   const isActive = (path: string) => location === path;
 
@@ -112,14 +124,14 @@ export function BottomNav() {
                   </div>
                   <Pill className="w-5 h-5 opacity-60" />
                 </button>
-                <Link href="/medications" data-testid="nav-medications"
-                  onClick={() => setAddOpen(false)}
+                <button data-testid="nav-medications"
+                  onClick={() => { setAddOpen(false); setMedsOpen(true); }}
                   className="w-full flex items-center bg-rose-400/10 hover:bg-rose-400/20 text-rose-600 dark:text-rose-400 p-4 rounded-2xl transition-colors">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-xl font-bold">{tr("medication", lang)}</div>
                   </div>
                   <Syringe className="w-5 h-5 opacity-60" />
-                </Link>
+                </button>
               </div>
             </SheetContent>
           </Sheet>
@@ -148,6 +160,124 @@ export function BottomNav() {
                   </button>
                 ))}
               </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Medications chooser — everything we log as medication except vitamins */}
+          <Sheet open={medsOpen} onOpenChange={setMedsOpen}>
+            <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-white/15 dark:border-white/8 p-6" dir={dir}>
+              <SheetTitle className="text-center font-bold text-xl mb-6">
+                {lang === "he" ? "💉 מה נותנים?" : "💉 Что даём?"}
+              </SheetTitle>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => { setMedsOpen(false); setMedsSimikolOpen(true); }}
+                  className="w-full h-14 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-300 dark:border-rose-700 hover:bg-rose-100 active:scale-95 transition-all font-bold text-base text-rose-700 dark:text-rose-300"
+                >
+                  {lang === "he" ? "סימיקול" : "Симикол"}
+                </button>
+                <button
+                  onClick={() => goToMedications(lang === "he" ? "נובימול" : "Новимол")}
+                  className="w-full h-14 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-300 dark:border-rose-700 hover:bg-rose-100 active:scale-95 transition-all font-bold text-base text-rose-700 dark:text-rose-300"
+                >
+                  {lang === "he" ? "נובימול" : "Новимол"}
+                </button>
+                <button
+                  onClick={() => { setMedsOpen(false); setMedsGelBrand(null); setMedsGelGums(null); setMedsGelOpen(true); }}
+                  className="w-full h-14 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-300 dark:border-rose-700 hover:bg-rose-100 active:scale-95 transition-all font-bold text-base text-rose-700 dark:text-rose-300"
+                >
+                  {lang === "he" ? "ג'ל לחניכיים" : "Гель для дёсен"}
+                </button>
+                <button
+                  onClick={() => goToMedications()}
+                  className="w-full h-14 rounded-2xl bg-muted hover:bg-muted/70 active:scale-95 transition-all font-bold text-base text-muted-foreground"
+                >
+                  {lang === "he" ? "אחר" : "Другое"}
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Simikol sub-picker — mL amount, then on to the medications page (keeps the time field) */}
+          <Sheet open={medsSimikolOpen} onOpenChange={setMedsSimikolOpen}>
+            <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-white/15 dark:border-white/8 p-6" dir={dir}>
+              <SheetTitle className="text-center font-bold text-xl mb-6">
+                {lang === "he" ? "💊 בחר כמות" : "💊 Выберите дозу"}
+              </SheetTitle>
+              <div className="grid grid-cols-2 gap-4">
+                {(["0.3", "0.6"] as const).map((ml) => (
+                  <button
+                    key={ml}
+                    onClick={() => {
+                      const note = lang === "he" ? `סימיקול · ${ml} מ"ל` : `Симикол · ${ml} мл`;
+                      goToMedications(note);
+                    }}
+                    className="h-20 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-300 dark:border-rose-700 hover:bg-rose-100 active:scale-95 transition-all font-bold text-2xl text-rose-700 dark:text-rose-300"
+                  >
+                    {ml} <span className="text-sm">{lang === "he" ? 'מ"ל' : "мл"}</span>
+                  </button>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Gel sub-picker — brand + gums, then on to the medications page (keeps the time field) */}
+          <Sheet open={medsGelOpen} onOpenChange={(o) => { setMedsGelOpen(o); if (!o) { setMedsGelBrand(null); setMedsGelGums(null); } }}>
+            <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-white/15 dark:border-white/8 p-6" dir={dir}>
+              <SheetTitle className="text-center font-bold text-xl mb-5">
+                {lang === "he" ? "🌿 ג'ל לחניכיים" : "🌿 Гель для дёсен"}
+              </SheetTitle>
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-2 text-center tracking-wider uppercase">{lang === "he" ? "מותג" : "Бренд"}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["tigel", "chamomile"] as const).map((b) => (
+                    <button
+                      key={b}
+                      onClick={() => setMedsGelBrand(b)}
+                      className={cn(
+                        "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+                        medsGelBrand === b
+                          ? "bg-teal-500 border-teal-500 text-white"
+                          : "bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300"
+                      )}
+                    >
+                      {b === "tigel" ? (lang === "he" ? "טיגל" : "Тигель") : (lang === "he" ? "קמומילו" : "Ромашка")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-muted-foreground mb-2 text-center tracking-wider uppercase">{lang === "he" ? "חניכיים" : "Дёсны"}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["upper", "lower"] as const).map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setMedsGelGums(g)}
+                      className={cn(
+                        "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+                        medsGelGums === g
+                          ? "bg-teal-500 border-teal-500 text-white"
+                          : "bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300"
+                      )}
+                    >
+                      {g === "upper" ? (lang === "he" ? "עליונות" : "Верхние") : (lang === "he" ? "תחתונות" : "Нижние")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                disabled={!medsGelBrand || !medsGelGums}
+                onClick={() => {
+                  if (!medsGelBrand || !medsGelGums) return;
+                  const brand = medsGelBrand === "tigel" ? (lang === "he" ? "טיגל" : "Тигель") : (lang === "he" ? "קמומילו" : "Ромашка");
+                  const gums = medsGelGums === "upper" ? (lang === "he" ? "עליונות" : "Верхние") : (lang === "he" ? "תחתונות" : "Нижние");
+                  const gelLabel = lang === "he" ? "ג'ל לחניכיים" : "Гель для дёсен";
+                  goToMedications(`${gelLabel} · ${brand} · ${gums}`);
+                }}
+                className="w-full h-14 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-bold text-base disabled:opacity-40 transition-all active:scale-95"
+              >
+                {lang === "he" ? "המשך" : "Далее"}
+              </button>
             </SheetContent>
           </Sheet>
         </div>

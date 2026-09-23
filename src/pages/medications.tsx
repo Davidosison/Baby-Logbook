@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearchParams } from "wouter";
 import { useLogMedication } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,11 @@ function timeToTodayISO(timeStr: string): string {
 
 export default function MedicationsPage() {
   const [, setLocation] = useLocation();
+  const [search] = useSearchParams();
   const { lang, dir } = useLanguage();
   const { name } = usePerson();
   const [time, setTime] = useState(format(new Date(), "HH:mm"));
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(() => search.get("notes") ?? "");
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const logMedication = useLogMedication({
