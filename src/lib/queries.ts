@@ -748,15 +748,16 @@ export function useLogMedication(options?: {
 }
 
 export function useLogVitaminD(options?: {
-  mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null }>;
+  mutation?: UseMutationOptions<Event, Error, { loggedBy?: string | null; notes?: string | null }>;
 }) {
   const queryClient = useQueryClient();
   const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
   return useMutation({
-    mutationFn: async ({ loggedBy }: { loggedBy?: string | null } = {}) => {
+    mutationFn: async ({ loggedBy, notes }: { loggedBy?: string | null; notes?: string | null } = {}) => {
       const row = await safeInsert("events", {
         type: "vitamin_d",
         started_at: new Date().toISOString(),
+        notes: notes ?? null,
         is_active: false,
         logged_by: loggedBy ?? null,
       });

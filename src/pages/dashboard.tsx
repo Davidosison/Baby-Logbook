@@ -5,7 +5,7 @@ import {
   useGetActiveSleep, getGetActiveSleepQueryKey,
   useStopSleep,
   useGetActiveFeeding, getGetActiveFeedingQueryKey,
-  useLogDiaper, useLogMedication, useStartSleep, useStartFeeding, useStopFeeding,
+  useLogDiaper, useLogMedication, useLogVitaminD, useStartSleep, useStartFeeding, useStopFeeding,
 } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
@@ -155,7 +155,7 @@ export default function DashboardPage() {
   // ── Quick Actions ────────────────────────────────────────────────────────────
   const [quickDone, setQuickDone] = useState<string | null>(null);
   const [splashing, setSplashing] = useState<string | null>(null);
-  const [dropsOpen, setDropsOpen] = useState(false);
+  const [vitaminsOpen, setVitaminsOpen] = useState(false);
   const [gelOpen, setGelOpen] = useState(false);
   const [gelBrand, setGelBrand] = useState<"tigel" | "chamomile" | null>(null);
   const [gelGums, setGelGums] = useState<"upper" | "lower" | null>(null);
@@ -171,6 +171,9 @@ export default function DashboardPage() {
   });
   const logMedication = useLogMedication({
     mutation: { onSuccess: () => quickFlash("medication") },
+  });
+  const logVitaminD = useLogVitaminD({
+    mutation: { onSuccess: () => quickFlash("vitamin") },
   });
   const startSleepQuick = useStartSleep({
     mutation: { onSuccess: () => quickFlash("sleep") },
@@ -378,20 +381,20 @@ export default function DashboardPage() {
             <span>{lang === "he" ? "פיפי" : "Пи-пи"}</span>
           </button>
 
-          {/* Drops — opens mL picker */}
+          {/* Vitamins — opens Vitamin D / Iron picker */}
           <button
-            onClick={() => setDropsOpen(true)}
-            onAnimationEnd={() => splashing === "medication" && setSplashing(null)}
+            onClick={() => setVitaminsOpen(true)}
+            onAnimationEnd={() => splashing === "vitamin" && setSplashing(null)}
             className={cn(
               "h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95",
-              splashing === "medication" && "btn-pop",
-              quickDone === "medication"
+              splashing === "vitamin" && "btn-pop",
+              quickDone === "vitamin"
                 ? "bg-green-400/20 border-green-400 text-green-600 dark:text-green-400"
                 : "bg-violet-400/10 border-violet-400/40 text-violet-700 dark:text-violet-400"
             )}
           >
-            <span className="text-lg leading-none">{quickDone === "medication" ? "✓" : "💊"}</span>
-            <span>{lang === "he" ? "סימיקול" : "Симикол"}</span>
+            <span className="text-lg leading-none">{quickDone === "vitamin" ? "✓" : "💊"}</span>
+            <span>{lang === "he" ? "ויטמינים" : "Витамины"}</span>
           </button>
 
           {/* Gum gel — opens brand+gums picker */}
@@ -610,25 +613,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Drops popup ─────────────────────────────────────────────────────── */}
-      <Sheet open={dropsOpen} onOpenChange={setDropsOpen}>
+      {/* ── Vitamins popup ──────────────────────────────────────────────────── */}
+      <Sheet open={vitaminsOpen} onOpenChange={setVitaminsOpen}>
         <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-border/60 p-6" dir={dir}>
           <SheetTitle className="text-center font-bold text-xl mb-6">
-            {lang === "he" ? "💊 בחר כמות" : "💊 Выберите дозу"}
+            {lang === "he" ? "💊 בחר ויטמין" : "💊 Выберите витамин"}
           </SheetTitle>
           <div className="grid grid-cols-2 gap-4">
-            {(["0.3", "0.6"] as const).map((ml) => (
+            {([
+              ["vitamin_d", lang === "he" ? "ויטמין D" : "Витамин D"],
+              ["iron", lang === "he" ? "ברזל" : "Железо"],
+            ] as const).map(([key, label]) => (
               <button
-                key={ml}
+                key={key}
                 onClick={() => {
-                  const dropsNote = lang === "he" ? `סימיקול · ${ml} מ"ל` : `Симикол · ${ml} мл`;
-                  logMedication.mutate({ data: { notes: dropsNote, loggedBy: name ?? null } });
-                  setDropsOpen(false);
+                  logVitaminD.mutate({ notes: label, loggedBy: name ?? null });
+                  setVitaminsOpen(false);
                 }}
-                disabled={logMedication.isPending}
-                className="h-20 rounded-2xl bg-violet-100 dark:bg-violet-900/30 border-2 border-violet-300 dark:border-violet-700 hover:bg-violet-200 active:scale-95 transition-all font-bold text-2xl text-violet-700 dark:text-violet-300"
+                disabled={logVitaminD.isPending}
+                className="h-20 rounded-2xl bg-violet-100 dark:bg-violet-900/30 border-2 border-violet-300 dark:border-violet-700 hover:bg-violet-200 active:scale-95 transition-all font-bold text-base text-violet-700 dark:text-violet-300"
               >
-                {ml} <span className="text-sm">{lang === "he" ? 'מ"ל' : "мл"}</span>
+                {label}
               </button>
             ))}
           </div>

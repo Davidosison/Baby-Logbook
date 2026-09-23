@@ -20,6 +20,7 @@ export function BottomNav() {
   const { name, setName } = usePerson();
   const { goals, setGoal } = useGoals();
   const [addOpen, setAddOpen] = useState(false);
+  const [vitaminsOpen, setVitaminsOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const logVitaminD = useLogVitaminD();
@@ -102,10 +103,9 @@ export function BottomNav() {
                 </Link>
                 <button data-testid="nav-vitamin-d"
                   onClick={() => {
-                    logVitaminD.mutate({ loggedBy: name ?? null });
                     setAddOpen(false);
+                    setVitaminsOpen(true);
                   }}
-                  disabled={logVitaminD.isPending}
                   className="w-full flex items-center bg-violet-400/10 hover:bg-violet-400/20 text-violet-600 dark:text-violet-400 p-4 rounded-2xl transition-colors disabled:opacity-50">
                   <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
                     <div className="text-xl font-bold">{tr("vitamin_d", lang)}</div>
@@ -120,6 +120,33 @@ export function BottomNav() {
                   </div>
                   <Syringe className="w-5 h-5 opacity-60" />
                 </Link>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Vitamins popup — Vitamin D / Iron choice */}
+          <Sheet open={vitaminsOpen} onOpenChange={setVitaminsOpen}>
+            <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-white/15 dark:border-white/8 p-6" dir={dir}>
+              <SheetTitle className="text-center font-bold text-xl mb-6">
+                {lang === "he" ? "💊 בחר ויטמין" : "💊 Выберите витамин"}
+              </SheetTitle>
+              <div className="grid grid-cols-2 gap-4">
+                {([
+                  ["vitamin_d", lang === "he" ? "ויטמין D" : "Витамин D"],
+                  ["iron", lang === "he" ? "ברזל" : "Железо"],
+                ] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      logVitaminD.mutate({ notes: label, loggedBy: name ?? null });
+                      setVitaminsOpen(false);
+                    }}
+                    disabled={logVitaminD.isPending}
+                    className="h-20 rounded-2xl bg-violet-100 dark:bg-violet-900/30 border-2 border-violet-300 dark:border-violet-700 hover:bg-violet-200 active:scale-95 transition-all font-bold text-base text-violet-700 dark:text-violet-300"
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </SheetContent>
           </Sheet>
