@@ -76,14 +76,18 @@ export const supabase = new Proxy({} as SupabaseClient, {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type EventType = "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d" | "medication" | "solids";
+
 export type EventRow = {
   id: number;
-  type: "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d" | "medication";
+  type: EventType;
   started_at: string;
   ended_at: string | null;
   duration_minutes: number | null;
   amount_ml: number | null;
   diaper_type: string | null;
+  food_type: string | null;
+  amount_tsp: number | string | null;
   notes: string | null;
   is_active: boolean;
   logged_by: string | null;
@@ -92,12 +96,14 @@ export type EventRow = {
 
 export type Event = {
   id: number;
-  type: "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d" | "medication";
+  type: EventType;
   startedAt: string;
   endedAt: string | null;
   durationMinutes: number | null;
   amountMl: number | null;
   diaperType: string | null;
+  foodType: string | null;
+  amountTsp: number | null;
   notes: string | null;
   isActive: boolean;
   loggedBy: string | null;
@@ -113,6 +119,8 @@ export function toEvent(row: EventRow): Event {
     durationMinutes: row.duration_minutes,
     amountMl: row.amount_ml,
     diaperType: row.diaper_type,
+    foodType: row.food_type ?? null,
+    amountTsp: row.amount_tsp != null ? Number(row.amount_tsp) : null,
     notes: row.notes,
     isActive: row.is_active,
     loggedBy: (row as any).logged_by ?? null,

@@ -23,6 +23,8 @@ type EventItem = {
   durationMinutes?: number | null;
   amountMl?: number | null;
   diaperType?: string | null;
+  foodType?: string | null;
+  amountTsp?: number | null;
   isActive: boolean;
 };
 
@@ -34,6 +36,7 @@ const TYPE_COLORS_WEEKLY: Record<string, string> = {
   bath: "bg-teal-400/75",
   vitamin_d: "bg-purple-400/75",
   medication: "bg-rose-400/75",
+  solids: "bg-orange-400/75",
 };
 
 // ─── Utils ───────────────────────────────────────────────────────────────────
@@ -248,6 +251,12 @@ const EVENT_ACCENT: Record<string, EventAccent> = {
     endDotCls: "",
     cardCls: "bg-rose-400/10 border-rose-400/25",
   },
+  solids: {
+    dotCls: "bg-orange-400",
+    barCls: "",
+    endDotCls: "",
+    cardCls: "bg-orange-400/10 border-orange-400/25",
+  },
 };
 
 function TimelineEventRow({
@@ -278,6 +287,8 @@ function TimelineEventRow({
             ? tr("vitamin_d", lang)
             : event.type === "medication"
               ? tr("medication", lang)
+              : event.type === "solids"
+              ? tr("solids", lang)
               : event.diaperType === "pee"
                 ? tr("pee", lang)
                 : event.diaperType === "poop"
@@ -293,6 +304,10 @@ function TimelineEventRow({
   }
   if (event.type === "sleep" && !event.isActive && durMin) {
     subParts.push(tr("sleepDuration", lang, Math.floor(durMin / 60), durMin % 60));
+  }
+  if (event.type === "solids") {
+    if (event.foodType) subParts.push(event.foodType);
+    if (event.amountTsp != null) subParts.push(`${event.amountTsp} ${tr("tspUnit", lang)}`);
   }
 
   return (

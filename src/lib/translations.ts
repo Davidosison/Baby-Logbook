@@ -36,6 +36,7 @@ const t = {
   diaper: { he: "טיטול", ru: "Подгузник" },
   bath: { he: "מקלחת", ru: "Купание" },
   vitamin_d: { he: "ויטמינים 💊", ru: "Витамины 💊" },
+  solids: { he: "טעימות", ru: "Прикорм" },
   sleepStartFrom: { he: "ישן מ-", ru: "Спит с" },
   feedingStartFrom: { he: "האכלה מ-", ru: "Кормление с" },
   guide: { he: "מדריך", ru: "Справка" },
@@ -97,6 +98,13 @@ const t = {
   saveMedication: { he: "שמור תרופה", ru: "Сохранить" },
   medicationNotes: { he: "תרופה, מינון וסיבה", ru: "Лекарство, доза и причина" },
   medicationNotesPlaceholder: { he: 'לדוגמה: אקמול 2.5 מ"ל - הורדת חום', ru: "Например: парацетамол 2.5 мл — от температуры" },
+
+  // Solids page
+  foodType: { he: "סוג האוכל", ru: "Что ел" },
+  foodTypePlaceholder: { he: "לדוגמה: גזר, בטטה, אבוקדו...", ru: "Например: морковь, батат, авокадо..." },
+  teaspoons: { he: "כמה כפיות", ru: "Сколько ложек" },
+  tspUnit: { he: "כפיות", ru: "ложк." },
+  saveSolids: { he: "שמור טעימה", ru: "Сохранить" },
 
   // Feeding timer (dashboard banner)
   feedingActive: { he: "האכלה פעילה", ru: "Идёт кормление" },

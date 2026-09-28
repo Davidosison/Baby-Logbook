@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
 import {
   Droplet, Moon, Utensils, Share2, StopCircle, RefreshCw,
-  Timer, Bath, Sparkles, Loader2, Syringe,
+  Timer, Bath, Sparkles, Loader2, Syringe, Carrot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
@@ -76,6 +76,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "bath") return <Bath className={cn("w-4 h-4", className)} />;
   if (type === "vitamin_d") return <span className="text-sm leading-none">💊</span>;
   if (type === "medication") return <Syringe className={cn("w-4 h-4", className)} />;
+  if (type === "solids") return <Carrot className={cn("w-4 h-4", className)} />;
   return null;
 }
 
@@ -337,6 +338,7 @@ export default function DashboardPage() {
     if (type === "bath") return tr("bath", lang);
     if (type === "vitamin_d") return tr("vitamin_d", lang);
     if (type === "medication") return tr("medication", lang);
+    if (type === "solids") return tr("solids", lang);
     return type;
   };
 
@@ -575,11 +577,12 @@ export default function DashboardPage() {
                 }
                 if (event.type === "sleep") return event.isActive ? tr("sleepingNow", lang) : event.durationMinutes ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60) : "";
                 if (event.type === "diaper") return diaperLabel(event.diaperType);
+                if (event.type === "solids") return [event.foodType, event.amountTsp != null ? `${event.amountTsp} ${tr("tspUnit", lang)}` : null].filter(Boolean).join(" · ");
                 return "";
               })();
-              const colorDot = event.type === "feeding" ? "bg-sky-400" : event.type === "sleep" ? "bg-indigo-400" : event.type === "diaper" ? "bg-amber-400" : event.type === "bath" ? "bg-teal-400" : event.type === "vitamin_d" ? "bg-purple-400" : "bg-rose-400";
-              const colorBorder = event.type === "feeding" ? "border-sky-200/60 dark:border-sky-800/40" : event.type === "sleep" ? "border-indigo-200/60 dark:border-indigo-800/40" : event.type === "diaper" ? "border-amber-200/60 dark:border-amber-800/40" : event.type === "bath" ? "border-teal-200/60 dark:border-teal-800/40" : event.type === "vitamin_d" ? "border-purple-200/60 dark:border-purple-800/40" : "border-rose-200/60 dark:border-rose-800/40";
-              const colorIcon = event.type === "feeding" ? "bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400" : event.type === "sleep" ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400" : event.type === "diaper" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" : event.type === "bath" ? "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400" : event.type === "vitamin_d" ? "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400";
+              const colorDot = event.type === "feeding" ? "bg-sky-400" : event.type === "sleep" ? "bg-indigo-400" : event.type === "diaper" ? "bg-amber-400" : event.type === "bath" ? "bg-teal-400" : event.type === "vitamin_d" ? "bg-purple-400" : event.type === "solids" ? "bg-orange-400" : "bg-rose-400";
+              const colorBorder = event.type === "feeding" ? "border-sky-200/60 dark:border-sky-800/40" : event.type === "sleep" ? "border-indigo-200/60 dark:border-indigo-800/40" : event.type === "diaper" ? "border-amber-200/60 dark:border-amber-800/40" : event.type === "bath" ? "border-teal-200/60 dark:border-teal-800/40" : event.type === "vitamin_d" ? "border-purple-200/60 dark:border-purple-800/40" : event.type === "solids" ? "border-orange-200/60 dark:border-orange-800/40" : "border-rose-200/60 dark:border-rose-800/40";
+              const colorIcon = event.type === "feeding" ? "bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400" : event.type === "sleep" ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400" : event.type === "diaper" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" : event.type === "bath" ? "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400" : event.type === "vitamin_d" ? "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400" : event.type === "solids" ? "bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400";
               return (
                 <div key={event.id} className="relative flex gap-2.5 mb-2" data-testid={`event-item-${event.id}`}>
                   {/* Timeline line */}

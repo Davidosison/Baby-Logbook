@@ -2,14 +2,17 @@
 
 create table if not exists events (
   id             serial primary key,
-  type           text    not null check (type in ('feeding', 'sleep', 'diaper', 'bath', 'vitamin_d', 'medication')),
+  type           text    not null check (type in ('feeding', 'sleep', 'diaper', 'bath', 'vitamin_d', 'medication', 'solids')),
   started_at     timestamptz not null default now(),
   ended_at       timestamptz,
   duration_minutes integer,
   amount_ml      integer,
   diaper_type    text    check (diaper_type in ('pee', 'poop', 'both')),
+  food_type      text,
+  amount_tsp     numeric(4,1),
   notes          text,
   is_active      boolean not null default false,
+  logged_by      text,
   created_at     timestamptz not null default now()
 );
 

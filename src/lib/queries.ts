@@ -658,6 +658,8 @@ export function useUpdateEvent(options?: {
       if ("durationMinutes" in data) update.duration_minutes = data.durationMinutes;
       if ("amountMl" in data) update.amount_ml = data.amountMl;
       if ("diaperType" in data) update.diaper_type = data.diaperType;
+      if ("foodType" in data) update.food_type = data.foodType;
+      if ("amountTsp" in data) update.amount_tsp = data.amountTsp;
       if ("notes" in data) update.notes = data.notes;
       if ("isActive" in data) update.is_active = data.isActive;
       const { data: row, error } = await supabase
@@ -717,6 +719,34 @@ export function useGetFamilyMembers(options?: { query?: Partial<UseQueryOptions<
       return names;
     },
     staleTime: 5 * 60 * 1000,
+    ...restOpts,
+  });
+}
+
+type SolidsInput = { foodType: string; amountTsp: number | null; notes?: string | null; startedAt?: string; loggedBy?: string | null };
+
+export function useLogSolids(options?: {
+  mutation?: UseMutationOptions<Event, Error, { data: SolidsInput }>;
+}) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
+  return useMutation({
+    mutationFn: async ({ data }: { data: SolidsInput }) => {
+      const row = await safeInsert("events", {
+        type: "solids",
+        started_at: data.startedAt ?? new Date().toISOString(),
+        food_type: data.foodType,
+        amount_tsp: data.amountTsp,
+        notes: data.notes ?? null,
+        is_active: false,
+        logged_by: data.loggedBy ?? null,
+      });
+      return toEvent(row as EventRow);
+    },
+    onSuccess: (data, vars, ctx) => {
+      invalidateEventCaches(queryClient);
+      userOnSuccess?.(data, vars, ctx);
+    },
     ...restOpts,
   });
 }
