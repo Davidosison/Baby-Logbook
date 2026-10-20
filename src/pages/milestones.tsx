@@ -10,7 +10,7 @@ import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
 import { format, parseISO, isToday, addMonths, differenceInMonths, differenceInCalendarDays } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Star } from "lucide-react";
+import { Star, CalendarDays } from "lucide-react";
 
 function ruPlural(n: number, one: string, few: string, many: string) {
   const m10 = n % 10, m100 = n % 100;
@@ -93,13 +93,24 @@ export default function MilestonesPage() {
           <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
             {tr("milestoneDate", lang)}
           </label>
-          <Input
-            type="date"
-            value={date}
-            max={todayStr}
-            onChange={(e) => setDate(e.target.value)}
-            className="h-12 text-base border-border bg-background"
-          />
+          {/* iOS draws date inputs in the phone's language and too wide — show our own label under an invisible input */}
+          <div className="relative">
+            <div className="h-12 w-full rounded-md border border-border bg-background px-3 flex items-center justify-between gap-2 text-base">
+              <span className="truncate">
+                {format(parseISO(date), lang === "he" ? "EEEE, d בMMMM yyyy" : "EEEE, d MMMM yyyy", { locale: dateLocale })}
+              </span>
+              <CalendarDays className="w-4 h-4 shrink-0 text-muted-foreground" />
+            </div>
+            <input
+              type="date"
+              value={date}
+              max={todayStr}
+              aria-label={tr("milestoneDate", lang)}
+              onChange={(e) => { if (e.target.value) setDate(e.target.value); }}
+              onClick={(e) => { try { e.currentTarget.showPicker?.(); } catch { /* picker opens natively */ } }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          </div>
           {birth && date && (
             <p className="text-xs text-muted-foreground mt-2">{ageAt(birth, parseISO(date), lang)}</p>
           )}
