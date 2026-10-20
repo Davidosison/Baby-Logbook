@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
 import {
   Droplet, Moon, Utensils, Share2, StopCircle, RefreshCw,
-  Timer, Bath, Sparkles, Loader2, Syringe, Carrot,
+  Timer, Bath, Sparkles, Loader2, Syringe, Carrot, Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
@@ -77,6 +77,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "vitamin_d") return <span className="text-sm leading-none">💊</span>;
   if (type === "medication") return <Syringe className={cn("w-4 h-4", className)} />;
   if (type === "solids") return <Carrot className={cn("w-4 h-4", className)} />;
+  if (type === "milestone") return <Star className={cn("w-4 h-4", className)} />;
   return null;
 }
 
@@ -157,6 +158,7 @@ export default function DashboardPage() {
   const [quickDone, setQuickDone] = useState<string | null>(null);
   const [splashing, setSplashing] = useState<string | null>(null);
   const [vitaminsOpen, setVitaminsOpen] = useState(false);
+  const [peeOpen, setPeeOpen] = useState(false);
   const [gelOpen, setGelOpen] = useState(false);
   const [gelBrand, setGelBrand] = useState<"tigel" | "chamomile" | null>(null);
   const [gelGums, setGelGums] = useState<"upper" | "lower" | null>(null);
@@ -339,6 +341,7 @@ export default function DashboardPage() {
     if (type === "vitamin_d") return tr("vitamin_d", lang);
     if (type === "medication") return tr("medication", lang);
     if (type === "solids") return tr("solids", lang);
+    if (type === "milestone") return tr("milestone", lang);
     return type;
   };
 
@@ -368,7 +371,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-5 gap-1.5" dir="ltr">
           {/* Pee */}
           <button
-            onClick={() => logDiaper.mutate({ data: { diaperType: "pee", loggedBy: name ?? null } })}
+            onClick={() => setPeeOpen(true)}
             disabled={logDiaper.isPending}
             onAnimationEnd={() => splashing === "pee" && setSplashing(null)}
             className={cn(
@@ -576,13 +579,14 @@ export default function DashboardPage() {
                   return parts.join(" · ");
                 }
                 if (event.type === "sleep") return event.isActive ? tr("sleepingNow", lang) : event.durationMinutes ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60) : "";
-                if (event.type === "diaper") return diaperLabel(event.diaperType);
+                if (event.type === "diaper") return [diaperLabel(event.diaperType), event.ointment == null ? null : event.ointment ? `🧴 ${tr("ointmentApplied", lang)}` : tr("ointmentNotApplied", lang)].filter(Boolean).join(" · ");
+                if (event.type === "milestone") return event.title ?? "";
                 if (event.type === "solids") return [event.foodType, event.amountTsp != null ? `${event.amountTsp} ${tr("tspUnit", lang)}` : null].filter(Boolean).join(" · ");
                 return "";
               })();
-              const colorDot = event.type === "feeding" ? "bg-sky-400" : event.type === "sleep" ? "bg-indigo-400" : event.type === "diaper" ? "bg-amber-400" : event.type === "bath" ? "bg-teal-400" : event.type === "vitamin_d" ? "bg-purple-400" : event.type === "solids" ? "bg-orange-400" : "bg-rose-400";
-              const colorBorder = event.type === "feeding" ? "border-sky-200/60 dark:border-sky-800/40" : event.type === "sleep" ? "border-indigo-200/60 dark:border-indigo-800/40" : event.type === "diaper" ? "border-amber-200/60 dark:border-amber-800/40" : event.type === "bath" ? "border-teal-200/60 dark:border-teal-800/40" : event.type === "vitamin_d" ? "border-purple-200/60 dark:border-purple-800/40" : event.type === "solids" ? "border-orange-200/60 dark:border-orange-800/40" : "border-rose-200/60 dark:border-rose-800/40";
-              const colorIcon = event.type === "feeding" ? "bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400" : event.type === "sleep" ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400" : event.type === "diaper" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" : event.type === "bath" ? "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400" : event.type === "vitamin_d" ? "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400" : event.type === "solids" ? "bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400";
+              const colorDot = event.type === "feeding" ? "bg-sky-400" : event.type === "sleep" ? "bg-indigo-400" : event.type === "diaper" ? "bg-amber-400" : event.type === "bath" ? "bg-teal-400" : event.type === "vitamin_d" ? "bg-purple-400" : event.type === "solids" ? "bg-orange-400" : event.type === "milestone" ? "bg-yellow-400" : "bg-rose-400";
+              const colorBorder = event.type === "feeding" ? "border-sky-200/60 dark:border-sky-800/40" : event.type === "sleep" ? "border-indigo-200/60 dark:border-indigo-800/40" : event.type === "diaper" ? "border-amber-200/60 dark:border-amber-800/40" : event.type === "bath" ? "border-teal-200/60 dark:border-teal-800/40" : event.type === "vitamin_d" ? "border-purple-200/60 dark:border-purple-800/40" : event.type === "solids" ? "border-orange-200/60 dark:border-orange-800/40" : event.type === "milestone" ? "border-yellow-300/70 dark:border-yellow-700/50" : "border-rose-200/60 dark:border-rose-800/40";
+              const colorIcon = event.type === "feeding" ? "bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400" : event.type === "sleep" ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400" : event.type === "diaper" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400" : event.type === "bath" ? "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400" : event.type === "vitamin_d" ? "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400" : event.type === "solids" ? "bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400" : event.type === "milestone" ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400";
               return (
                 <div key={event.id} className="relative flex gap-2.5 mb-2" data-testid={`event-item-${event.id}`}>
                   {/* Timeline line */}
@@ -615,6 +619,30 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Pee popup — ointment applied or not ──────────────────────────────── */}
+      <Sheet open={peeOpen} onOpenChange={setPeeOpen}>
+        <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-border/60 p-6" dir={dir}>
+          <SheetTitle className="text-center font-bold text-xl mb-6">
+            {lang === "he" ? "💧 פיפי — משחה?" : "💧 Пи-пи — крем?"}
+          </SheetTitle>
+          <div className="grid grid-cols-2 gap-4">
+            {([true, false] as const).map((applied) => (
+              <button
+                key={String(applied)}
+                onClick={() => {
+                  logDiaper.mutate({ data: { diaperType: "pee", ointment: applied, loggedBy: name ?? null } });
+                  setPeeOpen(false);
+                }}
+                disabled={logDiaper.isPending}
+                className="h-20 rounded-2xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 hover:bg-amber-200 active:scale-95 transition-all font-bold text-base text-amber-700 dark:text-amber-300"
+              >
+                {applied ? `🧴 ${tr("ointmentApplied", lang)}` : tr("ointmentNotApplied", lang)}
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* ── Vitamins popup ──────────────────────────────────────────────────── */}
       <Sheet open={vitaminsOpen} onOpenChange={setVitaminsOpen}>

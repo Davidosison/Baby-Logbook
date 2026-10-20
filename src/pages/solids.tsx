@@ -4,6 +4,7 @@ import { useLogSolids } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
@@ -32,6 +33,7 @@ export default function SolidsPage() {
   const [time, setTime] = useState(format(new Date(), "HH:mm"));
   const [foodType, setFoodType] = useState("");
   const [tsp, setTsp] = useState(1);
+  const [notes, setNotes] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const logSolids = useLogSolids({
@@ -124,6 +126,17 @@ export default function SolidsPage() {
           </div>
         </div>
 
+        {/* Notes */}
+        <div>
+          <label className="block text-sm font-medium mb-2">{tr("notesOptional", lang)}</label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={tr("solidsNotesPlaceholder", lang)}
+            className="resize-none h-24 bg-card border-border"
+          />
+        </div>
+
         {saveError && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm rounded-2xl p-3 text-center">
             {saveError}
@@ -137,6 +150,7 @@ export default function SolidsPage() {
               data: {
                 foodType: foodType.trim(),
                 amountTsp: tsp,
+                notes: notes.trim() || null,
                 startedAt: timeToTodayISO(time),
                 loggedBy: name ?? null,
               },

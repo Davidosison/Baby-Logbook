@@ -469,6 +469,7 @@ function invalidateEventCaches(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["events-range"] });
   queryClient.invalidateQueries({ queryKey: ["recent-activity"] });
   queryClient.invalidateQueries({ queryKey: ["daily-summary"] });
+  queryClient.invalidateQueries({ queryKey: ["milestones"] });
 }
 
 type FeedingInput = { startedAt: string; endedAt?: string | null; durationMinutes?: number | null; amountMl?: number | null; notes?: string | null; loggedBy?: string | null };
@@ -592,7 +593,7 @@ export function useStopSleep(options?: { mutation?: UseMutationOptions<Event, Er
   });
 }
 
-type DiaperInput = { diaperType: "pee" | "poop" | "both"; notes?: string | null; startedAt?: string; loggedBy?: string | null };
+type DiaperInput = { diaperType: "pee" | "poop" | "both"; ointment?: boolean | null; notes?: string | null; startedAt?: string; loggedBy?: string | null };
 
 export function useLogDiaper(options?: {
   mutation?: UseMutationOptions<Event, Error, { data: DiaperInput }>;
@@ -605,6 +606,7 @@ export function useLogDiaper(options?: {
         type: "diaper",
         started_at: data.startedAt ?? new Date().toISOString(),
         diaper_type: data.diaperType,
+        ointment: data.ointment ?? null,
         notes: data.notes ?? null,
         is_active: false,
         logged_by: data.loggedBy ?? null,
@@ -660,6 +662,8 @@ export function useUpdateEvent(options?: {
       if ("diaperType" in data) update.diaper_type = data.diaperType;
       if ("foodType" in data) update.food_type = data.foodType;
       if ("amountTsp" in data) update.amount_tsp = data.amountTsp;
+      if ("ointment" in data) update.ointment = data.ointment;
+      if ("title" in data) update.title = data.title;
       if ("notes" in data) update.notes = data.notes;
       if ("isActive" in data) update.is_active = data.isActive;
       const { data: row, error } = await supabase
@@ -723,7 +727,49 @@ export function useGetFamilyMembers(options?: { query?: Partial<UseQueryOptions<
   });
 }
 
-type SolidsInput = { foodType: string; amountTsp: number | null; notes?: string | null; startedAt?: string; loggedBy?: string | null };
+type MilestoneInput = { title: string; notes?: string | null; startedAt?: string; loggedBy?: string | null };
+
+export function useLogMilestone(options?: {
+  mutation?: UseMutationOptions<Event, Error, { data: MilestoneInput }>;
+}) {
+  const queryClient = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOpts } = options?.mutation ?? {};
+  return useMutation({
+    mutationFn: async ({ data }: { data: MilestoneInput }) => {
+      const row = await safeInsert("events", {
+        type: "milestone",
+        started_at: data.startedAt ?? new Date().toISOString(),
+        title: data.title,
+        notes: data.notes ?? null,
+        is_active: false,
+        logged_by: data.loggedBy ?? null,
+      });
+      return toEvent(row as EventRow);
+    },
+    onSuccess: (data, vars, ctx) => {
+      invalidateEventCaches(queryClient);
+      userOnSuccess?.(data, vars, ctx);
+    },
+    ...restOpts,
+  });
+}
+
+export function useListMilestones() {
+  return useQuery({
+    queryKey: ["milestones"],
+    queryFn: async () => {
+      const { data, error } = await getSupabase()
+        .from("events")
+        .select("*")
+        .eq("type", "milestone")
+        .order("started_at", { ascending: false });
+      if (error) throw error;
+      return (data as EventRow[]).map(toEvent);
+    },
+  });
+}
+
+type SolidsInput ={ foodType: string; amountTsp: number | null; notes?: string | null; startedAt?: string; loggedBy?: string | null };
 
 export function useLogSolids(options?: {
   mutation?: UseMutationOptions<Event, Error, { data: SolidsInput }>;

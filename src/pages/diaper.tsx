@@ -34,6 +34,7 @@ export default function DiaperPage() {
   const [diaperType, setDiaperType] = useState<"pee" | "poop" | "both" | null>(null);
   const [time, setTime] = useState(format(new Date(), "HH:mm"));
   const [notes, setNotes] = useState("");
+  const [ointment, setOintment] = useState<boolean | null>(null);
 
   const logDiaper = useLogDiaper({
     mutation: {
@@ -87,6 +88,30 @@ export default function DiaperPage() {
           </button>
         </div>
 
+        {/* Ointment — tap the selected option again to clear it */}
+        <div className="bg-card border border-border rounded-3xl p-4">
+          <label className="block text-xs font-semibold text-muted-foreground mb-2">
+            🧴 {tr("ointment", lang)}
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {([true, false] as const).map((applied) => (
+              <button
+                key={String(applied)}
+                type="button"
+                onClick={() => setOintment((o) => (o === applied ? null : applied))}
+                className={cn(
+                  "h-12 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+                  ointment === applied
+                    ? "bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400"
+                    : "bg-background border-border text-muted-foreground"
+                )}
+              >
+                {applied ? tr("ointmentApplied", lang) : tr("ointmentNotApplied", lang)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Time picker */}
         <div className="bg-card border border-border rounded-3xl p-4">
           <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
@@ -123,7 +148,7 @@ export default function DiaperPage() {
         <Button
           onClick={() => {
             if (!diaperType) return;
-            logDiaper.mutate({ data: { diaperType, notes: notes || undefined, startedAt: timeToTodayISO(time), loggedBy: name ?? null } });
+            logDiaper.mutate({ data: { diaperType, ointment, notes: notes || undefined, startedAt: timeToTodayISO(time), loggedBy: name ?? null } });
           }}
           disabled={logDiaper.isPending || !diaperType}
           data-testid="button-save-diaper"

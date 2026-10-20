@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Utensils, Droplet, Pill, Syringe, Carrot } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Utensils, Droplet, Pill, Syringe, Carrot, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
@@ -76,7 +76,7 @@ export function BottomNav() {
                 <Plus className="w-8 h-8" />
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-white/15 dark:border-white/8 flex flex-col p-6" dir={dir}>
+            <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-white/15 dark:border-white/8 flex flex-col p-6 max-h-[92dvh] overflow-y-auto" dir={dir}>
               <VisuallyHidden>
                 <SheetTitle>{tr("logEvent", lang)}</SheetTitle>
               </VisuallyHidden>
@@ -139,6 +139,14 @@ export function BottomNav() {
                     <div className="text-xl font-bold">{tr("solids", lang)}</div>
                   </div>
                   <Carrot className="w-5 h-5 opacity-60" />
+                </Link>
+                <Link href="/milestones" data-testid="nav-milestones"
+                  onClick={() => setAddOpen(false)}
+                  className="w-full flex items-center bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-700 dark:text-yellow-400 p-4 rounded-2xl transition-colors">
+                  <div className={cn("flex-1", dir === "rtl" ? "text-right" : "text-left")}>
+                    <div className="text-xl font-bold">{tr("milestone", lang)}</div>
+                  </div>
+                  <Star className="w-5 h-5 opacity-60" />
                 </Link>
               </div>
             </SheetContent>

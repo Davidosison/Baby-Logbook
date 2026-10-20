@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
 import { format, isToday, isYesterday, subDays, startOfDay } from "date-fns";
 import { he, ru } from "date-fns/locale";
-import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2, Syringe, Search, X, Carrot } from "lucide-react";
+import { Droplet, Moon, Utensils, Trash2, Pencil, BarChart2, Syringe, Search, X, Carrot, Star } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -31,8 +31,10 @@ type EventItem = {
   durationMinutes?: number | null;
   amountMl?: number | null;
   diaperType?: string | null;
+  ointment?: boolean | null;
   foodType?: string | null;
   amountTsp?: number | null;
+  title?: string | null;
   notes?: string | null;
   isActive: boolean;
   loggedBy?: string | null;
@@ -46,6 +48,7 @@ function EventIcon({ type, className }: { type: string; className?: string }) {
   if (type === "vitamin_d") return <span className={cn("text-sm leading-none", className)}>💊</span>;
   if (type === "medication") return <Syringe className={cn("w-4 h-4", className)} />;
   if (type === "solids") return <Carrot className={cn("w-4 h-4", className)} />;
+  if (type === "milestone") return <Star className={cn("w-4 h-4", className)} />;
   return null;
 }
 
@@ -72,6 +75,8 @@ function EditSheet({
   const [notes, setNotes] = useState(event.notes ?? "");
   const [foodType, setFoodType] = useState(event.foodType ?? "");
   const [amountTsp, setAmountTsp] = useState(event.amountTsp?.toString() ?? "");
+  const [ointment, setOintment] = useState<boolean | null>(event.ointment ?? null);
+  const [title, setTitle] = useState(event.title ?? "");
 
   function applyTime(timeStr: string, baseISO: string): string {
     const base = new Date(baseISO);
@@ -107,6 +112,10 @@ function EditSheet({
     }
     if (event.type === "diaper") {
       data.diaperType = diaperType;
+      data.ointment = ointment;
+    }
+    if (event.type === "milestone") {
+      data.title = title.trim();
     }
     if (event.type === "solids") {
       data.startedAt = applyTime(startTime, event.startedAt);
@@ -123,6 +132,7 @@ function EditSheet({
     : event.type === "sleep" ? !!startTime
     : event.type === "diaper" ? !!diaperType
     : event.type === "solids" ? !!startTime && foodType.trim().length > 0
+    : event.type === "milestone" ? title.trim().length > 0
     : true;
 
   return (
@@ -225,6 +235,44 @@ function EditSheet({
                 {tr(t, lang)}
               </button>
             ))}
+          </div>
+        )}
+        {event.type === "diaper" && (
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-2">
+              🧴 {tr("ointment", lang)}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {([true, false] as const).map((applied) => (
+                <button
+                  key={String(applied)}
+                  type="button"
+                  onClick={() => setOintment((o) => (o === applied ? null : applied))}
+                  className={cn(
+                    "h-12 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95",
+                    ointment === applied
+                      ? "bg-amber-400/20 border-amber-400 text-amber-700 dark:text-amber-400"
+                      : "bg-background border-border text-muted-foreground"
+                  )}
+                >
+                  {applied ? tr("ointmentApplied", lang) : tr("ointmentNotApplied", lang)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Milestone */}
+        {event.type === "milestone" && (
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-2">
+              {tr("milestoneTitle", lang)}
+            </label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="h-12 border-border bg-background"
+            />
           </div>
         )}
 
@@ -466,6 +514,7 @@ export default function HistoryPage() {
     if (type === "vitamin_d") return tr("vitamin_d", lang);
     if (type === "medication") return tr("medication", lang);
     if (type === "solids") return tr("solids", lang);
+    if (type === "milestone") return tr("milestone", lang);
     return type;
   };
 
@@ -485,6 +534,7 @@ export default function HistoryPage() {
       (e) =>
         e.notes?.toLowerCase().includes(q) ||
         e.foodType?.toLowerCase().includes(q) ||
+        e.title?.toLowerCase().includes(q) ||
         typeLabel(e.type).toLowerCase().includes(q) ||
         e.loggedBy?.toLowerCase().includes(q),
     );
@@ -660,7 +710,8 @@ export default function HistoryPage() {
                             event.type === "vitamin_d" && "bg-violet-50 border-violet-100/80 dark:bg-violet-950/25 dark:border-violet-900/30",
                             event.type === "medication" && "bg-rose-50 border-rose-100/80 dark:bg-rose-950/25 dark:border-rose-900/30",
                             event.type === "solids" && "bg-orange-50 border-orange-100/80 dark:bg-orange-950/25 dark:border-orange-900/30",
-                            !["feeding","sleep","diaper","bath","vitamin_d","medication","solids"].includes(event.type) && "bg-card border-border",
+                            event.type === "milestone" && "bg-yellow-50 border-yellow-200/80 dark:bg-yellow-950/25 dark:border-yellow-900/30",
+                            !["feeding","sleep","diaper","bath","vitamin_d","medication","solids","milestone"].includes(event.type) && "bg-card border-border",
                           )}
                           dir={dir}
                         >
@@ -674,6 +725,7 @@ export default function HistoryPage() {
                             event.type === "vitamin_d" && "bg-violet-100 border-violet-200 text-violet-600 dark:bg-violet-900/40 dark:border-violet-800 dark:text-violet-400",
                             event.type === "medication" && "bg-rose-100 border-rose-200 text-rose-600 dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400",
                             event.type === "solids" && "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/40 dark:border-orange-800 dark:text-orange-400",
+                            event.type === "milestone" && "bg-yellow-100 border-yellow-200 text-yellow-600 dark:bg-yellow-900/40 dark:border-yellow-800 dark:text-yellow-400",
                           )}>
                             <EventIcon type={event.type} />
                           </div>
@@ -708,7 +760,8 @@ export default function HistoryPage() {
                                 : event.durationMinutes
                                   ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60)
                                   : "")}
-                              {event.type === "diaper" && diaperLabel(event.diaperType)}
+                              {event.type === "diaper" && [diaperLabel(event.diaperType), event.ointment == null ? null : event.ointment ? `🧴 ${tr("ointmentApplied", lang)}` : tr("ointmentNotApplied", lang)].filter(Boolean).join(" · ")}
+                              {event.type === "milestone" && (event.title ?? "")}
                               {event.type === "solids" && [event.foodType, event.amountTsp != null ? `${event.amountTsp} ${tr("tspUnit", lang)}` : null].filter(Boolean).join(" · ")}
                               {event.notes ? ` · ${event.notes}` : ""}
                             </div>

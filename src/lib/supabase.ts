@@ -76,7 +76,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type EventType = "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d" | "medication" | "solids";
+export type EventType = "feeding" | "sleep" | "diaper" | "bath" | "vitamin_d" | "medication" | "solids" | "milestone";
 
 export type EventRow = {
   id: number;
@@ -86,8 +86,10 @@ export type EventRow = {
   duration_minutes: number | null;
   amount_ml: number | null;
   diaper_type: string | null;
+  ointment: boolean | null;
   food_type: string | null;
   amount_tsp: number | string | null;
+  title: string | null;
   notes: string | null;
   is_active: boolean;
   logged_by: string | null;
@@ -102,8 +104,10 @@ export type Event = {
   durationMinutes: number | null;
   amountMl: number | null;
   diaperType: string | null;
+  ointment: boolean | null;
   foodType: string | null;
   amountTsp: number | null;
+  title: string | null;
   notes: string | null;
   isActive: boolean;
   loggedBy: string | null;
@@ -119,8 +123,10 @@ export function toEvent(row: EventRow): Event {
     durationMinutes: row.duration_minutes,
     amountMl: row.amount_ml,
     diaperType: row.diaper_type,
+    ointment: row.ointment ?? null,
     foodType: row.food_type ?? null,
     amountTsp: row.amount_tsp != null ? Number(row.amount_tsp) : null,
+    title: row.title ?? null,
     notes: row.notes,
     isActive: row.is_active,
     loggedBy: (row as any).logged_by ?? null,

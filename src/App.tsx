@@ -20,6 +20,7 @@ import DiaperPage from "@/pages/diaper";
 import BathPage from "@/pages/bath";
 import MedicationsPage from "@/pages/medications";
 import SolidsPage from "@/pages/solids";
+import MilestonesPage from "@/pages/milestones";
 import HistoryPage from "@/pages/history";
 import SchedulePage from "@/pages/schedule";
 import GuidePage from "@/pages/guide";
@@ -74,6 +75,9 @@ function Router() {
       </Route>
       <Route path="/solids">
         <AuthWrapper><MainLayout><SolidsPage /></MainLayout></AuthWrapper>
+      </Route>
+      <Route path="/milestones">
+        <AuthWrapper><MainLayout><MilestonesPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/schedule">
         <AuthWrapper><MainLayout><SchedulePage /></MainLayout></AuthWrapper>

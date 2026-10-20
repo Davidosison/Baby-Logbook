@@ -25,6 +25,9 @@ type EventItem = {
   diaperType?: string | null;
   foodType?: string | null;
   amountTsp?: number | null;
+  ointment?: boolean | null;
+  title?: string | null;
+  notes?: string | null;
   isActive: boolean;
 };
 
@@ -37,6 +40,7 @@ const TYPE_COLORS_WEEKLY: Record<string, string> = {
   vitamin_d: "bg-purple-400/75",
   medication: "bg-rose-400/75",
   solids: "bg-orange-400/75",
+  milestone: "bg-yellow-400/80",
 };
 
 // ─── Utils ───────────────────────────────────────────────────────────────────
@@ -257,6 +261,12 @@ const EVENT_ACCENT: Record<string, EventAccent> = {
     endDotCls: "",
     cardCls: "bg-orange-400/10 border-orange-400/25",
   },
+  milestone: {
+    dotCls: "bg-yellow-400",
+    barCls: "",
+    endDotCls: "",
+    cardCls: "bg-yellow-400/10 border-yellow-400/30",
+  },
 };
 
 function TimelineEventRow({
@@ -289,6 +299,8 @@ function TimelineEventRow({
               ? tr("medication", lang)
               : event.type === "solids"
               ? tr("solids", lang)
+              : event.type === "milestone"
+              ? tr("milestone", lang)
               : event.diaperType === "pee"
                 ? tr("pee", lang)
                 : event.diaperType === "poop"
@@ -309,6 +321,10 @@ function TimelineEventRow({
     if (event.foodType) subParts.push(event.foodType);
     if (event.amountTsp != null) subParts.push(`${event.amountTsp} ${tr("tspUnit", lang)}`);
   }
+  if (event.type === "diaper" && event.ointment != null) {
+    subParts.push(event.ointment ? `🧴 ${tr("ointmentApplied", lang)}` : tr("ointmentNotApplied", lang));
+  }
+  if (event.type === "milestone" && event.title) subParts.push(event.title);
 
   return (
     <div className="flex">

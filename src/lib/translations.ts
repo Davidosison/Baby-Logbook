@@ -37,6 +37,7 @@ const t = {
   bath: { he: "מקלחת", ru: "Купание" },
   vitamin_d: { he: "ויטמינים 💊", ru: "Витамины 💊" },
   solids: { he: "טעימות", ru: "Прикорм" },
+  milestone: { he: "ציון דרך", ru: "Достижение" },
   sleepStartFrom: { he: "ישן מ-", ru: "Спит с" },
   feedingStartFrom: { he: "האכלה מ-", ru: "Кормление с" },
   guide: { he: "מדריך", ru: "Справка" },
@@ -105,6 +106,20 @@ const t = {
   teaspoons: { he: "כמה כפיות", ru: "Сколько ложек" },
   tspUnit: { he: "כפיות", ru: "ложк." },
   saveSolids: { he: "שמור טעימה", ru: "Сохранить" },
+  solidsNotesPlaceholder: { he: "לדוגמה: אהב מאוד, עשה פרצוף...", ru: "Например: очень понравилось, скривился..." },
+
+  // Diaper ointment
+  ointment: { he: "משחה", ru: "Крем" },
+  ointmentApplied: { he: "נמרחה משחה", ru: "Крем нанесён" },
+  ointmentNotApplied: { he: "בלי משחה", ru: "Без крема" },
+
+  // Milestones page
+  milestoneTitle: { he: "מה אדם עשה?", ru: "Что сделал Адам?" },
+  milestoneTitlePlaceholder: { he: "לדוגמה: התהפך לבד, שן ראשונה...", ru: "Например: перевернулся, первый зуб..." },
+  milestoneDate: { he: "תאריך", ru: "Дата" },
+  saveMilestone: { he: "שמור ציון דרך", ru: "Сохранить" },
+  milestonesSoFar: { he: "ציוני הדרך של אדם", ru: "Достижения Адама" },
+  noMilestones: { he: "עוד אין ציוני דרך — הראשון בדרך! 🌟", ru: "Пока нет достижений — первое уже скоро! 🌟" },
 
   // Feeding timer (dashboard banner)
   feedingActive: { he: "האכלה פעילה", ru: "Идёт кормление" },
