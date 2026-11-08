@@ -144,7 +144,7 @@ export default function SettingsPage() {
         </Section>
 
         {/* Quick buttons */}
-        <Section title={tr("quickButtonsTitle", lang)} sub={tr("quickButtonsSub", lang, QUICK_ACTIONS_MIN, QUICK_ACTIONS_MAX)}>
+        <Section title={tr("quickButtonsTitle", lang)} sub={tr("quickButtonsSub", lang, QUICK_ACTIONS_MIN, QUICK_ACTIONS_MAX, name ?? "")}>
           <div className="grid grid-cols-4 gap-2">
             {QUICK_ACTIONS.map((a) => {
               const on = enabled.includes(a.id);

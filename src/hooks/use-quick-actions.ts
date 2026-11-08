@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePerson } from "@/contexts/person-context";
+import { usePersonQuickActions, useSavePersonQuickActions } from "@/lib/queries";
 
 export type QuickActionId = "pee" | "vitamins" | "gel" | "feeding" | "sleep" | "solids" | "bath";
 
@@ -15,33 +17,52 @@ export const QUICK_ACTIONS: { id: QuickActionId; emoji: string; he: string; ru: 
 export const QUICK_ACTIONS_MIN = 3;
 export const QUICK_ACTIONS_MAX = 5;
 
-const KEY = "quick-actions";
 const DEFAULT: QuickActionId[] = ["pee", "vitamins", "gel", "feeding", "sleep"];
+const personKey = (name: string) => `quick-actions:${name}`;
 
-function load(): QuickActionId[] {
+function sanitize(ids: unknown): QuickActionId[] | null {
+  if (!Array.isArray(ids)) return null;
+  const valid = ids.filter((id): id is QuickActionId => QUICK_ACTIONS.some((a) => a.id === id));
+  return valid.length >= QUICK_ACTIONS_MIN ? valid : null;
+}
+
+function readCache(name: string | null): QuickActionId[] {
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY) ?? "null") as QuickActionId[] | null;
-    const valid = saved?.filter((id) => QUICK_ACTIONS.some((a) => a.id === id));
-    return valid && valid.length >= QUICK_ACTIONS_MIN ? valid : DEFAULT;
+    return (name ? sanitize(JSON.parse(localStorage.getItem(personKey(name)) ?? "null")) : null) ?? DEFAULT;
   } catch {
     return DEFAULT;
   }
 }
 
-/** Which buttons show in the home screen's quick-action row, saved per device. */
+/** Home quick buttons of the selected person: saved per name in the DB, cached locally for instant render. */
 export function useQuickActions() {
-  const [enabled, setEnabled] = useState<QuickActionId[]>(load);
+  const { name } = usePerson();
+  const [enabled, setEnabled] = useState<QuickActionId[]>(() => readCache(name));
+  const { data: saved } = usePersonQuickActions(name);
+  const save = useSavePersonQuickActions();
+
+  useEffect(() => {
+    setEnabled(readCache(name));
+  }, [name]);
+
+  useEffect(() => {
+    const fromDb = sanitize(saved);
+    if (!fromDb || !name) return;
+    setEnabled(fromDb);
+    localStorage.setItem(personKey(name), JSON.stringify(fromDb));
+  }, [saved, name]);
 
   const toggle = (id: QuickActionId) => {
-    setEnabled((cur) => {
-      const on = cur.includes(id);
-      if (on && cur.length <= QUICK_ACTIONS_MIN) return cur;
-      if (!on && cur.length >= QUICK_ACTIONS_MAX) return cur;
-      // Keep the catalog order so the row layout stays predictable.
-      const next = QUICK_ACTIONS.map((a) => a.id).filter((a) => (a === id ? !on : cur.includes(a)));
-      localStorage.setItem(KEY, JSON.stringify(next));
-      return next;
-    });
+    const on = enabled.includes(id);
+    if (on && enabled.length <= QUICK_ACTIONS_MIN) return;
+    if (!on && enabled.length >= QUICK_ACTIONS_MAX) return;
+    // Keep the catalog order so the row layout stays predictable.
+    const next = QUICK_ACTIONS.map((a) => a.id).filter((a) => (a === id ? !on : enabled.includes(a)));
+    setEnabled(next);
+    if (name) {
+      localStorage.setItem(personKey(name), JSON.stringify(next));
+      save.mutate({ name, quickActions: next });
+    }
   };
 
   return { enabled, toggle };

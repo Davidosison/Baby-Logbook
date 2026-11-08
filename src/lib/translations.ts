@@ -155,8 +155,8 @@ const t = {
   save: { he: "שמור", ru: "Сохранить" },
   quickButtonsTitle: { he: "כפתורים מהירים בדף הבית", ru: "Быстрые кнопки на главной" },
   quickButtonsSub: {
-    he: (min: number, max: number) => `בחרו ${min}–${max} כפתורים. ההגדרה נשמרת בטלפון הזה בלבד.`,
-    ru: (min: number, max: number) => `Выберите ${min}–${max} кнопок. Настройка только для этого телефона.`,
+    he: (min: number, max: number, name: string) => `בחרו ${min}–${max} כפתורים. נשמר עבור ${name} — בכל מכשיר.`,
+    ru: (min: number, max: number, name: string) => `Выберите ${min}–${max} кнопок. Сохраняется для: ${name} — на любом устройстве.`,
   },
   displayTitle: { he: "תצוגה", ru: "Отображение" },
   infoTitle: { he: "מידע ועזרה", ru: "Информация и помощь" },

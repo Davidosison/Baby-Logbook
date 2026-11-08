@@ -701,6 +701,38 @@ export function useDeleteEvent(options?: {
 
 // ─── Family members (unique logged_by names across all devices) ───────────────
 
+/** A person's saved home quick buttons, or null if they never chose. */
+export function usePersonQuickActions(name: string | null) {
+  return useQuery({
+    queryKey: ["person-prefs", name],
+    enabled: !!name,
+    queryFn: async () => {
+      const { data, error } = await getSupabase()
+        .from("person_prefs")
+        .select("quick_actions")
+        .eq("name", name!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.quick_actions as string[] | undefined) ?? null;
+    },
+  });
+}
+
+export function useSavePersonQuickActions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ name, quickActions }: { name: string; quickActions: string[] }) => {
+      const { error } = await getSupabase()
+        .from("person_prefs")
+        .upsert({ name, quick_actions: quickActions, updated_at: new Date().toISOString() }, { onConflict: "name" });
+      if (error) throw error;
+    },
+    onSuccess: (_d, { name, quickActions }) => {
+      queryClient.setQueryData(["person-prefs", name], quickActions);
+    },
+  });
+}
+
 export function useGetFamilyMembers(options?: { query?: Partial<UseQueryOptions<string[]>> }) {
   const { queryKey: _userKey, ...restOpts } = options?.query ?? {};
   return useQuery({
