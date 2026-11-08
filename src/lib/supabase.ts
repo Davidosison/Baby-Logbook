@@ -89,6 +89,10 @@ export type EventRow = {
   ointment: boolean | null;
   food_type: string | null;
   amount_tsp: number | string | null;
+  foods: string[] | null;
+  reaction: string | null;
+  symptoms: string[] | null;
+  is_favorite: boolean | null;
   title: string | null;
   notes: string | null;
   is_active: boolean;
@@ -107,6 +111,10 @@ export type Event = {
   ointment: boolean | null;
   foodType: string | null;
   amountTsp: number | null;
+  foods: string[] | null;
+  reaction: string | null;
+  symptoms: string[] | null;
+  isFavorite: boolean;
   title: string | null;
   notes: string | null;
   isActive: boolean;
@@ -126,6 +134,10 @@ export function toEvent(row: EventRow): Event {
     ointment: row.ointment ?? null,
     foodType: row.food_type ?? null,
     amountTsp: row.amount_tsp != null ? Number(row.amount_tsp) : null,
+    foods: row.foods ?? null,
+    reaction: row.reaction ?? null,
+    symptoms: row.symptoms ?? null,
+    isFavorite: row.is_favorite ?? false,
     title: row.title ?? null,
     notes: row.notes,
     isActive: row.is_active,

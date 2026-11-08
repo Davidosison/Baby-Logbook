@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, CalendarDays, UserCircle2, Minus, Bath, Utensils, Droplet, Pill, Syringe, Carrot, Star } from "lucide-react";
+import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, Salad, UserCircle2, Minus, Bath, Utensils, Droplet, Pill, Syringe, Carrot, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
@@ -299,7 +299,7 @@ export function BottomNav() {
         </div>
 
         {/* Schedule */}
-        {navItem("/schedule", CalendarDays, tr("schedule", lang), "nav-schedule")}
+        {navItem("/food", Salad, tr("foodTab", lang), "nav-food")}
 
         {/* Settings */}
         <Sheet>

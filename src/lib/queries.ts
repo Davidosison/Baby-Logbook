@@ -470,6 +470,7 @@ function invalidateEventCaches(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["recent-activity"] });
   queryClient.invalidateQueries({ queryKey: ["daily-summary"] });
   queryClient.invalidateQueries({ queryKey: ["milestones"] });
+  queryClient.invalidateQueries({ queryKey: ["solids"] });
 }
 
 type FeedingInput = { startedAt: string; endedAt?: string | null; durationMinutes?: number | null; amountMl?: number | null; notes?: string | null; loggedBy?: string | null };
@@ -664,6 +665,10 @@ export function useUpdateEvent(options?: {
       if ("amountTsp" in data) update.amount_tsp = data.amountTsp;
       if ("ointment" in data) update.ointment = data.ointment;
       if ("title" in data) update.title = data.title;
+      if ("foods" in data) update.foods = data.foods;
+      if ("reaction" in data) update.reaction = data.reaction;
+      if ("symptoms" in data) update.symptoms = data.symptoms;
+      if ("isFavorite" in data) update.is_favorite = data.isFavorite;
       if ("notes" in data) update.notes = data.notes;
       if ("isActive" in data) update.is_active = data.isActive;
       const { data: row, error } = await supabase
@@ -769,7 +774,32 @@ export function useListMilestones() {
   });
 }
 
-type SolidsInput ={ foodType: string; amountTsp: number | null; notes?: string | null; startedAt?: string; loggedBy?: string | null };
+type SolidsInput = {
+  foods: string[];
+  foodType: string;
+  amountTsp: number | null;
+  reaction?: string | null;
+  symptoms?: string[] | null;
+  isFavorite?: boolean;
+  notes?: string | null;
+  startedAt?: string;
+  loggedBy?: string | null;
+};
+
+export function useListSolids() {
+  return useQuery({
+    queryKey: ["solids"],
+    queryFn: async () => {
+      const { data, error } = await getSupabase()
+        .from("events")
+        .select("*")
+        .eq("type", "solids")
+        .order("started_at", { ascending: false });
+      if (error) throw error;
+      return (data as EventRow[]).map(toEvent);
+    },
+  });
+}
 
 export function useLogSolids(options?: {
   mutation?: UseMutationOptions<Event, Error, { data: SolidsInput }>;
@@ -781,8 +811,12 @@ export function useLogSolids(options?: {
       const row = await safeInsert("events", {
         type: "solids",
         started_at: data.startedAt ?? new Date().toISOString(),
+        foods: data.foods,
         food_type: data.foodType,
         amount_tsp: data.amountTsp,
+        reaction: data.reaction ?? null,
+        symptoms: data.symptoms?.length ? data.symptoms : null,
+        is_favorite: data.isFavorite ?? false,
         notes: data.notes ?? null,
         is_active: false,
         logged_by: data.loggedBy ?? null,

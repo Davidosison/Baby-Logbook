@@ -3,6 +3,7 @@ import { useListEventsRange, getListEventsRangeQueryKey } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { tr } from "@/lib/translations";
+import { solidsDetail } from "@/lib/foods";
 import { format, subDays, startOfDay, isToday } from "date-fns";
 import { he, ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,9 @@ type EventItem = {
   diaperType?: string | null;
   foodType?: string | null;
   amountTsp?: number | null;
+  foods?: string[] | null;
+  reaction?: string | null;
+  symptoms?: string[] | null;
   ointment?: boolean | null;
   title?: string | null;
   notes?: string | null;
@@ -317,10 +321,7 @@ function TimelineEventRow({
   if (event.type === "sleep" && !event.isActive && durMin) {
     subParts.push(tr("sleepDuration", lang, Math.floor(durMin / 60), durMin % 60));
   }
-  if (event.type === "solids") {
-    if (event.foodType) subParts.push(event.foodType);
-    if (event.amountTsp != null) subParts.push(`${event.amountTsp} ${tr("tspUnit", lang)}`);
-  }
+  if (event.type === "solids") subParts.push(solidsDetail(event, lang));
   if (event.type === "diaper" && event.ointment != null) {
     subParts.push(event.ointment ? `🧴 ${tr("ointmentApplied", lang)}` : tr("ointmentNotApplied", lang));
   }

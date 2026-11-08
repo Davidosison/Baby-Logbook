@@ -6,7 +6,9 @@ import {
   getGetRecentActivityQueryKey, getGetDailySummaryQueryKey,
 } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
+import { FoodPicker } from "@/components/food-picker";
 import { useLanguage } from "@/contexts/language-context";
+import { REACTIONS, SYMPTOMS, foodsOf, foodName, solidsDetail } from "@/lib/foods";
 import { tr } from "@/lib/translations";
 import { format, isToday, isYesterday, subDays, startOfDay } from "date-fns";
 import { he, ru } from "date-fns/locale";
@@ -34,6 +36,9 @@ type EventItem = {
   ointment?: boolean | null;
   foodType?: string | null;
   amountTsp?: number | null;
+  foods?: string[] | null;
+  reaction?: string | null;
+  symptoms?: string[] | null;
   title?: string | null;
   notes?: string | null;
   isActive: boolean;
@@ -73,7 +78,9 @@ function EditSheet({
     (event.diaperType as "pee" | "poop" | "both") ?? "pee"
   );
   const [notes, setNotes] = useState(event.notes ?? "");
-  const [foodType, setFoodType] = useState(event.foodType ?? "");
+  const [foods, setFoods] = useState<string[]>(() => foodsOf(event));
+  const [reaction, setReaction] = useState<string | null>(event.reaction ?? null);
+  const [symptoms, setSymptoms] = useState<string[]>(event.symptoms ?? []);
   const [amountTsp, setAmountTsp] = useState(event.amountTsp?.toString() ?? "");
   const [ointment, setOintment] = useState<boolean | null>(event.ointment ?? null);
   const [title, setTitle] = useState(event.title ?? "");
@@ -119,9 +126,12 @@ function EditSheet({
     }
     if (event.type === "solids") {
       data.startedAt = applyTime(startTime, event.startedAt);
-      data.foodType = foodType.trim();
+      data.foods = foods;
+      data.foodType = foods.map((k) => foodName(k, lang)).join(", ");
       const tsp = parseFloat(amountTsp);
       data.amountTsp = Number.isFinite(tsp) && tsp > 0 ? tsp : null;
+      data.reaction = reaction;
+      data.symptoms = symptoms.length ? symptoms : null;
     }
 
     onSave(event.id, data);
@@ -131,7 +141,7 @@ function EditSheet({
     event.type === "feeding" ? true
     : event.type === "sleep" ? !!startTime
     : event.type === "diaper" ? !!diaperType
-    : event.type === "solids" ? !!startTime && foodType.trim().length > 0
+    : event.type === "solids" ? !!startTime && foods.length > 0
     : event.type === "milestone" ? title.trim().length > 0
     : true;
 
@@ -292,14 +302,9 @@ function EditSheet({
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-2">
-                {tr("foodType", lang)}
+                {tr("whatDidHeEat", lang)}
               </label>
-              <Input
-                value={foodType}
-                onChange={(e) => setFoodType(e.target.value)}
-                placeholder={tr("foodTypePlaceholder", lang)}
-                className="h-12 border-border bg-background"
-              />
+              <FoodPicker value={foods} onChange={setFoods} lang={lang} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-2">
@@ -314,6 +319,49 @@ function EditSheet({
                 onChange={(e) => setAmountTsp(e.target.value)}
                 className="h-12 border-border bg-background"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                {tr("howDidItGo", lang)}
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {REACTIONS.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setReaction((cur) => (cur === r.id ? null : r.id))}
+                    className={cn(
+                      "h-12 rounded-2xl border-2 text-xs font-semibold transition-all active:scale-95",
+                      reaction === r.id ? "bg-orange-500/15 border-orange-400" : "bg-background border-border",
+                    )}
+                  >
+                    {r.emoji} {r[lang]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                {tr("unusualReaction", lang)}
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {SYMPTOMS.map((s) => {
+                  const on = symptoms.includes(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSymptoms((cur) => (on ? cur.filter((x) => x !== s.id) : [...cur, s.id]))}
+                      className={cn(
+                        "h-9 px-3 rounded-full border text-xs font-semibold transition-colors",
+                        on ? "bg-red-500/15 border-red-400 text-red-700 dark:text-red-300" : "bg-background border-border text-muted-foreground",
+                      )}
+                    >
+                      {on ? "⚠️ " : ""}{s[lang]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -534,6 +582,7 @@ export default function HistoryPage() {
       (e) =>
         e.notes?.toLowerCase().includes(q) ||
         e.foodType?.toLowerCase().includes(q) ||
+        (e.type === "solids" && foodsOf(e).some((k) => foodName(k, lang).toLowerCase().includes(q))) ||
         e.title?.toLowerCase().includes(q) ||
         typeLabel(e.type).toLowerCase().includes(q) ||
         e.loggedBy?.toLowerCase().includes(q),
@@ -762,7 +811,7 @@ export default function HistoryPage() {
                                   : "")}
                               {event.type === "diaper" && [diaperLabel(event.diaperType), event.ointment == null ? null : event.ointment ? `🧴 ${tr("ointmentApplied", lang)}` : tr("ointmentNotApplied", lang)].filter(Boolean).join(" · ")}
                               {event.type === "milestone" && (event.title ?? "")}
-                              {event.type === "solids" && [event.foodType, event.amountTsp != null ? `${event.amountTsp} ${tr("tspUnit", lang)}` : null].filter(Boolean).join(" · ")}
+                              {event.type === "solids" && solidsDetail(event, lang)}
                               {event.notes ? ` · ${event.notes}` : ""}
                             </div>
                           </div>

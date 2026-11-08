@@ -6,13 +6,14 @@ import {
   useStopSleep,
   useGetActiveFeeding, getGetActiveFeedingQueryKey,
   useLogDiaper, useLogMedication, useLogVitaminD, useStartSleep, useStartFeeding, useStopFeeding,
+  useListSolids,
 } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
 import { useToast } from "@/hooks/use-toast";
 import { tr } from "@/lib/translations";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { he, ru } from "date-fns/locale";
@@ -24,6 +25,9 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { getSupabase, toEvent, type EventRow } from "@/lib/supabase";
+import {
+  solidsDetail, computeFoodStats, computeAllergenProgress, ALLERGEN_GROUPS, EXPOSURES_TARGET,
+} from "@/lib/foods";
 import type { Language } from "@/contexts/language-context";
 
 // ── Outside component: insight generator ─────────────────────────────────────
@@ -205,6 +209,13 @@ export default function DashboardPage() {
     { date: today },
     { query: { queryKey: getGetDailySummaryQueryKey({ date: today }) } },
   );
+
+  const { data: solids } = useListSolids();
+  const foodStats = useMemo(() => computeFoodStats(solids ?? []), [solids]);
+  const allergensDone = useMemo(() => {
+    const p = computeAllergenProgress(solids ?? []);
+    return ALLERGEN_GROUPS.filter((g) => p[g.id].days >= EXPOSURES_TARGET).length;
+  }, [solids]);
 
   const handleRefresh = () => { refetchEvents(); refetchRecent(); refetchSummary(); };
 
@@ -537,6 +548,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Food summary — opens the food tab */}
+        <div className="card-surface border border-orange-200/70 dark:border-orange-900/40 rounded-3xl px-3 py-2.5 flex items-center gap-3 shadow-sm">
+          <Link href="/food" className="flex-1 min-w-0 flex items-center gap-3">
+            <span className="text-2xl">🥄</span>
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-orange-700 dark:text-orange-300">{tr("foodsTried", lang, foodStats.size)}</div>
+              <div className="text-[11px] text-muted-foreground">{tr("allergensDone", lang, allergensDone, ALLERGEN_GROUPS.length)} ✓</div>
+            </div>
+          </Link>
+          <Link href="/solids">
+            <button className="shrink-0 h-9 px-3 rounded-xl bg-orange-500 text-white text-xs font-bold flex items-center gap-1 active:scale-95 transition-transform">
+              + {tr("newTasting", lang)}
+            </button>
+          </Link>
+        </div>
+
         {/* Share button */}
         <div className="flex justify-end">
           <button
@@ -581,7 +608,7 @@ export default function DashboardPage() {
                 if (event.type === "sleep") return event.isActive ? tr("sleepingNow", lang) : event.durationMinutes ? tr("sleepDuration", lang, Math.floor(event.durationMinutes / 60), event.durationMinutes % 60) : "";
                 if (event.type === "diaper") return [diaperLabel(event.diaperType), event.ointment == null ? null : event.ointment ? `🧴 ${tr("ointmentApplied", lang)}` : tr("ointmentNotApplied", lang)].filter(Boolean).join(" · ");
                 if (event.type === "milestone") return event.title ?? "";
-                if (event.type === "solids") return [event.foodType, event.amountTsp != null ? `${event.amountTsp} ${tr("tspUnit", lang)}` : null].filter(Boolean).join(" · ");
+                if (event.type === "solids") return solidsDetail(event, lang);
                 return "";
               })();
               const colorDot = event.type === "feeding" ? "bg-sky-400" : event.type === "sleep" ? "bg-indigo-400" : event.type === "diaper" ? "bg-amber-400" : event.type === "bath" ? "bg-teal-400" : event.type === "vitamin_d" ? "bg-purple-400" : event.type === "solids" ? "bg-orange-400" : event.type === "milestone" ? "bg-yellow-400" : "bg-rose-400";

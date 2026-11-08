@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +22,7 @@ import BathPage from "@/pages/bath";
 import MedicationsPage from "@/pages/medications";
 import SolidsPage from "@/pages/solids";
 import MilestonesPage from "@/pages/milestones";
+import FoodPage from "@/pages/food";
 import HistoryPage from "@/pages/history";
 import SchedulePage from "@/pages/schedule";
 import GuidePage from "@/pages/guide";
@@ -36,6 +38,11 @@ const queryClient = new QueryClient({
 });
 
 function MainLayout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
   return (
     <>
       <NameSetup />
@@ -75,6 +82,9 @@ function Router() {
       </Route>
       <Route path="/solids">
         <AuthWrapper><MainLayout><SolidsPage /></MainLayout></AuthWrapper>
+      </Route>
+      <Route path="/food">
+        <AuthWrapper><MainLayout><FoodPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/milestones">
         <AuthWrapper><MainLayout><MilestonesPage /></MainLayout></AuthWrapper>
