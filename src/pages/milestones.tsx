@@ -5,36 +5,13 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useLanguage, type Language } from "@/contexts/language-context";
+import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
 import { tr } from "@/lib/translations";
-import { format, parseISO, isToday, addMonths, differenceInMonths, differenceInCalendarDays } from "date-fns";
+import { ageAt } from "@/lib/age";
+import { format, parseISO, isToday } from "date-fns";
 import { he, ru } from "date-fns/locale";
 import { Star, CalendarDays } from "lucide-react";
-
-function ruPlural(n: number, one: string, few: string, many: string) {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-  return many;
-}
-
-function ageAt(birth: Date, when: Date, lang: Language): string {
-  const months = Math.max(0, differenceInMonths(when, birth));
-  const days = Math.max(0, differenceInCalendarDays(when, addMonths(birth, months)));
-  if (lang === "he") {
-    const m = months === 1 ? "חודש" : months === 2 ? "חודשיים" : `${months} חודשים`;
-    const d = days === 1 ? "יום" : days === 2 ? "יומיים" : `${days} ימים`;
-    if (months === 0) return `בגיל ${d}`;
-    if (days === 0) return `בגיל ${m}`;
-    return `בגיל ${m} ו-${d}`;
-  }
-  const m = `${months} ${ruPlural(months, "месяц", "месяца", "месяцев")}`;
-  const d = `${days} ${ruPlural(days, "день", "дня", "дней")}`;
-  if (months === 0) return `в ${d}`;
-  if (days === 0) return `в ${m}`;
-  return `в ${m} и ${d}`;
-}
 
 export default function MilestonesPage() {
   const [, setLocation] = useLocation();

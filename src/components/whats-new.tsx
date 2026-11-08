@@ -3,33 +3,52 @@ import { useLanguage } from "@/contexts/language-context";
 import { X, Sparkles } from "lucide-react";
 
 // Bump this whenever there's a new announcement to show everyone once.
-const WHATS_NEW_VERSION = "2026-11-08-food";
+const WHATS_NEW_VERSION = "2026-11-08-settings";
 const STORAGE_KEY = "whats-new-seen";
 
 const ITEMS_HE = [
-  "🥗 טאב חדש \"אוכל\" במקום \"לוח\" — כל המזונות של אדם: מה נוסה, כמה פעמים, ומה עוד לא",
-  "⚠️ מעקב אלרגנים — 3 ימי חשיפה לכל קבוצה (חלב, ביצה, בוטנים, טחינה ועוד), מתמלא אוטומטית מהטעימות",
-  "🥄 רישום טעימה: בוחרים מזונות מהרשימה (כמה ביחד = ארוחה), איך הלך 😍😐😖 ותגובה חריגה",
-  "🔁 \"שוב\" חוזר על ארוחה קודמת בלחיצה, ואפשר לשמור ארוחות מועדפות ❤️",
-  "✨ כל הטעימות שכבר רשמתם זוהו אוטומטית ונכנסו לרשימה",
+  "👥 מי משתמש במכשיר? בהגדרות מחליפים שם בלחיצה אחת (או לוחצים על \"שלום ...\" בדף הבית)",
+  "🏠 בוחרים אילו כפתורים מהירים יופיעו בדף הבית — כולל \"טעימה\" ו\"מקלחת\"",
+  "🕐 נתתם ויטמין/ברזל לפני כמה דקות? בהיסטוריה ✏️ אפשר לתקן את השעה (גם לטיטול, תרופות ומקלחת)",
+  "⚙️ ההגדרות סודרו מחדש: הגיל המדויק של אדם, שפה ותצוגה, מדריך ו\"מה חדש\"",
+  "🥗 טאב \"אוכל\" במקום \"לוח\": מה אדם כבר טעם, מעקב אלרגנים (3 ימי חשיפה) והיסטוריית ארוחות",
+  "🥄 רישום טעימה: בוחרים מהרשימה ומסמנים איך הלך, ו\"שוב\" חוזר על ארוחה בלחיצה אחת",
 ];
 
 const ITEMS_RU = [
-  "🥗 Новая вкладка «Питание» вместо «График» — все продукты Адама: что пробовал, сколько раз и что ещё нет",
-  "⚠️ Аллергены — 3 дня экспозиции для каждой группы (молоко, яйцо, арахис, тхина и др.), заполняется автоматически",
-  "🥄 Запись прикорма: выбираем продукты из списка (несколько = приём пищи), реакция 😍😐😖 и необычные симптомы",
-  "🔁 «Повторить» — тот же приём пищи одним нажатием, и можно сохранять избранное ❤️",
-  "✨ Все прежние записи прикорма распознаны автоматически",
+  "👥 Кто пользуется устройством? В настройках имя меняется одним нажатием (или нажмите на «Привет...» на главной)",
+  "🏠 Выбирайте, какие быстрые кнопки показывать на главной — в том числе «Прикорм» и «Купание»",
+  "🕐 Дали витамин/железо пару минут назад? В истории ✏️ можно исправить время (и для подгузника, лекарств, купания)",
+  "⚙️ Настройки обновлены: точный возраст Адама, язык и вид, справка и «Что нового»",
+  "🥗 Вкладка «Питание» вместо «График»: что Адам уже пробовал, аллергены (3 дня экспозиции) и история",
+  "🥄 Запись прикорма: выбор из списка и реакция, а «Повторить» — тот же приём пищи в одно нажатие",
 ];
+
+const OPEN_EVENT = "open-whats-new";
+
+/** Re-show the latest announcement on demand (e.g. from settings). */
+export function openWhatsNew() {
+  window.dispatchEvent(new Event(OPEN_EVENT));
+}
+
+/** Release date of the current announcement, e.g. "2026-11-08". */
+export const LAST_UPDATE_DATE = WHATS_NEW_VERSION.slice(0, 10);
 
 export function WhatsNew() {
   const { lang, dir } = useLanguage();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem(STORAGE_KEY) === WHATS_NEW_VERSION) return;
-    const t = setTimeout(() => setVisible(true), 800);
-    return () => clearTimeout(t);
+    const open = () => setVisible(true);
+    window.addEventListener(OPEN_EVENT, open);
+    if (localStorage.getItem(STORAGE_KEY) === WHATS_NEW_VERSION) {
+      return () => window.removeEventListener(OPEN_EVENT, open);
+    }
+    const t = setTimeout(open, 800);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener(OPEN_EVENT, open);
+    };
   }, []);
 
   const dismiss = () => {

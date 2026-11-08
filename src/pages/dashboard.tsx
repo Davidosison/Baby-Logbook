@@ -28,6 +28,7 @@ import { getSupabase, toEvent, type EventRow } from "@/lib/supabase";
 import {
   solidsDetail, computeFoodStats, computeAllergenProgress, ALLERGEN_GROUPS, EXPOSURES_TARGET,
 } from "@/lib/foods";
+import { useQuickActions } from "@/hooks/use-quick-actions";
 import type { Language } from "@/contexts/language-context";
 
 // ── Outside component: insight generator ─────────────────────────────────────
@@ -210,6 +211,7 @@ export default function DashboardPage() {
     { query: { queryKey: getGetDailySummaryQueryKey({ date: today }) } },
   );
 
+  const { enabled: quickActions } = useQuickActions();
   const { data: solids } = useListSolids();
   const foodStats = useMemo(() => computeFoodStats(solids ?? []), [solids]);
   const allergensDone = useMemo(() => {
@@ -371,17 +373,17 @@ export default function DashboardPage() {
         className="flex-1 overflow-y-auto px-3 pt-2 space-y-2"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)" }}
       >
-        {/* Hello */}
+        {/* Hello — tapping it is the quickest way to switch who's using the device */}
         {name && (
-          <p className="text-sm font-semibold text-primary" dir={dir}>
+          <Link href="/settings" className="block text-sm font-semibold text-primary" dir={dir}>
             {tr("helloName", lang, name)}
-          </p>
+          </Link>
         )}
 
-        {/* ── Quick Actions — 5 buttons in a single row, no scroll ─────────── */}
-        <div className="grid grid-cols-5 gap-1.5" dir="ltr">
+        {/* ── Quick Actions — chosen per device in settings ─────────────────── */}
+        <div className="grid gap-1.5" dir="ltr" style={{ gridTemplateColumns: `repeat(${quickActions.length}, minmax(0, 1fr))` }}>
           {/* Pee */}
-          <button
+          {quickActions.includes("pee") && <button
             onClick={() => setPeeOpen(true)}
             disabled={logDiaper.isPending}
             onAnimationEnd={() => splashing === "pee" && setSplashing(null)}
@@ -395,10 +397,10 @@ export default function DashboardPage() {
           >
             <span className="text-lg leading-none">{quickDone === "pee" ? "✓" : "💧"}</span>
             <span>{lang === "he" ? "פיפי" : "Пи-пи"}</span>
-          </button>
+          </button>}
 
           {/* Vitamins — opens Vitamin D / Iron picker */}
-          <button
+          {quickActions.includes("vitamins") && <button
             onClick={() => setVitaminsOpen(true)}
             onAnimationEnd={() => splashing === "vitamin" && setSplashing(null)}
             className={cn(
@@ -411,10 +413,10 @@ export default function DashboardPage() {
           >
             <span className="text-lg leading-none">{quickDone === "vitamin" ? "✓" : "💊"}</span>
             <span>{lang === "he" ? "ויטמינים" : "Витамины"}</span>
-          </button>
+          </button>}
 
           {/* Gum gel — opens brand+gums picker */}
-          <button
+          {quickActions.includes("gel") && <button
             onClick={() => { setGelBrand(null); setGelGums(null); setGelOpen(true); }}
             onAnimationEnd={() => splashing === "gel" && setSplashing(null)}
             className={cn(
@@ -427,10 +429,10 @@ export default function DashboardPage() {
           >
             <span className="text-lg leading-none">{quickDone === "gel" ? "✓" : "🌿"}</span>
             <span>{lang === "he" ? "ג'ל" : "Гель"}</span>
-          </button>
+          </button>}
 
           {/* Feeding — toggles timer; stop navigates to /feeding */}
-          <button
+          {quickActions.includes("feeding") && <button
             onClick={() => {
               if (activeFeeding) stopFeedingQuick.mutate();
               else startFeedingQuick.mutate({ loggedBy: name ?? null });
@@ -445,10 +447,10 @@ export default function DashboardPage() {
           >
             <span className="text-lg leading-none">{activeFeeding ? "⏱️" : "🍼"}</span>
             <span>{activeFeeding ? (lang === "he" ? "מאכיל" : "Кормит") : (lang === "he" ? "האכלה" : "Корм.")}</span>
-          </button>
+          </button>}
 
           {/* Sleep — toggles timer */}
-          <button
+          {quickActions.includes("sleep") && <button
             onClick={() => {
               if (activeSleep) stopSleepMutation.mutate();
               else startSleepQuick.mutate({ loggedBy: name ?? null });
@@ -467,7 +469,29 @@ export default function DashboardPage() {
           >
             <span className="text-lg leading-none">{quickDone === "sleep" ? "✓" : activeSleep ? "🌙" : "😴"}</span>
             <span>{activeSleep ? (lang === "he" ? "ישן" : "Спит") : (lang === "he" ? "שינה" : "Сон")}</span>
-          </button>
+          </button>}
+
+          {/* Solids — opens the tasting page */}
+          {quickActions.includes("solids") && (
+            <Link
+              href="/solids"
+              className="h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95 bg-orange-400/10 border-orange-400/40 text-orange-700 dark:text-orange-400"
+            >
+              <span className="text-lg leading-none">🥄</span>
+              <span>{lang === "he" ? "טעימה" : "Прикорм"}</span>
+            </Link>
+          )}
+
+          {/* Bath — opens the bath page */}
+          {quickActions.includes("bath") && (
+            <Link
+              href="/bath"
+              className="h-12 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 font-bold text-[9px] transition-colors active:scale-95 bg-teal-400/10 border-teal-400/40 text-teal-700 dark:text-teal-400"
+            >
+              <span className="text-lg leading-none">🛁</span>
+              <span>{lang === "he" ? "מקלחת" : "Купание"}</span>
+            </Link>
+          )}
         </div>
 
         {/* Live sleep banner */}

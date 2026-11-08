@@ -101,8 +101,15 @@ function EditSheet({
     return diff > 0 ? diff : null;
   }
 
+  // Instant events (logged "now" from a quick button) — only their single time is editable.
+  const hasPointTime = ["vitamin_d", "medication", "diaper", "bath"].includes(event.type);
+
   const handleSave = () => {
     const data: Record<string, unknown> = { notes: notes || null };
+
+    if (hasPointTime && startTime) {
+      data.startedAt = applyTime(startTime, event.startedAt);
+    }
 
     if (event.type === "feeding") {
       data.amountMl = amountMl ? parseInt(amountMl) : null;
@@ -143,6 +150,7 @@ function EditSheet({
     : event.type === "diaper" ? !!diaperType
     : event.type === "solids" ? !!startTime && foods.length > 0
     : event.type === "milestone" ? title.trim().length > 0
+    : hasPointTime ? !!startTime
     : true;
 
   return (
@@ -156,6 +164,20 @@ function EditSheet({
       </SheetHeader>
 
       <div className="space-y-4">
+        {hasPointTime && (
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-2">
+              {tr("time", lang)}
+            </label>
+            <Input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="w-full h-12 border-border bg-background"
+            />
+          </div>
+        )}
+
         {/* Feeding */}
         {event.type === "feeding" && (
           <>

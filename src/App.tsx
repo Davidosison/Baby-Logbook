@@ -9,7 +9,6 @@ import { PersonProvider } from "@/contexts/person-context";
 import { AuthWrapper } from "@/components/auth-wrapper";
 import { BottomNav } from "@/components/bottom-nav";
 import { restoreSession } from "@/lib/supabase";
-import { PushPrompt } from "@/components/push-prompt";
 import { NameSetup } from "@/components/name-setup";
 import { InstallGuide } from "@/components/install-guide";
 import { WhatsNew } from "@/components/whats-new";
@@ -23,6 +22,7 @@ import MedicationsPage from "@/pages/medications";
 import SolidsPage from "@/pages/solids";
 import MilestonesPage from "@/pages/milestones";
 import FoodPage from "@/pages/food";
+import SettingsPage from "@/pages/settings";
 import HistoryPage from "@/pages/history";
 import SchedulePage from "@/pages/schedule";
 import GuidePage from "@/pages/guide";
@@ -49,7 +49,6 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       <InstallGuide />
       <WhatsNew />
       {children}
-      <PushPrompt />
       <BottomNav />
     </>
   );
@@ -82,6 +81,9 @@ function Router() {
       </Route>
       <Route path="/solids">
         <AuthWrapper><MainLayout><SolidsPage /></MainLayout></AuthWrapper>
+      </Route>
+      <Route path="/settings">
+        <AuthWrapper><MainLayout><SettingsPage /></MainLayout></AuthWrapper>
       </Route>
       <Route path="/food">
         <AuthWrapper><MainLayout><FoodPage /></MainLayout></AuthWrapper>

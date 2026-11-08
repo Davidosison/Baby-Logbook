@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Clock, Plus, Moon, Sun, SunMoon, Settings, Salad, UserCircle2, Minus, Bath, Utensils, Droplet, Pill, Syringe, Carrot, Star } from "lucide-react";
+import { Home, Clock, Plus, Moon, Settings, Salad, Bath, Utensils, Droplet, Pill, Syringe, Carrot, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "./theme-provider";
 import { useLanguage } from "@/contexts/language-context";
 import { usePerson } from "@/contexts/person-context";
-import { useGoals } from "@/hooks/use-goals";
 import { useLogVitaminD } from "@/lib/queries";
 import { tr } from "@/lib/translations";
 import {
@@ -15,10 +13,8 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export function BottomNav() {
   const [location, setLocation] = useLocation();
-  const { theme, setTheme } = useTheme();
-  const { lang, setLang, dir } = useLanguage();
-  const { name, setName } = usePerson();
-  const { goals, setGoal } = useGoals();
+  const { lang, dir } = useLanguage();
+  const { name } = usePerson();
   const [addOpen, setAddOpen] = useState(false);
   const [vitaminsOpen, setVitaminsOpen] = useState(false);
   const [medsOpen, setMedsOpen] = useState(false);
@@ -26,8 +22,6 @@ export function BottomNav() {
   const [medsGelOpen, setMedsGelOpen] = useState(false);
   const [medsGelBrand, setMedsGelBrand] = useState<"tigel" | "chamomile" | null>(null);
   const [medsGelGums, setMedsGelGums] = useState<"upper" | "lower" | null>(null);
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState("");
   const logVitaminD = useLogVitaminD();
 
   const goToMedications = (notes?: string) => {
@@ -298,175 +292,8 @@ export function BottomNav() {
           </Sheet>
         </div>
 
-        {/* Schedule */}
         {navItem("/food", Salad, tr("foodTab", lang), "nav-food")}
-
-        {/* Settings */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <button
-              data-testid="nav-settings"
-              className="flex flex-col items-center justify-center w-16 h-full text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Settings className="w-7 h-7 mb-1" />
-              <span className="text-xs font-medium">{tr("settings", lang)}</span>
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-[2rem] card-surface border-white/15 dark:border-white/8 p-6" dir={dir}>
-            <SheetTitle className="text-xl font-bold text-center mb-6">{tr("settings", lang)}</SheetTitle>
-
-            {/* Language */}
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">{tr("language", lang)}</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setLang("he")}
-                  className={cn(
-                    "h-14 rounded-2xl border-2 font-bold text-base transition-all active:scale-95",
-                    lang === "he"
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-background border-border text-muted-foreground"
-                  )}
-                >
-                  עברית
-                </button>
-                <button
-                  onClick={() => setLang("ru")}
-                  className={cn(
-                    "h-14 rounded-2xl border-2 font-bold text-base transition-all active:scale-95",
-                    lang === "ru"
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-background border-border text-muted-foreground"
-                  )}
-                >
-                  Русский
-                </button>
-              </div>
-            </div>
-
-            {/* Name */}
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">{tr("yourName", lang)}</p>
-              {editingName ? (
-                <div className="flex gap-2">
-                  <input
-                    autoFocus
-                    type="text"
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    placeholder={tr("yourNamePlaceholder", lang)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && nameInput.trim()) {
-                        setName(nameInput.trim());
-                        setEditingName(false);
-                      }
-                    }}
-                    className="flex-1 h-12 px-3 rounded-2xl bg-background border-2 border-border focus:border-primary outline-none text-base"
-                    maxLength={30}
-                  />
-                  <button
-                    onClick={() => {
-                      if (nameInput.trim()) {
-                        setName(nameInput.trim());
-                        setEditingName(false);
-                      }
-                    }}
-                    className="h-12 px-4 rounded-2xl bg-primary text-primary-foreground font-bold text-sm"
-                  >
-                    {tr("letsGo", lang)}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => { setNameInput(name ?? ""); setEditingName(true); }}
-                  className="w-full h-14 rounded-2xl border-2 border-border bg-background flex items-center gap-3 px-4 active:scale-95 transition-transform"
-                >
-                  <UserCircle2 className="w-5 h-5 text-muted-foreground shrink-0" />
-                  <span className="flex-1 text-base font-medium text-left">
-                    {name ? tr("helloName", lang, name) : tr("whoAreYou", lang)}
-                  </span>
-                  <span className="text-xs text-primary font-semibold">{tr("changeName", lang)}</span>
-                </button>
-              )}
-            </div>
-
-            {/* Goals */}
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">{tr("dailyGoals", lang)}</p>
-              <div className="space-y-3">
-                {/* Feeding goal */}
-                <div className="bg-background border border-border rounded-2xl p-3">
-                  <p className="text-xs text-muted-foreground mb-2">{tr("feedings", lang)}</p>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setGoal("feedingGoalMin", Math.max(1, goals.feedingGoalMin - 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Minus className="w-4 h-4 text-primary" /></button>
-                      <span className="w-6 text-center font-bold text-base">{goals.feedingGoalMin}</span>
-                      <button onClick={() => setGoal("feedingGoalMin", Math.min(goals.feedingGoalMax - 1, goals.feedingGoalMin + 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Plus className="w-4 h-4 text-primary" /></button>
-                    </div>
-                    <span className="text-muted-foreground text-sm">–</span>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setGoal("feedingGoalMax", Math.max(goals.feedingGoalMin + 1, goals.feedingGoalMax - 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Minus className="w-4 h-4 text-primary" /></button>
-                      <span className="w-6 text-center font-bold text-base">{goals.feedingGoalMax}</span>
-                      <button onClick={() => setGoal("feedingGoalMax", Math.min(20, goals.feedingGoalMax + 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Plus className="w-4 h-4 text-primary" /></button>
-                    </div>
-                  </div>
-                </div>
-                {/* Sleep goal */}
-                <div className="bg-background border border-border rounded-2xl p-3">
-                  <p className="text-xs text-muted-foreground mb-2">{tr("sleep", lang)}</p>
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setGoal("sleepGoalHours", Math.max(8, goals.sleepGoalHours - 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Minus className="w-4 h-4 text-primary" /></button>
-                    <span className="flex-1 text-center font-bold text-base">{goals.sleepGoalHours}{lang === "he" ? " שע'" : " ч."}</span>
-                    <button onClick={() => setGoal("sleepGoalHours", Math.min(22, goals.sleepGoalHours + 1))} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center active:scale-95"><Plus className="w-4 h-4 text-primary" /></button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Theme */}
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">{tr("theme", lang)}</p>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => setTheme("dark")}
-                  className={cn(
-                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1",
-                    theme === "dark"
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-background border-border text-muted-foreground"
-                  )}
-                >
-                  <Moon className="w-4 h-4" />
-                  {tr("dark", lang)}
-                </button>
-                <button
-                  onClick={() => setTheme("auto")}
-                  className={cn(
-                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1",
-                    theme === "auto"
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-background border-border text-muted-foreground"
-                  )}
-                >
-                  <SunMoon className="w-4 h-4" />
-                  {tr("autoTheme", lang)}
-                </button>
-                <button
-                  onClick={() => setTheme("light")}
-                  className={cn(
-                    "h-14 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-1",
-                    theme === "light"
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-background border-border text-muted-foreground"
-                  )}
-                >
-                  <Sun className="w-4 h-4" />
-                  {tr("light", lang)}
-                </button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+        {navItem("/settings", Settings, tr("settings", lang), "nav-settings")}
       </div>
       <div className="h-24" />
     </>

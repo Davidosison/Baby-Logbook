@@ -9,7 +9,6 @@ import {
   getSupabase, initSupabaseWithJWT, clearSession, hasValidSession,
   supabase, toEvent, type Event, type EventRow,
 } from "./supabase";
-import { getGoals } from "@/hooks/use-goals";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -241,9 +240,6 @@ export function useGetDailySummary(
     diaperCount: number;
     peeDiapers: number;
     poopDiapers: number;
-    feedingGoalMin: number;
-    feedingGoalMax: number;
-    sleepGoalMinutes: number;
   }>> },
 ) {
   const { queryKey: _userKey, ...restOpts } = options?.query ?? {};
@@ -305,9 +301,6 @@ export function useGetDailySummary(
         diaperCount: diapers.length,
         peeDiapers: diapers.filter((e) => e.diaperType === "pee").length,
         poopDiapers: diapers.filter((e) => e.diaperType === "poop" || e.diaperType === "both").length,
-        feedingGoalMin: getGoals().feedingGoalMin,
-        feedingGoalMax: getGoals().feedingGoalMax,
-        sleepGoalMinutes: getGoals().sleepGoalHours * 60,
       };
     },
     ...restOpts,

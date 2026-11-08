@@ -45,7 +45,6 @@ const t = {
   summary: { he: "סיכום", ru: "Сводка" },
   never: { he: "מעולם", ru: "Никогда" },
   justNow: { he: "עכשיו", ru: "Сейчас" },
-  dailyGoals: { he: "יעדים יומיים", ru: "Дневные цели" },
   feedings: { he: "האכלות", ru: "Кормления" },
   todayTimeline: { he: "ציר הזמן של היום", ru: "График дня" },
   refresh: { he: "רענן", ru: "Обновить" },
@@ -145,6 +144,25 @@ const t = {
   noTastingsYet: { he: "עוד אין טעימות — הראשונה בדרך! 🥄", ru: "Пока нет записей — первая уже скоро! 🥄" },
   noFoodsMatch: { he: "לא נמצאו מזונות", ru: "Ничего не найдено" },
 
+  // Settings page
+  bornOn: { he: (d: string) => `נולד ${d}`, ru: (d: string) => `Родился ${d}` },
+  whoUsesDevice: { he: "מי משתמש במכשיר הזה?", ru: "Кто пользуется этим устройством?" },
+  whoUsesDeviceSub: {
+    he: "לחיצה על שם מחליפה מיד — כל רישום יישמר על שמו",
+    ru: "Нажмите на имя, чтобы переключиться — записи сохранятся под этим именем",
+  },
+  addPerson: { he: "+ מישהו אחר", ru: "+ Кто-то другой" },
+  save: { he: "שמור", ru: "Сохранить" },
+  quickButtonsTitle: { he: "כפתורים מהירים בדף הבית", ru: "Быстрые кнопки на главной" },
+  quickButtonsSub: {
+    he: (min: number, max: number) => `בחרו ${min}–${max} כפתורים. ההגדרה נשמרת בטלפון הזה בלבד.`,
+    ru: (min: number, max: number) => `Выберите ${min}–${max} кнопок. Настройка только для этого телефона.`,
+  },
+  displayTitle: { he: "תצוגה", ru: "Отображение" },
+  infoTitle: { he: "מידע ועזרה", ru: "Информация и помощь" },
+  whatsNewLink: { he: "מה חדש באפליקציה", ru: "Что нового" },
+  lastUpdated: { he: (d: string) => `עודכן לאחרונה ${d}`, ru: (d: string) => `Обновлено ${d}` },
+
   // Diaper ointment
   ointment: { he: "משחה", ru: "Крем" },
   ointmentApplied: { he: "נמרחה משחה", ru: "Крем нанесён" },
@@ -187,10 +205,6 @@ const t = {
   agePrefix: { he: "בן", ru: "возраст" },
 
   // Push prompt
-  enablePushTitle: { he: "הפעל התראות האכלה", ru: "Включить напоминания" },
-  enablePushSub: { he: "קבלו תזכורת כל 3 שעות", ru: "Напоминание каждые 3 часа" },
-  pushEnabledTitle: { he: "התראות מופעלות", ru: "Уведомления включены" },
-  pushEnabledSub: { he: "תקבלו התראה כשהתינוק לא הוזן 3 שעות", ru: "Уведомление придёт, если не кормили 3 часа" },
   enable: { he: "הפעל", ru: "Включить" },
 
   // Time ago
