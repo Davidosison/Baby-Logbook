@@ -529,12 +529,13 @@ export default function HistoryPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editEvent, setEditEvent] = useState<EventItem | null>(null);
   const [search, setSearch] = useState("");
-  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+  // Months the user tapped — flips the default (newest month open, older months folded).
+  const [toggledMonths, setToggledMonths] = useState<Set<string>>(new Set());
   const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
   const dateLocale = lang === "he" ? he : ru;
 
   const toggleMonth = (key: string) =>
-    setCollapsedMonths((prev) => {
+    setToggledMonths((prev) => {
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
@@ -547,10 +548,8 @@ export default function HistoryPage() {
       return next;
     });
 
-  const { data: events, isLoading } = useListEvents(
-    { limit: 1000 },
-    { query: { queryKey: getListEventsQueryKey({ limit: 1000 }) } },
-  );
+  // The whole history since birth (read page by page — not just the last 1000 records).
+  const { data: events, isLoading } = useListEvents({});
 
   const deleteEventMutation = useDeleteEvent({
     mutation: {
@@ -723,13 +722,18 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {monthGroups.map((month) => {
-          const monthCollapsed = collapsedMonths.has(month.key);
+        {monthGroups.map((month, i) => {
+          // Older months start folded so the phone doesn't draw months of cards at once;
+          // a search shows every match open.
+          const searching = !!search.trim();
+          const foldedByDefault = i > 0 && !searching;
+          const toggleKey = (searching ? "q:" : "") + month.key;
+          const monthCollapsed = foldedByDefault !== toggledMonths.has(toggleKey);
           return (
           <div key={month.key}>
             {/* Month header — tap to collapse/expand */}
             <button
-              onClick={() => toggleMonth(month.key)}
+              onClick={() => toggleMonth(toggleKey)}
               className="w-full flex items-center gap-3 mt-5 mb-3"
             >
               <div className="flex-1 h-px bg-border/40" />

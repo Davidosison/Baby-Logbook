@@ -181,14 +181,48 @@ export function useListEvents(
           .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
       }
 
-      if (params.limit) q = q.limit(params.limit);
+      if (!params.limit) return (await fetchAllEvents()).map(toEvent);
 
-      const { data, error } = await q;
+      const { data, error } = await q.limit(params.limit);
       if (error) throw error;
       return (data as EventRow[]).map(toEvent);
     },
     ...restOpts,
   });
+}
+
+/** Supabase returns at most 1000 rows per request, so the full history is read page by page. */
+const EVENTS_PAGE = 1000;
+
+async function fetchAllEvents(): Promise<EventRow[]> {
+  const page = (from: number, withCount = false) =>
+    getSupabase()
+      .from("events")
+      .select("*", withCount ? { count: "exact" } : undefined)
+      .order("started_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + EVENTS_PAGE - 1);
+
+  const first = await page(0, true);
+  if (first.error) throw first.error;
+  const total = first.count ?? 0;
+
+  const offsets: number[] = [];
+  for (let from = EVENTS_PAGE; from < total; from += EVENTS_PAGE) offsets.push(from);
+  const rest = await Promise.all(offsets.map((from) => page(from)));
+
+  // A row logged while pages load can shift one across a page edge — keep each id once.
+  const seen = new Set<number>();
+  const rows: EventRow[] = [];
+  for (const res of [first, ...rest]) {
+    if (res.error) throw res.error;
+    for (const row of res.data as EventRow[]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      rows.push(row);
+    }
+  }
+  return rows;
 }
 
 export function useGetRecentActivity(options?: { query?: Partial<UseQueryOptions<{
